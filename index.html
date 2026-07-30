@@ -152,125 +152,168 @@
     border-radius:7px;cursor:pointer;color:var(--text);}
   .pj-b:hover{border-color:var(--accent);}
   .pj-b.del:hover{border-color:#f87171;color:#f87171;}
-  /* ═══════════ 📱 MOBIL INTERFEYS — professional joylashuv ═══════════ */
+  /* ═══════════ 📱 MOBIL — CapCut uslubidagi professional interfeys ═══════════ */
   #mobBar,#mobTransport,#moreSheet{display:none;}
   .sheet-head{display:none;}
   @media (max-width:900px){
-    html,body{height:100%;}
-    body{height:100dvh; display:flex; flex-direction:column; overflow:hidden;}
+    html{-webkit-text-size-adjust:100%;}
+    body{height:100dvh; display:flex; flex-direction:column; overflow:hidden;
+      background:#0b0b0f;}
 
-    /* — Yuqori qator: ixcham, bir qatorda — */
-    header{flex:0 0 auto; padding:0 8px; height:46px; gap:8px;
-      flex-wrap:nowrap; overflow:hidden; align-items:center;}
-    .logo{font-size:14px; gap:6px; flex:0 0 auto;}
+    /* ───── 1. Yuqori qator ───── */
+    header{flex:0 0 auto; height:52px; padding:0 10px; gap:10px;
+      flex-wrap:nowrap; overflow:hidden; align-items:center;
+      background:linear-gradient(180deg,#17171f,#121218); border-bottom:1px solid #22222c;}
+    .logo{font-size:14px; gap:7px; flex:0 0 auto;}
     .logo small{display:none;}
-    .logo .mark{width:24px;height:24px;font-size:12px;}
+    .logo .mark{width:26px;height:26px;font-size:12px;border-radius:8px;
+      box-shadow:0 3px 10px rgba(139,92,246,.45);}
     header select.hsel,header .time-display,header #btnStart,header #btnPlay,
     header #btnPng,header #btnExportProj,header #btnImportProj,header #btnHelp,
-    header #btnUndo,header #btnRedo,header #saveDot{display:none!important;}
+    header #btnUndo,header #btnRedo,header #saveDot,header #btnProjects{display:none!important;}
     #projName{display:block; flex:1; min-width:0; max-width:none; text-align:center;
-      background:transparent; border:none; font-size:12.5px; color:var(--text); font-weight:600;}
-    header #btnProjects{display:none!important;}
-    header #btnExport{flex:0 0 auto; padding:7px 12px; font-size:12.5px; font-weight:700;}
+      background:transparent; border:none; font-size:13px; color:#e8e8ee; font-weight:600;
+      padding:0; letter-spacing:.2px;}
+    header #btnExport{flex:0 0 auto; padding:9px 16px; font-size:13px; font-weight:700;
+      border-radius:10px; box-shadow:0 4px 14px rgba(139,92,246,.4);}
 
-    /* — Sahna — */
+    /* ───── 2. Sahna (preview) ───── */
     main{flex:1 1 auto; min-height:0; flex-direction:column;}
-    .stage-wrap{flex:1 1 auto; min-height:0; padding:10px 10px 6px;}
+    .stage-wrap{flex:1 1 auto; min-height:0; padding:12px 12px 8px;
+      background:radial-gradient(circle at 50% 35%,#15151c 0%,#0b0b0f 75%);}
     .stage-hint{display:none;}
-    #stZoomBadge{top:8px; right:8px; font-size:10.5px; padding:3px 7px;}
+    #stZoomBadge{top:10px; right:10px; font-size:10.5px; padding:4px 9px; border-radius:8px;
+      background:rgba(20,20,28,.82); backdrop-filter:blur(8px);}
 
-    /* — Transport qatori — */
-    #mobTransport{display:flex; flex:0 0 auto; align-items:center; gap:5px;
-      padding:5px 8px; background:var(--panel); border-top:1px solid var(--border);
-      border-bottom:1px solid var(--border);}
-    #mobTransport button{width:34px;height:32px;padding:0;justify-content:center;
-      font-size:14px;border-radius:9px;flex:0 0 auto;}
-    #mobTransport button.pp{background:var(--accent);border-color:var(--accent);color:#fff;
-      width:40px;font-size:15px;}
-    #mobTime{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--accent2);
-      flex:0 0 auto;padding:0 4px;}
+    /* ───── 3. Transport ───── */
+    #mobTransport{display:flex; flex:0 0 auto; align-items:center; gap:6px;
+      padding:7px 10px; background:#121218; border-top:1px solid #22222c;}
+    #mobTransport button{width:36px;height:34px;padding:0;justify-content:center;
+      font-size:15px;border-radius:10px;flex:0 0 auto;background:#1c1c25;border-color:#2a2a36;}
+    #mobTransport button:active{background:#2a2a36;}
+    #mobTransport button.pp{background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+      border-color:transparent;color:#fff;width:44px;font-size:16px;
+      box-shadow:0 4px 14px rgba(139,92,246,.45);}
+    #mobTime{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:#a78bfa;
+      flex:0 0 auto;padding:0 6px;letter-spacing:-.3px;}
     #mobTransport .tsp{flex:1;}
 
-    /* — TIMELINE: doim ko'rinadi, barmoq uchun kattalashtirilgan — */
-    .timeline{flex:0 0 auto; height:190px; border-top:none;}
+    /* ───── 4. TIMELINE (CapCut uslubi) ───── */
+    .timeline{flex:0 0 auto; height:34dvh; min-height:180px; max-height:270px;
+      border-top:1px solid #22222c; background:#0e0e13;}
     .tl-resizer{display:none;}
-    .tl-toolbar{gap:6px; padding:6px 8px; overflow-x:auto; flex-wrap:nowrap; min-height:0;}
-    .tl-toolbar::-webkit-scrollbar{display:none;}
-    .tl-toolbar .lbl{display:none;}
-    .tl-toolbar #inDuration{width:52px;}
-    .tl-toolbar button{padding:8px 11px; font-size:12px; flex:0 0 auto;}
-    .tl-toolbar .zoombtns{flex:0 0 auto;}
-    .tl-names{width:88px; padding-top:22px;}
-    .tl-names .nm{height:36px; font-size:11px; padding:0 4px 0 8px;}
-    .tl-names .nm .rowadd{display:flex;}
-    .tl-names .nm .ra{padding:4px 5px; font-size:11px;}
-    .tl-row{height:36px;}
-    .tl-bar{height:28px; top:4px; font-size:11px; padding:0 12px; border-radius:8px;}
-    .tl-bar .h{width:16px;}
-    .tick{font-size:9.5px;}
+    /* Sarlavha → gorizontal siljiydigan ixcham asboblar qatori */
+    .tl-head{gap:7px; padding:8px 10px; flex-wrap:nowrap; overflow-x:auto;
+      overflow-y:hidden; border-bottom:1px solid #1e1e28; scrollbar-width:none;
+      -webkit-overflow-scrolling:touch;}
+    .tl-head::-webkit-scrollbar{display:none;}
+    .tl-head .lbl{display:none!important;}
+    .tl-head #inDuration{width:56px; flex:0 0 auto; padding:8px 6px; font-size:12.5px;
+      background:#1c1c25; border-radius:9px; text-align:center;}
+    .tl-head button{padding:9px 13px; font-size:12.5px; flex:0 0 auto;
+      background:#1c1c25; border-color:#2a2a36; border-radius:10px; white-space:nowrap;}
+    .tl-head .zoombtns{flex:0 0 auto; gap:5px;}
+    .tl-head .zoombtns button{width:38px; padding:9px 0; justify-content:center;}
+    .tl-body{flex:1; min-height:0;}
+    .tl-names{width:0; display:none;}          /* nomlar ustuni — mobilda o'rin egallaydi */
+    .tl-track-wrap{-webkit-overflow-scrolling:touch;}
+    .tl-ruler{height:24px; background:#0e0e13; border-bottom:1px solid #1e1e28;}
+    .tick{font-size:9.5px; color:#5a5a68;}
+    .tl-rows{padding-bottom:10px;}
+    .tl-row{height:44px; border-bottom:1px solid rgba(255,255,255,.035);}
+    .tl-bar{height:36px; top:4px; font-size:11.5px; padding:0 12px; border-radius:10px;
+      opacity:.95; box-shadow:0 2px 8px rgba(0,0,0,.35);}
+    .tl-bar.msel{outline:2px solid #fff; outline-offset:1px;}
+    .tl-bar .h{width:18px;}
+    .playhead{width:2px; background:#fff; box-shadow:0 0 8px rgba(255,255,255,.7);}
+    .kfd{width:12px;height:12px;}
 
-    /* — Pastdagi asosiy panel (oqimda, fixed EMAS — timeline yopilmaydi) — */
-    #mobBar{display:flex; flex:0 0 auto; background:var(--panel);
-      border-top:1px solid var(--border); gap:2px;
-      padding:5px 4px calc(5px + env(safe-area-inset-bottom));}
-    #mobBar button{flex:1; flex-direction:column; gap:2px; padding:6px 2px; font-size:9.5px;
-      background:transparent; border:none; border-radius:10px; color:var(--muted); line-height:1.1;}
-    #mobBar button i{font-style:normal; font-size:18px;}
-    #mobBar button.on{color:#fff; background:var(--panel2);}
-    #mobBar button.acc{color:var(--accent2);}
+    /* ───── 5. Pastdagi asboblar (CapCut uslubi, gorizontal scroll) ───── */
+    #mobBar{display:flex; flex:0 0 auto; gap:0; overflow-x:auto; scrollbar-width:none;
+      background:linear-gradient(180deg,#15151c,#101015);
+      border-top:1px solid #22222c;
+      padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+      -webkit-overflow-scrolling:touch;}
+    #mobBar::-webkit-scrollbar{display:none;}
+    #mobBar button{flex:0 0 auto; min-width:66px; flex-direction:column; gap:4px;
+      padding:6px 4px; font-size:10px; background:transparent; border:none;
+      border-radius:12px; color:#8a8a99; line-height:1.1; transition:.18s;}
+    #mobBar button i{font-style:normal; font-size:21px; display:block;
+      width:42px; height:42px; line-height:42px; border-radius:13px;
+      background:#1c1c25; border:1px solid #2a2a36; margin:0 auto; transition:.18s;}
+    #mobBar button:active i{transform:scale(.92);}
+    #mobBar button.on{color:#fff;}
+    #mobBar button.on i{background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+      border-color:transparent; box-shadow:0 4px 14px rgba(139,92,246,.45);}
+    #mobBar button.acc{color:#a78bfa;}
+    #mobBar button.acc i{border-color:#8b5cf6;}
 
-    /* — Panellar: pastdan chiqadigan varaqlar — */
+    /* ───── 6. Pastdan chiquvchi varaqlar ───── */
     .side{position:fixed; left:0; right:0; bottom:0; top:auto; width:auto;
-      height:72dvh; max-height:72dvh; z-index:80; border:none;
-      border-top:1px solid var(--border); border-radius:18px 18px 0 0;
-      box-shadow:0 -14px 44px rgba(0,0,0,.6);
-      transform:translateY(103%); transition:transform .25s cubic-bezier(.22,1,.36,1);
+      height:74dvh; max-height:74dvh; z-index:80; border:none;
+      background:#15151c; border-top:1px solid #2a2a36;
+      border-radius:20px 20px 0 0; box-shadow:0 -16px 50px rgba(0,0,0,.72);
+      transform:translateY(103%); transition:transform .28s cubic-bezier(.22,1,.36,1);
       padding-bottom:env(safe-area-inset-bottom);}
     .side.open{transform:translateY(0);}
     .side.right{border-left:none;}
-    .side h3{padding:2px 14px 6px; font-size:10px;}
+    .side h3{padding:2px 16px 8px; font-size:10px; letter-spacing:1.4px;}
     .sheet-head{display:flex; align-items:center; justify-content:space-between;
-      padding:9px 12px 2px; flex:0 0 auto;}
-    .sheet-head .grip{width:46px;height:4px;border-radius:3px;background:var(--border);margin:0 auto;}
-    .sheet-head .sx{width:30px;height:30px;padding:0;justify-content:center;
-      border-radius:50%;font-size:13px;flex:0 0 auto;}
-    .props{padding:0 12px 24px;}
-    .layers{padding:0 8px 6px; max-height:30dvh;}
-    .add-row{grid-template-columns:1fr 1fr; gap:8px; padding:8px;}
-    .add-row button{padding:13px 4px; font-size:13px;}
-    .add-row select{padding:13px 4px; font-size:13px;
-      background-position:calc(50% + 54px) 55%, calc(50% + 59px) 55%;}
+      padding:10px 14px 4px; flex:0 0 auto; position:relative;}
+    .sheet-head .grip{position:absolute; left:50%; top:7px; transform:translateX(-50%);
+      width:44px;height:4px;border-radius:3px;background:#33333f;}
+    .sheet-head .sx{width:32px;height:32px;padding:0;justify-content:center;
+      border-radius:50%;font-size:13px;flex:0 0 auto;background:#1c1c25;border-color:#2a2a36;}
+    .props{padding:0 14px 28px;}
+    .layers{padding:0 10px 8px; max-height:28dvh;}
+    .layer-item{padding:11px 10px; border-radius:11px; font-size:13px;}
+    .add-row{grid-template-columns:repeat(3,1fr); gap:9px; padding:10px;
+      border-top:1px solid #22222c;}
+    .add-row button{flex-direction:column; gap:5px; padding:14px 3px; font-size:11px;
+      border-radius:14px; background:#1c1c25; border-color:#2a2a36; line-height:1.2;}
+    .add-row select{grid-column:1/-1; padding:13px 4px; font-size:13px; border-radius:12px;
+      background-color:#1c1c25;
+      background-position:calc(50% + 58px) 55%, calc(50% + 63px) 55%;}
 
-    /* — "Ko'proq" varag'i — */
-    #moreSheet{position:fixed; inset:0; z-index:90; background:rgba(0,0,0,.55);
-      display:none; align-items:flex-end;}
+    /* ───── 7. "Ko'proq" varag'i ───── */
+    #moreSheet{position:fixed; inset:0; z-index:90; background:rgba(0,0,0,.6);
+      display:none; align-items:flex-end; backdrop-filter:blur(3px);}
     #moreSheet.open{display:flex;}
-    #moreSheet .ms-card{width:100%; background:var(--panel); border-radius:18px 18px 0 0;
-      border-top:1px solid var(--border); padding-bottom:calc(10px + env(safe-area-inset-bottom));
-      max-height:78dvh; overflow:auto;}
-    .ms-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 12px;}
-    .ms-grid button{flex-direction:column; gap:5px; padding:14px 4px; font-size:11px;
-      border-radius:12px; justify-content:center; line-height:1.15;}
-    .ms-grid button i{font-style:normal; font-size:21px;}
+    #moreSheet .ms-card{width:100%; background:#15151c; border-radius:20px 20px 0 0;
+      border-top:1px solid #2a2a36; padding-bottom:calc(12px + env(safe-area-inset-bottom));
+      max-height:80dvh; overflow:auto; animation:msUp .28s cubic-bezier(.22,1,.36,1);}
+    @keyframes msUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .ms-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:12px 14px;}
+    .ms-grid button{flex-direction:column; gap:7px; padding:16px 4px; font-size:11px;
+      border-radius:15px; justify-content:center; line-height:1.2;
+      background:#1c1c25; border-color:#2a2a36;}
+    .ms-grid button i{font-style:normal; font-size:23px;}
+    .ms-grid button:active{background:#242430;}
 
-    /* — Modal oynalar — */
-    #helpOv .card,#keymapOv .card,#projOv .card,.rename-ov .rn-card{max-height:76dvh;}
-    #projOv .card{width:96%;}
-    .row2{gap:8px;}
-    input[type=range]{height:28px;}
+    /* ───── 8. Modal va boshqa mayda tuzatishlar ───── */
+    #helpOv .card,#keymapOv .card,#projOv .card,.rename-ov .rn-card{max-height:78dvh;}
+    #projOv .card{width:96%; border-radius:18px;}
+    .row2{gap:9px;}
+    input[type=range]{height:30px;}
     .props .field label{font-size:12px;}
-    .props button{padding:11px 10px;}
-    .props select,.props input[type=text],.props input[type=number]{padding:10px;font-size:13px;}
-    .kf-list{max-height:150px;}
-    .anchor-grid{width:104px;}
-    .toast{bottom:auto; top:56px;}
+    .props button{padding:12px 10px; border-radius:10px;}
+    .props select,.props input[type=text],.props input[type=number]{padding:11px;font-size:13px;border-radius:10px;}
+    .sec-head{padding:12px 4px;font-size:12px;}
+    .kf-list{max-height:160px;}
+    .anchor-grid{width:112px;}
+    .toast{bottom:auto; top:62px; left:50%; transform:translateX(-50%); font-size:12.5px;}
+    .grad-cols .gc input[type=color]{width:50px;height:40px;}
   }
+  /* Gorizontal (landscape) holat */
   @media (max-width:900px) and (orientation:landscape){
-    .side{height:90dvh;max-height:90dvh;}
-    .timeline{height:132px;}
-    .tl-row,.tl-names .nm{height:30px;}
-    .tl-bar{height:24px;}
-    header{height:40px;}
+    header{height:44px;}
+    .side{height:92dvh;max-height:92dvh;}
+    .timeline{height:40dvh;min-height:120px;}
+    .tl-row{height:34px;}
+    .tl-bar{height:27px;}
+    #mobBar button{min-width:58px;}
+    #mobBar button i{width:34px;height:34px;line-height:34px;font-size:17px;}
+    .stage-wrap{padding:8px;}
   }
   .rename-ov{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:120; display:flex; align-items:center; justify-content:center;}
   .rename-ov .rn-card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px 20px; width:min(420px,92%);}
@@ -452,10 +495,17 @@
 
 <!-- 📱 Mobil pastdagi asosiy panel -->
 <div id="mobBar">
-  <button id="mbAdd" title="Qo'shish"><i>➕</i>Qo'shish</button>
-  <button id="mbProps" title="Tahrirlash"><i>⚙️</i>Tahrir</button>
-  <button id="mbSplit" title="Bo'lish"><i>✂️</i>Bo'lish</button>
+  <button id="mbProps" title="Tanlangan elementni tahrirlash"><i>⚙️</i>Tahrir</button>
+  <button id="mbText" title="Matn qo'shish"><i>Ｔ</i>Matn</button>
+  <button id="mbVideo" title="Video qo'shish"><i>🎬</i>Video</button>
+  <button id="mbImage" title="Rasm qo'shish"><i>🖼</i>Rasm</button>
+  <button id="mbAudio" title="Audio qo'shish"><i>🎵</i>Audio</button>
+  <button id="mbShape" title="Shakl qo'shish"><i>◇</i>Shakl</button>
+  <button id="mbTpl" title="Tayyor shablonlar"><i>🧩</i>Shablon</button>
+  <button id="mbSplit" title="Playhead joyidan bo'lish"><i>✂️</i>Bo'lish</button>
+  <button id="mbDup" title="Nusxa"><i>⧉</i>Nusxa</button>
   <button id="mbDel" title="O'chirish"><i>🗑</i>O'chir</button>
+  <button id="mbAdd" title="Barcha qatlamlar"><i>📚</i>Qatlam</button>
   <button id="mbMore" title="Ko'proq"><i>⋯</i>Ko'proq</button>
 </div>
 
@@ -8407,6 +8457,28 @@ function openSheet(which){
 document.getElementById('mbAdd')?.addEventListener('click',()=>openSheet('L'));
 document.getElementById('mbProps')?.addEventListener('click',()=>openSheet('R'));
 document.getElementById('mbSplit')?.addEventListener('click',()=>splitSelected());
+/* To'g'ridan-to'g'ri qo'shish tugmalari (CapCut kabi — bir bosishda) */
+const mbTap=(id,srcId)=>document.getElementById(id)?.addEventListener('click',()=>{
+  document.getElementById(srcId)?.click();
+});
+mbTap('mbText','btnAddText');
+mbTap('mbVideo','btnAddVideo');
+mbTap('mbImage','btnAddImage');
+mbTap('mbAudio','btnAddAudio');
+mbTap('mbShape','btnAddShape');
+document.getElementById('mbDup')?.addEventListener('click',()=>{
+  if(!state.selected){toast('Avval elementni tanlang');return;}
+  copyLayer(true);pasteLayer(true);
+});
+document.getElementById('mbTpl')?.addEventListener('click',()=>{
+  openSheet('L');
+  setTimeout(()=>{
+    const sel=document.getElementById('tplSelect2');
+    if(sel){sel.scrollIntoView({block:'center',behavior:'smooth'});
+      sel.style.outline='2px solid var(--accent)';
+      setTimeout(()=>sel.style.outline='',1600);}
+  },300);
+});
 document.getElementById('mbDel')?.addEventListener('click',()=>{
   if(state.multi&&state.multi.length>1){bulkDelete();return;}
   if(state.selected)deleteLayer(state.selected);
@@ -8477,6 +8549,20 @@ if(IS_MOB){
   };
   addEventListener('resize',()=>setTimeout(fitStage,120));
   addEventListener('orientationchange',()=>setTimeout(fitStage,320));
+  // Yangi element qo'shilganda tahrirlash varag'i o'zi ochiladi (CapCut kabi)
+  const _openAfterAdd=['btnAddText','btnAddShape','btnAddGlass','btnAddProgress'];
+  _openAfterAdd.forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setTimeout(()=>openSheet('R'),260));
+  });
+  document.getElementById('tplSelect2')?.addEventListener('change',()=>{
+    setTimeout(closeSheets,200);
+  });
+  // Varaq ochiq bo'lsa "Orqaga" tugmasi uni yopsin
+  addEventListener('popstate',()=>{
+    if(sideL?.classList.contains('open')||sideR?.classList.contains('open')){closeSheets();}
+    else if(moreSheet?.classList.contains('open'))openMore(false);
+  });
 }
 
 /* ═══════════ 👆 SENSORLI (TOUCH) BOSHQARUV ═══════════
