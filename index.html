@@ -224,7 +224,24 @@
     .tl-bar{height:36px; top:4px; font-size:11.5px; padding:0 12px; border-radius:10px;
       opacity:.95; box-shadow:0 2px 8px rgba(0,0,0,.35);}
     .tl-bar.msel{outline:2px solid #fff; outline-offset:1px;}
-    .tl-bar .h{width:18px;}
+    /* Trim dastaklari — CapCut kabi katta va ko'rinarli (faqat tanlanganda) */
+    .tl-bar .rh,.tl-bar .lh{width:0; background:transparent;}
+    .tl-bar.sel .rh,.tl-bar.sel .lh{width:22px; background:#fff;
+      display:flex; align-items:center; justify-content:center;}
+    .tl-bar.sel .rh::after,.tl-bar.sel .lh::after{content:'';width:3px;height:16px;
+      border-radius:2px;background:#18181b;}
+    .tl-bar.sel .rh{border-radius:0 10px 10px 0;}
+    .tl-bar.sel .lh{border-radius:10px 0 0 10px;}
+    .tl-bar.sel{outline:2.5px solid #fff; outline-offset:0; z-index:4;}
+    /* Markaziy playhead chizig'i (timeline ustida qotib turadi) */
+    #tlCenter{display:block; position:absolute; left:50%; top:0; bottom:0; width:2px;
+      background:#fff; box-shadow:0 0 10px rgba(255,255,255,.85); z-index:9;
+      pointer-events:none; transform:translateX(-1px);}
+    #tlCenter::before{content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+      border-left:7px solid transparent; border-right:7px solid transparent;
+      border-top:9px solid #fff;}
+    .playhead{display:none;}          /* markaziy chiziq uni almashtiradi */
+    .tl-body{position:relative;}
     .playhead{width:2px; background:#fff; box-shadow:0 0 8px rgba(255,255,255,.7);}
     .kfd{width:12px;height:12px;}
 
@@ -469,6 +486,7 @@
     <span class="lbl" style="margin-left:auto"><b style='color:var(--accent2)'>?</b> = barcha tezkor tugmalar · ◆ keyframe · Z/X zoom · Cmd+Z ortga · Shift+klik / ramka = ko'p tanlash · Alt+←/→ = vaqtda siljitish</span>
   </div>
   <div class="tl-body">
+    <div id="tlCenter" style="display:none"></div>
     <div class="tl-names" id="tlNames"></div>
     <div class="tl-track-wrap" id="tlWrap">
       <div class="tl-inner" id="tlInner">
@@ -5558,8 +5576,8 @@ document.getElementById('btnSplit').onclick=splitSelected;
         if(ri<0)continue;
         mnx=Math.min(mnx,(l.start/state.duration)*W0);
         mxx=Math.max(mxx,((l.start+l.dur)/state.duration)*W0);
-        mny=Math.min(mny,ri*30);
-        mxy=Math.max(mxy,ri*30+28);
+        mny=Math.min(mny,ri*rowH());
+        mxy=Math.max(mxy,ri*rowH()+rowH()-2);
       }
       if(members.length&&x0>=mnx-8&&x0<=mxx+8&&y0>=mny&&y0<=mxy){
         saveHistory();
@@ -5596,7 +5614,7 @@ document.getElementById('btnSplit').onclick=splitSelected;
           delta=clamp(delta+bs,dMin,dMax);
           for(const gl of members)gl.start=starts.get(gl.id)+delta;
           // ↕ Vertikal: qatorlarni birga siljitish (chegaradan chiqmaydi)
-          let rowShift=Math.round((ev.clientY-startY)/30);
+          let rowShift=Math.round((ev.clientY-startY)/rowH());
           rowShift=clamp(rowShift,-minRow,dispSnap.length-1-maxRow);
           let vChanged=false;
           for(const gl of members){
@@ -5637,7 +5655,7 @@ document.getElementById('btnSplit').onclick=splitSelected;
       for(const l of state.layers){
         const ri=disp.indexOf(l.track);
         if(ri<0)continue;
-        const by=ri*30, bx=(l.start/state.duration)*W, bw=Math.max(6,(l.dur/state.duration)*W);
+        const by=ri*rowH(), bx=(l.start/state.duration)*W, bw=Math.max(6,(l.dur/state.duration)*W);
         if(bx<Lx+Wx&&bx+bw>Lx&&by<Ty+Hy&&by+28>Ty)hits.push(l.id);
       }
       state.multi=hits;
@@ -7348,6 +7366,14 @@ function addTrackRow(ref,where){
   toast(where==='above'?'⬆ Tepaga yangi qator ochildi':'⬇ Pastga yangi qator ochildi');
   return id;
 }
+let TL_PAD=0;   // ⏱ timeline chetidagi zaxira (mobil markaziy playhead uchun)
+/* Qator balandligi CSS'dan o'qiladi — mobilda 44px, kompyuterda 30px.
+   Ilgari 30 qattiq yozilgani uchun mobilda klipni boshqa qatorga surish xato ishlardi. */
+function rowH(){
+  const r=document.querySelector('#tlRows .tl-row');
+  if(r){const h=r.getBoundingClientRect().height;if(h>4)return h;}
+  return matchMedia('(max-width:900px)').matches?44:30;
+}
 let tlDragRows=null; // drag paytida qatorlar geometriyasini muzlatib turish
 /* ⚡ Drag paytida to'liq renderTimeline (butun DOM qayta qurish) juda og'ir —
    buning o'rniga faqat barlarning left/width uslublari yangilanadi */
@@ -7506,7 +7532,13 @@ function renderTimeline(){
         const groupStarts=group?new Map(state.layers.filter(l=>state.multi.includes(l.id)).map(l=>[l.id,l.start])):null;
         const groupTracks=group?new Map(state.layers.filter(l=>state.multi.includes(l.id)).map(l=>[l.id,l.track])):null;
         const startX=e.clientX,startY=e.clientY,s0=L.start;
+        let dragOn=false;
         const move=ev=>{
+          // 👆 Ostona: barmoq bilan bosganda klip tasodifan siljib ketmasin
+          if(!dragOn){
+            if(Math.abs(ev.clientX-startX)<6&&Math.abs(ev.clientY-startY)<6)return;
+            dragOn=true;
+          }
           const exIds=group?state.multi:[L.id];
           let ns=clamp(s0+(ev.clientX-startX)/W*state.duration,0,state.duration-L.dur);
           if(group){
@@ -7549,7 +7581,7 @@ function renderTimeline(){
             // ↕ Vertikal: butun guruhni qatorlar aro birga siljitish
             const memRows=members.map(l=>trackSnap.indexOf(groupTracks.get(l.id))).filter(r=>r>=0);
             const minRow=Math.min(...memRows), maxRow=Math.max(...memRows);
-            let rowShift=Math.round((ev.clientY-startY)/30);
+            let rowShift=Math.round((ev.clientY-startY)/rowH());
             rowShift=clamp(rowShift,-minRow,trackSnap.length-1-maxRow);
             let vChanged=false;
             for(const gl of members){
@@ -7593,7 +7625,7 @@ function renderTimeline(){
             // Vertikal surish = boshqa qatorga (trackka) ko'chirish (faqat yakka)
             const rowsEl=document.getElementById('tlRows');
             const rr=rowsEl.getBoundingClientRect();
-            const idx=Math.floor((ev.clientY-rr.top)/30);
+            const idx=Math.floor((ev.clientY-rr.top)/rowH());
             if(idx>=0&&idx<trackSnap.length){
               if(L.track!==trackSnap[idx]){L.track=trackSnap[idx];trackChanged=true;}
             }else if(idx>=trackSnap.length){
@@ -7671,7 +7703,7 @@ function renderTimeline(){
   const ruler=document.getElementById('tlRuler');
   const scrub=e=>{
     const r=tlWrap.getBoundingClientRect();
-    const x=e.clientX-r.left+tlWrap.scrollLeft;
+    const x=e.clientX-r.left+tlWrap.scrollLeft-TL_PAD;
     state.time=clamp(x/trackWidth(),0,1)*state.duration;
     seekDirty=true;syncTimeUI();
   };
@@ -7686,7 +7718,7 @@ function renderTimeline(){
 /* Playhead'ning HOZIRGI ekrandagi X pozitsiyasi (client koordinatada) */
 function playheadClientX(){
   const r=tlWrap.getBoundingClientRect();
-  const x=(state.time/Math.max(state.duration,0.001))*trackWidth()-tlWrap.scrollLeft;
+  const x=(state.time/Math.max(state.duration,0.001))*trackWidth()-tlWrap.scrollLeft+TL_PAD;
   return r.left+x;
 }
 function setZoom(z,pivotClientX){
@@ -7694,10 +7726,10 @@ function setZoom(z,pivotClientX){
   let px=(pivotClientX??(r.left+r.width/2))-r.left;
   // Pivot ekrandan tashqarida bo'lsa (playhead ko'rinmasa) — markazga tushuramiz
   if(px<0||px>r.width)px=r.width/2;
-  const tAt=(px+tlWrap.scrollLeft)/trackWidth();
+  const tAt=(px+tlWrap.scrollLeft-TL_PAD)/trackWidth();
   state.tlZoom=clamp(z,1,20);
   renderTimeline();
-  tlWrap.scrollLeft=tAt*trackWidth()-px;
+  tlWrap.scrollLeft=tAt*trackWidth()-px+TL_PAD;
 }
 // G'ildirak = oddiy skroll (zoom: Z/X klavishlari yoki − / + tugmalari)
 // Zoom har doim PLAYHEAD atrofida amalga oshadi — u chekkaga surilib ketmaydi
@@ -7728,7 +7760,7 @@ tlWrap.addEventListener('dragleave',()=>tlWrap.classList.remove('dropping'));
 tlWrap.addEventListener('drop',e=>{
   e.preventDefault();tlWrap.classList.remove('dropping');
   const r=tlWrap.getBoundingClientRect();
-  const x=e.clientX-r.left+tlWrap.scrollLeft;
+  const x=e.clientX-r.left+tlWrap.scrollLeft-TL_PAD;
   const t=clamp(x/trackWidth(),0,1)*state.duration;
   handleDroppedFiles(e.dataTransfer.files,t);
 });
@@ -8493,6 +8525,16 @@ document.getElementById('mtPlay')?.addEventListener('click',()=>{setPlaying(!sta
 document.getElementById('mtStart')?.addEventListener('click',()=>{
   state.time=0;seekDirty=true;syncTimeUI(true);
 });
+/* 📱 Birinchi ochilishda qisqa qo'llanma */
+if(IS_MOB){
+  setTimeout(()=>{
+    try{
+      if(localStorage.getItem('gm_tip'))return;
+      localStorage.setItem('gm_tip','1');
+      toast('👆 Timeline: barmoq bilan chapga-o\'ngga suring — vaqt markazdagi oq chiziq bo\'yicha yuradi. Ikki barmoq = masshtab. Klipni bosing = tanlash, suring = ko\'chirish.',9000);
+    }catch(e){}
+  },1600);
+}
 document.getElementById('mtZoomIn')?.addEventListener('click',()=>setZoom(state.tlZoom*1.4,playheadClientX()));
 document.getElementById('mtZoomOut')?.addEventListener('click',()=>setZoom(state.tlZoom/1.4,playheadClientX()));
 document.getElementById('mtFit')?.addEventListener('click',()=>document.getElementById('zoomFit')?.click());
@@ -8565,6 +8607,109 @@ if(IS_MOB){
   });
 }
 
+/* ═══════════ ⏱ MOBIL TIMELINE — CapCut uslubidagi boshqaruv ═══════════
+   Asosiy g'oya: playhead EKRAN MARKAZIDA qotib turadi, timeline'ning O'ZI suriladi.
+   Barmoq bilan chapga-o'ngga surish = vaqt bo'ylab yurish (scrub).
+   Ikki barmoq = timeline masshtabi. Klipni bosish = tanlash, surish = ko'chirish. */
+(function mobileTimeline(){
+  if(!matchMedia('(pointer:coarse)').matches)return;
+  const wrap=document.getElementById('tlWrap');
+  const body=document.querySelector('.tl-body');
+  const center=document.getElementById('tlCenter');
+  if(!wrap||!center)return;
+  center.style.display='block';
+
+  /* Markaziy chiziq ostidagi vaqtni hisoblash va aksincha */
+  const halfW=()=>wrap.clientWidth/2;
+  function timeAtCenter(){
+    return clamp((wrap.scrollLeft+halfW()-TL_PAD)/trackWidth()*state.duration,0,state.duration);
+  }
+  function scrollToTime(t,smooth){
+    const x=(t/Math.max(state.duration,0.001))*trackWidth()-halfW()+TL_PAD;
+    if(smooth)wrap.scrollTo({left:x,behavior:'smooth'});
+    else wrap.scrollLeft=x;
+  }
+  /* Timeline chetlarida bo'sh joy — 0 va oxirgi soniya ham markazga chiqa olsin */
+  function applyPad(){
+    const inner=document.getElementById('tlInner');
+    if(!inner)return;
+    const h=Math.round(halfW());
+    TL_PAD=h;
+    inner.style.marginLeft=h+'px';
+    inner.style.marginRight=h+'px';
+  }
+  applyPad();
+  addEventListener('resize',()=>{applyPad();scrollToTime(state.time);});
+
+  let mode=null,sx=0,sy=0,scr0=0,pz=null,moved=false,wasPlaying=false;
+  wrap.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){
+      const [a,b]=e.touches;
+      pz={d:Math.max(1,Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)),z:state.tlZoom,t:timeAtCenter()};
+      mode='pinch';e.preventDefault();return;
+    }
+    if(e.touches.length>1)return;
+    const t=e.touches[0];
+    const el=document.elementFromPoint(t.clientX,t.clientY);
+    if(el&&el.closest('.tl-bar'))return;      // klip — o'z mantiqi (ko'prik orqali)
+    mode='scrub';moved=false;
+    sx=t.clientX;sy=t.clientY;scr0=wrap.scrollLeft;
+    wasPlaying=state.playing;
+    if(wasPlaying)setPlaying(false);
+  },{passive:true});
+
+  wrap.addEventListener('touchmove',e=>{
+    if(mode==='pinch'&&e.touches.length===2){
+      const [a,b]=e.touches;
+      const d=Math.max(1,Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY));
+      const nz=clamp(pz.z*(d/pz.d),0.2,60);
+      if(Math.abs(nz-state.tlZoom)>0.005){
+        state.tlZoom=nz;
+        renderTimeline();applyPad();
+        scrollToTime(pz.t);
+      }
+      e.preventDefault();return;
+    }
+    if(mode!=='scrub')return;
+    const t=e.touches[0];
+    const dx=t.clientX-sx, dy=t.clientY-sy;
+    if(!moved&&Math.abs(dx)<Math.abs(dy)&&Math.abs(dy)>8){mode='vscroll';return;} // vertikal — tabiiy scroll
+    if(Math.abs(dx)>3)moved=true;
+    wrap.scrollLeft=scr0-dx;
+    state.time=timeAtCenter();
+    seekDirty=true;syncTimeUI(true);
+    e.preventDefault();
+  },{passive:false});
+
+  const end=()=>{
+    if(mode==='scrub'){
+      state.time=timeAtCenter();
+      seekDirty=true;syncTimeUI(true);
+    }
+    mode=null;pz=null;
+  };
+  wrap.addEventListener('touchend',end,{passive:true});
+  wrap.addEventListener('touchcancel',end,{passive:true});
+
+  /* Play paytida timeline avtomatik suriladi — playhead doim markazda */
+  let _lastT=-1;
+  (function follow(){
+    if(mode==null&&Math.abs(state.time-_lastT)>0.0005){
+      _lastT=state.time;
+      scrollToTime(state.time);
+    }
+    requestAnimationFrame(follow);
+  })();
+
+  /* Zoom tugmalari bosilganda markazni saqlaymiz */
+  ['mtZoomIn','mtZoomOut','mtFit','zoomIn','zoomOut','zoomFit'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setTimeout(()=>{applyPad();scrollToTime(state.time);},30));
+  });
+  const _rt=renderTimeline;
+  renderTimeline=function(){_rt();applyPad();};
+})();
+
 /* ═══════════ 👆 SENSORLI (TOUCH) BOSHQARUV ═══════════
    Dastur sichqoncha hodisalariga qurilgan. Bu ko'prik barmoq harakatlarini
    sichqoncha hodisalariga aylantiradi — sahnada element surish, timeline'da
@@ -8594,6 +8739,8 @@ if(IS_MOB){
     if(!el)return;
     const hot=el.closest(HOT);
     if(!hot)return;
+    // ⏱ Timeline'ning bo'sh joyi va lineyka — o'z jestlari bor (scrub/pinch)
+    if(el.closest('#tlWrap,#tlRuler')&&!el.closest('.tl-bar'))return;
     lastX=t.clientX;lastY=t.clientY;
     // Ikki marta tez tegish = dblclick (matn tahriri, nomlash)
     const now=Date.now();
