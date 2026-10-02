@@ -118,6 +118,11 @@
   @keyframes pulse{50%{opacity:.55}}
   #saveDot{width:9px;height:9px;border-radius:50%;background:#3f3f46;display:inline-block;margin-right:2px;transition:background .3s;}
   #saveDot.on{background:#22c55e;box-shadow:0 0 8px #22c55e;}
+  /* 🫥 Shaffof fon — kanvas ostida shaxmat naqshi (shaffoflik ko'rinib tursin) */
+  #stage.alpha{background-image:
+      linear-gradient(45deg,#2a2a33 25%,transparent 25%,transparent 75%,#2a2a33 75%),
+      linear-gradient(45deg,#2a2a33 25%,#1b1b22 25%,#1b1b22 75%,#2a2a33 75%);
+    background-size:22px 22px; background-position:0 0,11px 11px;}
   #btn3DScene{position:absolute; top:12px; left:46px; z-index:6; padding:5px 11px; font-size:12px;}
   #btn3DScene.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600;}
   #stZoomBadge{position:absolute; top:12px; right:14px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:4px 10px; font-size:12px; cursor:pointer; z-index:5; user-select:none;}
@@ -453,7 +458,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>6.0</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>6.1</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -632,6 +637,7 @@ const state = {
   aspect:'16:9', quality:1080, W:1920, H:1080, emptyTracks:[],
   duration:6, time:0, playing:false, loop:true,
   bg:'#0e0e16', bgGrad:['#141426','#0b0b12'],
+  bgA:100,                        // 🫥 sahna foni shaffofligi (0 = to'liq shaffof)
   layers:[], selected:null, tlZoom:1, clipboard:null,
   trackOrder:[], // qatorlar tartibi (0-indeks = ENG TEPADAGI qator)
   multi:[], // 🔗 ko'p tanlangan qatlam id'lari
@@ -1216,6 +1222,7 @@ function snapSF(){return PERF.lvl===0?4:(PERF.lvl===1?6:9);}
 /* Joriy chizish maydonining tayanch siljishi: izolyatsiya kanvasi, yaxlit
    kamera buferi yoki asosiy kanvas — shisha fon shu bo'yicha joylashadi. */
 function sceneBase(){ return (ctx===fctx)?(__isoPad||0):((ctx===cctx)?_scenePad:0); }
+let _fth3D=false;   // joriy qatlam 3D da chizilyaptimi (rangli feather chegarasi uchun)
 let _flatCam=null;
 /* Bir freymda nechta qatlam og'ir 3D quvuridan o'tayotgani. Tekstura byudjeti
    shu songa bo'linadi — 8 ta 3D qatlam bo'lsa ham umumiy yuk bir xil qoladi. */
@@ -2831,12 +2838,21 @@ function drawBGPattern(){
   ctx.restore();
 }
 function drawBG(){
-  if(state.bgGrad){
-    const g=ctx.createLinearGradient(0,0,0,cv.height);
-    g.addColorStop(0,state.bgGrad[0]);g.addColorStop(1,state.bgGrad[1]);
-    ctx.fillStyle=g;
-  }else ctx.fillStyle=state.bg;
-  ctx.fillRect(0,0,cv.width,cv.height);
+  // 🫥 Kadr HAR DOIM avval tozalanadi — fon shaffof bo'lsa ostidagi hech narsa
+  // qolmaydi (PNG va shaffof eksport uchun shart)
+  ctx.clearRect(0,0,cv.width,cv.height);
+  const a=clamp((state.bgA??100)/100,0,1);
+  if(a>0.002){
+    ctx.save();
+    ctx.globalAlpha=a;
+    if(state.bgGrad){
+      const g=ctx.createLinearGradient(0,0,0,cv.height);
+      g.addColorStop(0,state.bgGrad[0]);g.addColorStop(1,state.bgGrad[1]);
+      ctx.fillStyle=g;
+    }else ctx.fillStyle=state.bg;
+    ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.restore();
+  }
   drawBGPattern();
 }
 function shapePath(L){
@@ -4070,7 +4086,11 @@ function drawFeather(L,w,h){
     for(const [fr,a] of SEG)g.addColorStop(fr,c(a));
     return g;
   };
-  const OV=2600; // chekkadan tashqi to'liq qoplama (kanvas zaxira maydonini ham qamraydi)
+  /* 🐞 TUZATILDI: rangli ("Rangga eritish") rejimda chekkadan 2600px ga rang
+     to'kilardi. Element 3D ga burilganda ana shu KATTA RANGLI TO'RTBURCHAK ham
+     element bilan birga burilib, orqada "katta oyna" bo'lib ko'rinardi.
+     Endi 3D yoqilganda to'kilish element o'lchamiga qarab cheklanadi. */
+  const OV=_fth3D ? Math.max(40,Math.max(top,bot,left,right)*1.6+Math.max(w,h)*0.12) : 2600;
   if(top>0){
     ctx.fillStyle=c(1);
     ctx.fillRect(-w/2-OV,-h/2-OV,w+OV*2,OV);          // chekkadan tashqarisi to'liq
@@ -4756,8 +4776,10 @@ function render(){
         if(__isoReg.x1-__isoReg.x0<4||__isoReg.y1-__isoReg.y0<4)
           __isoReg={x0:__isoPad,y0:__isoPad,x1:__isoPad+4,y1:__isoPad+4};
       }
-      // Rangli feather butun kadrni bo'yashi mumkin — u holda to'liq hudud kerak
-      if(_fOn&&L.featherMode!=='alpha')
+      // Rangli feather butun kadrni bo'yashi mumkin — u holda to'liq hudud kerak.
+      // Lekin 3D yoqilgan bo'lsa YO'Q: aks holda butun kadr bo'yalib, element
+      // bilan birga buriladigan katta rangli to'rtburchak hosil bo'ladi.
+      if(_fOn&&L.featherMode!=='alpha'&&!_use3D&&!_flat3)
         __isoReg={x0:0,y0:0,x1:featherCv.width,y1:featherCv.height};
       fctx.setTransform(1,0,0,1,0,0);
       fctx.clearRect(__isoReg.x0,__isoReg.y0,__isoReg.x1-__isoReg.x0,__isoReg.y1-__isoReg.y0);
@@ -4765,6 +4787,7 @@ function render(){
       ctx=fctx;
     }
     ctx.save();
+    _fth3D=_use3D||_flat3;
     _flatCam=null;
     if(_flat3){
       // Kadr markazi atrofida bir xil masshtab + kamera siljishi
@@ -4936,7 +4959,7 @@ function render(){
       __isoPad=0;__isoReg=null;
     }
     if(saved)for(const k in saved)L[k]=saved[k];
-    _flatCam=null;
+    _flatCam=null;_fth3D=false;
     }catch(err){
       _flatCam=null;
       // Bitta elementdagi xato butun sahnani o'chirib yubormasin
@@ -5681,7 +5704,7 @@ function snapshotState(){
     aspect:state.aspect,quality:state.quality,
     sfx:state.sfx,selected:state.selected,trackOrder:state.trackOrder,
     emptyTracks:state.emptyTracks||[],
-    bgPattern:state.bgPattern,bgPatColor:state.bgPatColor,bgPatA:state.bgPatA,cam:state.cam,previewDiv,
+    bgPattern:state.bgPattern,bgPatColor:state.bgPatColor,bgPatA:state.bgPatA,bgA:state.bgA,cam:state.cam,previewDiv,
     layers:state.layers.map(L=>{
       const c={...L};
       delete c.el;
@@ -6051,6 +6074,7 @@ function restoreState(json){
   for(const t of (s.trackOrder||[]))trackSeq=Math.max(trackSeq,(t||0)+1);
   state.trackOrder=s.trackOrder||[];
   state.bgPattern=s.bgPattern||'';state.bgPatColor=s.bgPatColor||'#000000';state.bgPatA=s.bgPatA??22;
+  state.bgA=s.bgA??100; try{applyAlphaClass();}catch(e){}
   state.cam=s.cam||{on:false,sw:0,ti:0,dist:0,x:0,y:0,roll:0,zoom:1,kfs:[]};
   state.multi=[];
   state.layers=s.layers.map(c=>{
@@ -7290,9 +7314,12 @@ function featherBlock(L){
     ${L.featherOn?`
     <div class="field"><label>Uslub</label>
       <select id="pFthMode">
-        <option value="color" ${L.featherMode!=='alpha'?'selected':''}>Rangga eritish</option>
-        <option value="alpha" ${L.featherMode==='alpha'?'selected':''}>Shaffoflikka eritish (fon ko'rinadi)</option>
+        <option value="alpha" ${L.featherMode==='alpha'?'selected':''}>Shaffoflikka eritish — ostidagi ko'rinadi (tavsiya)</option>
+        <option value="color" ${L.featherMode!=='alpha'?'selected':''}>Rangga eritish — atrofi RANG bilan to'ladi</option>
       </select></div>
+    <div class="hintline">${L.featherMode!=='alpha'
+      ? '⚠️ <b>Rangga eritish</b>: element atrofi tanlangan rang bilan to\'ladi va bu rangli maydon element bilan BIRGA buriladi/harakatlanadi. Agar orqada keraksiz rangli to\'rtburchak ko\'rinayotgan bo\'lsa — <b>Shaffoflikka eritish</b> ga o\'ting.'
+      : '✅ Chekka haqiqiy shaffoflikka eriydi — orqada hech qanday rangli maydon qolmaydi.'}</div>
     ${L.featherMode!=='alpha'?`
     <div class="field"><label>Rang</label><input type="color" id="pFthColor" value="${L.featherColor}"></div>
     <div class="swrow">${FEATHER_COLORS.map(c=>`<div class="cw" data-c="${c}" style="background:${c}"></div>`).join('')}</div>
@@ -7665,6 +7692,13 @@ function renderProps(){
       <div class="sw" data-g="#7c2d12,#1c0a02" style="background:linear-gradient(#7c2d12,#1c0a02)"></div>
       <div class="sw" data-g="#f8fafc,#cbd5e1" style="background:linear-gradient(#f8fafc,#cbd5e1)" title="Oq"></div>
     </div>
+    <div class="field"><label>🫥 Fon shaffofligi: <b id="pBgAV">${Math.round(state.bgA??100)}</b>% <span style="color:var(--muted)">— 0% = fon umuman yo'q</span></label>
+      <input type="range" id="pBgA" min="0" max="100" value="${Math.round(state.bgA??100)}"></div>
+    <div class="row2">
+      <button id="pBgClear" style="justify-content:center">🫥 Fonni shaffof qilish</button>
+      <button id="pBgSolid" style="justify-content:center">🎨 To'liq fon</button>
+    </div>
+    <div class="hintline">Shaffof fonda kadr ortida shaxmat naqshi ko'rinadi — demak u yerda hech narsa yo'q. <b>🖼 PNG</b> shaffoflikni saqlaydi (boshqa dasturga ustma-ust qo'yish uchun). Video eksportida brauzer shaffoflikni qora bilan to'ldiradi.</div>
     <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
     <div class="field"><label>🎛 Setka / naqsh (premium)</label>
       <select id="pBgPat">${BG_PATTERNS.map(bp=>`<option value="${bp.v}" ${state.bgPattern===bp.v?'selected':''}>${bp.n}</option>`).join('')}</select></div>
@@ -9031,8 +9065,24 @@ function bindCam(){
     toast('🎬 Sahnaga kirish harakati qo\'llandi');
   };
 }
+function applyAlphaClass(){
+  const a=state.bgA??100;
+  cv.classList.toggle('alpha',a<99.5);
+}
 function bindBg(){
   bindCam();
+  applyAlphaClass();
+  {
+    const el=document.getElementById('pBgA');
+    if(el)el.oninput=e=>{state.bgA=+e.target.value;
+      const v=document.getElementById('pBgAV');if(v)v.textContent=e.target.value;
+      applyAlphaClass();seekDirty=true;};
+    const c0=document.getElementById('pBgClear');
+    if(c0)c0.onclick=()=>{saveHistory();state.bgA=0;applyAlphaClass();renderProps();seekDirty=true;
+      toast('🫥 Fon shaffof — PNG eksportida shaffofligicha saqlanadi');};
+    const c1=document.getElementById('pBgSolid');
+    if(c1)c1.onclick=()=>{saveHistory();state.bgA=100;applyAlphaClass();renderProps();seekDirty=true;};
+  }
   const pBg=document.getElementById('pBg');
   if(pBg)pBg.oninput=e=>{state.bg=e.target.value;state.bgGrad=null;renderProps();};
   document.querySelectorAll('.bg-swatches .sw').forEach(sw=>{
