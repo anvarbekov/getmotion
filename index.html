@@ -483,7 +483,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>6.5</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>6.6</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -2742,6 +2742,23 @@ function outFX(anim,q,time){
    3D/feather/maskasi esa guruh plastinasiga bo'ysunadi.
    ═══════════════════════════════════════════════════════════════════════════ */
 function isGroupHolder(L){return !!(L&&L.groupFlat);}
+/* 🧩 Guruh plastinasi transformi: ramkaning masshtabi, Z aylanishi va kirish/chiqish
+   animatsiyasi BARCHA a'zolarga ramka markazi atrofida qo'llanadi.
+   A'zolar mutlaq koordinatada qoladi (guruhni surish = hammasi birga suriladi). */
+function groupPlateM(G,T,local,t){
+  let F=null; try{F=objectFX(G,local,t);}catch(e){}
+  const s=Math.max(0.01,(T.scale||1)*(F?(F.scale||1):1));
+  const sx=F?(F.sx||1):1, sy=F?(F.sy||1):1;
+  const r=(T.rotDeg||0)*Math.PI/180+(F?(F.rot||0):0);
+  const dx=F?(F.dx||0):0, dy=F?(F.dy||0):0;
+  const a=F?clamp(F.alpha??1,0,1):1;
+  const on=Math.abs(s*sx-1)>1e-4||Math.abs(s*sy-1)>1e-4||Math.abs(r)>1e-5||Math.abs(dx)>0.01||Math.abs(dy)>0.01;
+  return {on,s,sx,sy,r,dx,dy,a,px:T.x,py:T.y};
+}
+function applyGroupM(c,M){
+  if(!M||!M.on)return;
+  c.translate(M.px+M.dx,M.py+M.dy);c.rotate(M.r);c.scale(M.s*M.sx,M.s*M.sy);c.translate(-M.px,-M.py);
+}
 /* 🧩 Tanlangan qatlamlardan guruh yasash — ko'rinmas "ramka" qatlam yaratiladi,
    hamma tanlangan unga biriktiriladi. Shu ramkani surish/burish = hammasi birga. */
 function makeGroup(ids){
@@ -6570,23 +6587,59 @@ function layerBounds_(L){
   }
   return{w:m.w,h:m.h};
 }
+/* 🧩 Guruh a'zosi: guruh plastinasi transformi (masshtab/aylanish) qo'llangan
+   ko'rinadigan holat — tanlov ramkasi aynan ko'ringan joyda chiqadi */
+function groupWorldM(L){
+  const G=inFlatGroup(L); if(!G)return null;
+  if(state.time<G.start||state.time>G.start+G.dur)return null;
+  const gl=clamp(state.time-G.start,0,G.dur);
+  const M=groupPlateM(G,kfValue(G,gl),gl,state.time);
+  return M.on?M:null;
+}
+function groupToRaw(L,x,y){
+  const M=groupWorldM(L); if(!M)return {x,y};
+  const ux=x-M.px-M.dx, uy=y-M.py-M.dy, c=Math.cos(-M.r), sn=Math.sin(-M.r);
+  return {x:M.px+(ux*c-uy*sn)/(M.s*M.sx), y:M.py+(ux*sn+uy*c)/(M.s*M.sy)};
+}
 function getSelBox(L){
-  const T=kfValue(L,clamp(state.time-L.start,0,L.dur));
+  let T=kfValue(L,clamp(state.time-L.start,0,L.dur));
+  const _gm=groupWorldM(L);
+  if(_gm){
+    const dx=(T.x-_gm.px)*_gm.s*_gm.sx, dy=(T.y-_gm.py)*_gm.s*_gm.sy, c=Math.cos(_gm.r), sn=Math.sin(_gm.r);
+    T={...T,x:_gm.px+_gm.dx+dx*c-dy*sn,y:_gm.py+_gm.dy+dx*sn+dy*c,
+      scale:(T.scale||1)*_gm.s,rotDeg:(T.rotDeg||0)+_gm.r*180/Math.PI,_gr:_gm.r*180/Math.PI};
+  }
   const b=layerBounds(L);
   const bw=b.w*T.scale,bh=b.h*T.scale;
   return {T,bw,bh,left:T.x-bw/2,right:T.x+bw/2,top:T.y-bh/2,bottom:T.y+bh/2};
 }
 const HANDLE_CURSORS={nw:'nwse-resize',se:'nwse-resize',ne:'nesw-resize',sw:'nesw-resize',e:'ew-resize',w:'ew-resize',n:'ns-resize',s:'ns-resize'};
+/* 🔄 Tanlov ramkasi element bilan BIRGA aylanadi (Figma / After Effects kabi) */
+function selRotate(B,x,y){
+  const a=(B.T.rotDeg||0)*Math.PI/180;
+  if(!a)return {x,y};
+  const dx=x-B.T.x,dy=y-B.T.y,c=Math.cos(a),s=Math.sin(a);
+  return {x:B.T.x+dx*c-dy*s,y:B.T.y+dx*s+dy*c};
+}
+function selUnrotate(B,x,y){
+  const a=(B.T.rotDeg||0)*Math.PI/180;
+  if(!a)return {x,y};
+  const dx=x-B.T.x,dy=y-B.T.y,c=Math.cos(-a),s=Math.sin(-a);
+  return {x:B.T.x+dx*c-dy*s,y:B.T.y+dx*s+dy*c};
+}
+function rotHandlePos(B){return selRotate(B,B.T.x,B.top-Math.max(26,state.W*0.024));}
 function handlePoints(L){
   const B=getSelBox(L);
-  const pts={
-    nw:{x:B.left,y:B.top}, ne:{x:B.right,y:B.top},
-    se:{x:B.right,y:B.bottom}, sw:{x:B.left,y:B.bottom},
+  const loc={
+    nw:[B.left,B.top], ne:[B.right,B.top],
+    se:[B.right,B.bottom], sw:[B.left,B.bottom],
   };
   if(L.type!=='text'){
-    pts.n={x:B.T.x,y:B.top}; pts.s={x:B.T.x,y:B.bottom};
-    pts.e={x:B.right,y:B.T.y}; pts.w={x:B.left,y:B.T.y};
+    loc.n=[B.T.x,B.top]; loc.s=[B.T.x,B.bottom];
+    loc.e=[B.right,B.T.y]; loc.w=[B.left,B.T.y];
   }
+  const pts={};
+  for(const k in loc)pts[k]=selRotate(B,loc[k][0],loc[k][1]);
   return {B,pts};
 }
 function drawMeasure(m){
@@ -7120,6 +7173,19 @@ function render(){
           if(kr.x1>__isoReg.x1)__isoReg.x1=kr.x1;
           if(kr.y1>__isoReg.y1)__isoReg.y1=kr.y1;
         }
+        // Plastina kattalashsa/aylansa — hudud ham shunga mos (chekkalar kesilmasin)
+        const _gm=groupPlateM(L,T,local,t);
+        if(_gm.on){
+          const P=__isoPad, px=_gm.px+P, py=_gm.py+P, c=Math.cos(_gm.r), sn=Math.sin(_gm.r);
+          const R=__isoReg; let a0=1e9,b0=1e9,a1=-1e9,b1=-1e9;
+          for(const [x,y] of [[R.x0,R.y0],[R.x1,R.y0],[R.x1,R.y1],[R.x0,R.y1]]){
+            const ux=(x-px)*_gm.s*_gm.sx, uy=(y-py)*_gm.s*_gm.sy;
+            const X=px+_gm.dx+ux*c-uy*sn, Y=py+_gm.dy+ux*sn+uy*c;
+            a0=Math.min(a0,X);a1=Math.max(a1,X);b0=Math.min(b0,Y);b1=Math.max(b1,Y);
+          }
+          __isoReg={x0:Math.max(0,Math.floor(a0)),y0:Math.max(0,Math.floor(b0)),
+            x1:Math.min(cv.width+P*2,Math.ceil(a1)),y1:Math.min(cv.height+P*2,Math.ceil(b1))};
+        }
       }
       // ⚡ Ekrandan tashqaridagi qismni ishlashning ma'nosi yo'q: hududni
       // ko'rinadigan kadr + zaxira bilan kesamiz (katta rasmlarda 5-10× tezlik)
@@ -7243,7 +7309,8 @@ function render(){
     // kompozitsiya butun buferni guruhning 3D si bilan BIR MARTA proyeksiya qiladi.
     if(isGroupHolder(L)){
       const kids=groupKids(L);
-      const gA=clamp(T.alpha??1,0,1);
+      const _GM=groupPlateM(L,T,local,t);
+      const gA=clamp((T.alpha??1)*_GM.a,0,1);
       for(const K of kids){
         if(K.type==='audio')continue;
         if(t<K.start||t>K.start+K.dur)continue;
@@ -7257,6 +7324,7 @@ function render(){
               if(KT[kk]!==undefined&&K[prop]!==undefined){ksaved[prop]=K[prop];K[prop]=KT[kk];}
           }
           ctx.save();
+          applyGroupM(ctx,_GM);
           ctx.translate(KT.x,KT.y);
           ctx.rotate((KT.rotDeg||0)*Math.PI/180);
           const ks=Math.max(0.01,KT.scale||1);
@@ -7269,7 +7337,7 @@ function render(){
           else if(K.type==='video'||K.type==='image')drawMedia(K,kl,t,kA);
           else drawText(K,kl,t,kA);
           ctx.restore();
-          if(K.burst&&K.burst!=='none'){ctx.save();ctx.translate(KT.x+(K.burstX||0),KT.y+(K.burstY||0));drawBurst(K,kl,kA);ctx.restore();}
+          if(K.burst&&K.burst!=='none'){ctx.save();applyGroupM(ctx,_GM);ctx.translate(KT.x+(K.burstX||0),KT.y+(K.burstY||0));drawBurst(K,kl,kA);ctx.restore();}
           if(ksaved)for(const kk in ksaved)K[kk]=ksaved[kk];
         }catch(e){ try{ctx.restore();}catch(e2){} }
       }
@@ -7415,15 +7483,18 @@ function render(){
     if(L&&L.type!=='audio'&&t>=L.start&&t<=L.start+L.dur){
       const {B,pts}=handlePoints(L);
       ctx.save();
+      // Ramka element burchagi bilan birga chiziladi
+      ctx.translate(B.T.x,B.T.y);ctx.rotate((B.T.rotDeg||0)*Math.PI/180);ctx.translate(-B.T.x,-B.T.y);
       ctx.strokeStyle='rgba(139,92,246,.95)';ctx.setLineDash([6,5]);ctx.lineWidth=Math.max(2,state.W/900);
       ctx.strokeRect(B.left,B.top,B.bw,B.bh);
       ctx.setLineDash([]);
       const hs=Math.max(9,state.W*0.008);
-      for(const k in pts){
+      const _hl=handlePoints.local=(L.type!=='text')?[[B.left,B.top],[B.right,B.top],[B.right,B.bottom],[B.left,B.bottom],[B.T.x,B.top],[B.T.x,B.bottom],[B.right,B.T.y],[B.left,B.T.y]]:[[B.left,B.top],[B.right,B.top],[B.right,B.bottom],[B.left,B.bottom]];
+      for(const [hx,hy] of _hl){
         ctx.fillStyle='#fff';
         ctx.strokeStyle='#8b5cf6';ctx.lineWidth=Math.max(1.5,state.W/1300);
-        ctx.fillRect(pts[k].x-hs/2,pts[k].y-hs/2,hs,hs);
-        ctx.strokeRect(pts[k].x-hs/2,pts[k].y-hs/2,hs,hs);
+        ctx.fillRect(hx-hs/2,hy-hs/2,hs,hs);
+        ctx.strokeRect(hx-hs/2,hy-hs/2,hs,hs);
       }
       // 🔄 360° aylantirish dastagi (yuqorida aylana)
       const rpy=B.top-Math.max(26,state.W*0.024);
@@ -7433,6 +7504,7 @@ function render(){
       ctx.fillStyle='#fff';ctx.fill();
       ctx.strokeStyle='#8b5cf6';ctx.stroke();
       ctx.restore();
+      void pts;
       // ⚓ Anchor point belgisi (agar markazda bo'lmasa) — sariq ⊕
       if(L.anchorX||L.anchorY){
         const _ab=layerBounds(L);
@@ -7478,7 +7550,11 @@ function render(){
       if(!ml||ml.type==='audio')continue;
       if(t<ml.start||t>ml.start+ml.dur)continue;
       const MB=getSelBox(ml);
-      ctx.strokeRect(MB.left,MB.top,MB.bw,MB.bh);
+      if(ml.groupFlat)continue; // ko'rinmas guruh ramkasi — kontur shart emas
+      ctx.save();
+      ctx.translate(MB.T.x,MB.T.y);ctx.rotate((MB.T.rotDeg||0)*Math.PI/180);
+      ctx.strokeRect(-MB.bw/2,-MB.bh/2,MB.bw,MB.bh);
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -12512,8 +12588,8 @@ document.getElementById('inDuration').onchange=e=>{
       }
       // 🔄 Aylantirish dastagi bosildimi?
       const rB=getSelBox(sel);
-      const rpy=rB.top-Math.max(26,state.W*0.024);
-      if(Math.hypot(p.x-rB.T.x,p.y-rpy)<hitRadius()){
+      const _rh=rotHandlePos(rB);
+      if(Math.hypot(p.x-_rh.x,p.y-_rh.y)<hitRadius()){
         saveHistory();
         rotating={L:sel};
         e.preventDefault();
@@ -12539,8 +12615,8 @@ document.getElementById('inDuration').onchange=e=>{
       if(state.time<L.start||state.time>L.start+L.dur)continue;
       const B=getSelBox(L);
       // 🔗 Bog'langan bola: ota transformi qo'llangan HAQIQIY (ko'ringan) markazni hisoblaymiz
-      let hx=B.T.x, hy=B.T.y;
-      if(L.linkTo){
+      let hx=B.T.x, hy=B.T.y, _ha=(B.T.rotDeg||0)*Math.PI/180, _hs=1;
+      if(L.linkTo&&!inFlatGroup(L)){
         const par=state.layers.find(x=>x.id===L.linkTo);
         if(par&&state.time>=par.start&&state.time<=par.start+par.dur){
           const pl=clamp(state.time-par.start,0,par.dur);
@@ -12552,9 +12628,13 @@ document.getElementById('inDuration').onchange=e=>{
           const ox=B.T.x-px, oy=B.T.y-py;
           hx=px+(ox*Math.cos(ang)-oy*Math.sin(ang))*ps;
           hy=py+(ox*Math.sin(ang)+oy*Math.cos(ang))*ps;
+          _ha+=ang;_hs=ps;
         }
       }
-      if(Math.abs(p.x-hx)<B.bw/2+20&&Math.abs(p.y-hy)<B.bh/2+16)
+      // Burilgan/masshtablangan elementni o'z o'qlarida tekshiramiz (burchaklar ham aniq bosiladi)
+      const _hc=Math.cos(-_ha),_hn=Math.sin(-_ha),_hdx=p.x-hx,_hdy=p.y-hy;
+      const _lx=_hdx*_hc-_hdy*_hn,_ly=_hdx*_hn+_hdy*_hc;
+      if(Math.abs(_lx)<B.bw*_hs/2+20&&Math.abs(_ly)<B.bh*_hs/2+16)
         hits.push({L,B:{...B,T:{...B.T,x:hx,y:hy}},area:B.bw*B.bh});
     }
     if(hits.length){
@@ -12594,7 +12674,7 @@ document.getElementById('inDuration').onchange=e=>{
           const gt=kfValue(gl,clamp(state.time-gl.start,0,gl.dur));
           starts.set(gl.id,{x:gt.x,y:gt.y});
         }
-        groupMove={starts,main:starts.get(pick.L.id)};
+        groupMove={starts,main:starts.get(pick.L.id),mainW:{x:pick.B.T.x,y:pick.B.T.y}};
       }
       state.selected=pick.L.id;
       renderLayers();renderProps();renderTimeline();
@@ -12705,9 +12785,9 @@ document.getElementById('inDuration').onchange=e=>{
     const p=toCanvas(e);
     if(rotating){
       const L=rotating.L;
-      const T=kfValue(L,clamp(state.time-L.start,0,L.dur));
-      let deg=Math.atan2(p.y-T.y,p.x-T.x)*180/Math.PI+90;
-      if(deg>180)deg-=360;
+      const T=getSelBox(L).T;
+      let deg=Math.atan2(p.y-T.y,p.x-T.x)*180/Math.PI+90-(T._gr||0);
+      while(deg>180)deg-=360; while(deg<-180)deg+=360;
       for(const sn of [0,90,180,-90,-180])if(Math.abs(deg-sn)<5)deg=sn;
       if(e.shiftKey)deg=Math.round(deg/15)*15;
       setTransformProp(L,'rot',deg);
@@ -12725,10 +12805,24 @@ document.getElementById('inDuration').onchange=e=>{
     }
     if(resizing){
       const R=resizing, L=R.L, h=R.h, B=R.box;
+      // 🔄 Aylantirilgan element: sichqonchani elementning O'Z o'qlariga o'tkazamiz,
+      // natijaviy markazni esa yana burchakka qaytaramiz
+      const rp=selUnrotate(B,p.x,p.y);
+      const _rc=(x,y)=>{const w=selRotate(B,x,y);return groupToRaw(L,w.x,w.y);};
+      // 🧩 Guruh ramkasi: burchak/chekka tortilsa — BUTUN guruh masshtablanadi (markaz atrofida)
+      if(isGroupHolder(L)){
+        const fx=Math.abs(rp.x-B.T.x)/Math.max(B.bw/2,1), fy=Math.abs(rp.y-B.T.y)/Math.max(B.bh/2,1);
+        const f=h.length===2?Math.max(fx,fy):(h==='e'||h==='w'?fx:fy);
+        const k0=(R.k0??(R.k0=B.T.scale||1));
+        const ns=clamp(k0*f,0.05,12);
+        setTransformProp(L,'scale',Math.round(ns*1000)/1000);
+        dragInfo=`Guruh masshtabi: ${Math.round(ns*100)}%`;
+        return;
+      }
       const minS=24;
       if(L.type==='text'){
-        const fx=Math.abs(p.x-B.T.x)/Math.max(B.bw/2,1);
-        const fy=Math.abs(p.y-B.T.y)/Math.max(B.bh/2,1);
+        const fx=Math.abs(rp.x-B.T.x)/Math.max(B.bw/2,1);
+        const fy=Math.abs(rp.y-B.T.y)/Math.max(B.bh/2,1);
         const f=Math.max(fx,fy,0.05);
         L.size=Math.round(clamp(R.size*f,8,state.H*0.6));
         dragInfo=`Shrift: ${L.size}px`;
@@ -12737,10 +12831,10 @@ document.getElementById('inDuration').onchange=e=>{
         // Shakl yoki quti — kenglik/balandlik anchor bilan
         const Ts=Math.max(B.T.scale,0.01);
         let left=B.left,right=B.right,top=B.top,bottom=B.bottom;
-        if(h.includes('e'))right=Math.max(p.x,left+minS);
-        if(h.includes('w'))left=Math.min(p.x,right-minS);
-        if(h.includes('s'))bottom=Math.max(p.y,top+minS);
-        if(h.includes('n'))top=Math.min(p.y,bottom-minS);
+        if(h.includes('e'))right=Math.max(rp.x,left+minS);
+        if(h.includes('w'))left=Math.min(rp.x,right-minS);
+        if(h.includes('s'))bottom=Math.max(rp.y,top+minS);
+        if(h.includes('n'))top=Math.min(rp.y,bottom-minS);
         let bw=right-left, bh=bottom-top;
         if(h.length===2){
           const f=Math.max(bw/B.bw,bh/B.bh);
@@ -12750,17 +12844,17 @@ document.getElementById('inDuration').onchange=e=>{
         }
         if(L.type==='shape'||L.type==='progress'||L.type==='timer'){setAnimProp(L,'w',bw/Ts);setAnimProp(L,'h',bh/Ts);}
         else{setAnimProp(L,'maskW',bw/Ts);setAnimProp(L,'maskH',bh/Ts);}
-        setTransformProp(L,{x:(left+right)/2,y:(top+bottom)/2});
+        setTransformProp(L,_rc((left+right)/2,(top+bottom)/2));
         dragInfo=`${Math.round(bw)} × ${Math.round(bh)} px`;
       }
       else{ // media
         const mAct=maskActiveAt(L,clamp(state.time-L.start,0,L.dur));
         if(h.length===2||mAct){ // burchak yoki quti burchagi = masshtab
           let left=B.left,right=B.right,top=B.top,bottom=B.bottom;
-          if(h.includes('e'))right=Math.max(p.x,left+minS);
-          if(h.includes('w'))left=Math.min(p.x,right-minS);
-          if(h.includes('s'))bottom=Math.max(p.y,top+minS);
-          if(h.includes('n'))top=Math.min(p.y,bottom-minS);
+          if(h.includes('e'))right=Math.max(rp.x,left+minS);
+          if(h.includes('w'))left=Math.min(rp.x,right-minS);
+          if(h.includes('s'))bottom=Math.max(rp.y,top+minS);
+          if(h.includes('n'))top=Math.min(rp.y,bottom-minS);
           const f=Math.max((right-left)/B.bw,(bottom-top)/B.bh);
           if(mAct&&e.shiftKey&&h.length===2){
             // Shift + burchak = quti emas, ICHKI VIDEONI o'lchash
@@ -12774,14 +12868,14 @@ document.getElementById('inDuration').onchange=e=>{
             const bw=B.bw*f,bh=B.bh*f;
             if(h.includes('w'))left=right-bw; else right=left+bw;
             if(h.includes('n'))top=bottom-bh; else bottom=top+bh;
-            setTransformProp(L,{x:(left+right)/2,y:(top+bottom)/2});
+            setTransformProp(L,_rc((left+right)/2,(top+bottom)/2));
             dragInfo=`${Math.round(bw)} × ${Math.round(bh)} px`;
           }else{
             // Burchak = MARKAZDAN hamma tomonga teng kattalashish
             const cxm=(B.left+B.right)/2, cym=(B.top+B.bottom)/2;
             const fc=Math.max(
-              Math.abs(p.x-cxm)/Math.max(B.bw/2,1),
-              Math.abs(p.y-cym)/Math.max(B.bh/2,1)
+              Math.abs(rp.x-cxm)/Math.max(B.bw/2,1),
+              Math.abs(rp.y-cym)/Math.max(B.bh/2,1)
             );
             setAnimProp(L,'mscale',Math.max(0.02,Math.min(6,R.scale*fc)));
             dragInfo=`O'lcham: ${Math.round(clamp(R.scale*fc,0.02,6)*100)}%`;
@@ -12790,11 +12884,11 @@ document.getElementById('inDuration').onchange=e=>{
           L.crop=L.crop||{l:0,t:0,r:0,b:0};
           const F=R.full,M=R.m;
           let left=B.left,right=B.right,top=B.top,bottom=B.bottom;
-          if(h==='w'){const nc=clamp((p.x-F.left)/M.w0,0,0.45);L.crop.l=nc;left=F.left+nc*M.w0;}
-          if(h==='e'){const nc=clamp((F.right-p.x)/M.w0,0,0.45);L.crop.r=nc;right=F.right-nc*M.w0;}
-          if(h==='n'){const nc=clamp((p.y-F.top)/M.h0,0,0.45);L.crop.t=nc;top=F.top+nc*M.h0;}
-          if(h==='s'){const nc=clamp((F.bottom-p.y)/M.h0,0,0.45);L.crop.b=nc;bottom=F.bottom-nc*M.h0;}
-          setTransformProp(L,{x:(left+right)/2,y:(top+bottom)/2});
+          if(h==='w'){const nc=clamp((rp.x-F.left)/M.w0,0,0.45);L.crop.l=nc;left=F.left+nc*M.w0;}
+          if(h==='e'){const nc=clamp((F.right-rp.x)/M.w0,0,0.45);L.crop.r=nc;right=F.right-nc*M.w0;}
+          if(h==='n'){const nc=clamp((rp.y-F.top)/M.h0,0,0.45);L.crop.t=nc;top=F.top+nc*M.h0;}
+          if(h==='s'){const nc=clamp((F.bottom-rp.y)/M.h0,0,0.45);L.crop.b=nc;bottom=F.bottom-nc*M.h0;}
+          setTransformProp(L,_rc((left+right)/2,(top+bottom)/2));
           dragInfo=`Kesish: ${Math.round(right-left)} × ${Math.round(bottom-top)} px`;
         }
       }
@@ -12826,14 +12920,21 @@ document.getElementById('inDuration').onchange=e=>{
       }
       for(const c of candX){if(Math.abs(nx-c.v)<th){nx=c.v;guides.push({t:'v',pos:c.line});break;}}
       for(const c of candY){if(Math.abs(ny-c.v)<th){ny=c.v;guides.push({t:'h',pos:c.line});break;}}
-      setTransformProp(L,{x:nx,y:ny});
       if(groupMove){
-        const dx=nx-groupMove.main.x, dy=ny-groupMove.main.y;
+        // Siljish ko'ringan (dunyo) koordinatada o'lchanadi va hammaga bir xil qo'shiladi —
+        // guruh aylangan/masshtablangan bo'lsa ham element sakramaydi
+        const mw=groupMove.mainW||groupMove.main;
+        const dx=nx-mw.x, dy=ny-mw.y;
+        const s0=groupMove.starts.get(L.id)||groupMove.main;
+        setTransformProp(L,{x:s0.x+dx,y:s0.y+dy});
         for(const gl of state.layers){
           if(gl.id===L.id||!state.multi.includes(gl.id))continue;
           const g0=groupMove.starts.get(gl.id);
           if(g0)setTransformProp(gl,{x:g0.x+dx,y:g0.y+dy});
         }
+      }else{
+        const rw=groupToRaw(L,nx,ny);
+        setTransformProp(L,{x:rw.x,y:rw.y});
       }
       // Canva uslubidagi masofa o'lchovlari
       buildMeasures(L,nx-B.bw/2,nx+B.bw/2,ny-B.bh/2,ny+B.bh/2);
@@ -12844,8 +12945,8 @@ document.getElementById('inDuration').onchange=e=>{
       const sel=state.layers.find(x=>x.id===state.selected);
       if(sel&&sel.type!=='audio'&&state.time>=sel.start&&state.time<=sel.start+sel.dur){
         const rB=getSelBox(sel);
-        const rpy=rB.top-Math.max(26,state.W*0.024);
-        if(Math.hypot(p.x-rB.T.x,p.y-rpy)<hitRadius()){cv.style.cursor='crosshair';return;}
+        const _rh=rotHandlePos(rB);
+        if(Math.hypot(p.x-_rh.x,p.y-_rh.y)<hitRadius()){cv.style.cursor='crosshair';return;}
         const hv=hitHandle(sel,p);
         if(hv){cv.style.cursor=HANDLE_CURSORS[hv];return;}
       }
