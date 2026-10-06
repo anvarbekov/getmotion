@@ -483,7 +483,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>6.7</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>6.9</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -1050,6 +1050,7 @@ const SHAPES = [
   {v:'toggle',n:'🔘 Toggle kalit (o\'zi yoqiladi)'},
   {v:'chart',n:'📈 Grafik (chizilib chiqadi)'},
   {v:'filmstrip',n:'🎞 Plyonka (video kadrlari + marker)'},
+  {v:'counter',n:'🔢 Hisoblagich (10 xil dizayn)'},
 ];
 const ANNOT=['arrow','curve','hilite','circleMark','line','marker','snake','select',
   'arrowDouble','arrowElbow','arrowBlock','arrowSketch','arrowZig','chevron'];
@@ -1533,7 +1534,7 @@ const GM3D=(function(){
     let ts=Math.min(1,Math.max((projW*1.15)/rw,(projH*1.15)/rh));
     if(!(ts>0.12))ts=0.12;
     // Adaptiv piksel byudjeti: sifat darajasiga VA freymdagi 3D qatlamlar soniga qarab
-    const BUD=(PERF.lvl===0?1.9e6:(PERF.lvl===1?0.95e6:0.5e6))/Math.sqrt(Math.max(1,_n3Dprev));
+    const BUD=(PERF.lvl===0?1.9e6:(PERF.lvl===1?0.95e6:0.5e6))/Math.sqrt(Math.max(1,_n3Dprev))*((state.playing&&!exporting)?0.6:1);   // ⚡ pleyda tekstura yengilroq (harakatda sezilmaydi); eksport/pauzada to'liq
     if(rw*rh*ts*ts>BUD)ts=Math.sqrt(BUD/(rw*rh));
     ts=Math.min(1,ts);
     const sw2=Math.max(2,Math.round(rw*ts)), sh2=Math.max(2,Math.round(rh*ts));
@@ -2918,6 +2919,7 @@ function objectFX(L,local,time){
     fx.sy*=1-0.045*Math.sin(time*2.1+L.id);
     fx.dx+=Math.sin(time*1.05+L.id)*state.W*0.008;
   }
+  if(L.loops&&L.loops.length)applyLoops(L,fx,time-L.start,_bw,_bh);
   if(L.animIn&&L.animIn.indexOf('swingIn')===0){
     const a0=(1-ease.elastic(clamp(p,0,1)))*0.72;
     if(L.animIn==='swingInL'){_pvX=-_bw/2;_pvA+=a0;}
@@ -2948,6 +2950,93 @@ function objectFX(L,local,time){
     fx.rot+=Math.sin(time*0.9+L.id)*0.012;
   }
   return fx;
+}
+/* ═══════════════════════════════════════════════════════════════════════════
+   ♾ DOIMIY ANIMATSIYALAR (Loops) — har qanday elementga (rasm, matn, shakl, video,
+   hisoblagich, GURUH...) bir nechta aylanuvchi/takrorlanuvchi harakat qo'shiladi.
+   Hammasi vaqtdan deterministik hisoblanadi: holat saqlanmaydi, eksportda aynan
+   shu ko'rinadi, protsessorga deyarli yuk bermaydi (oddiy sin/cos).
+   ═══════════════════════════════════════════════════════════════════════════ */
+const LOOPS=[
+  ['spin','🔄 Aylanish'],['pulse','💓 Puls'],['heart','❤ Yurak urishi'],['float','🌊 Suzish'],
+  ['swing','🪝 Tebranish'],['orbit','🛰 Aylana bo\'ylab'],['bounce','🏀 Sakrash'],['jelly','🫨 Jelly'],
+  ['shake','📳 Titrash'],['turnY','🪙 Tanga (Y burilish)'],['turnX','📖 Varaq (X burilish)'],['blink','💡 Miltillash'],
+  ['marquee','➡ Yugurish'],['rain','⬇ Yog\'ish'],['tada','🎉 Tada!'],['zoom','🔍 Yaqinlashib-uzoqlashish']];
+const LOOP_NOAMP=['spin','marquee','rain'];
+function applyLoops(L,fx,lt0,bw,bh){
+  const W=state.W,H=state.H,TAU=Math.PI*2;
+  for(const lp of L.loops){
+    const lt=Math.max(0,lt0-(+lp.dl||0));
+    if(lt0<(+lp.dl||0))continue;
+    const sp=Math.max(0.05,+lp.sp||1), a=(lp.amp??100)/100, ph=(+lp.ph||0)*Math.PI/180, sg=lp.rev?-1:1;
+    const w=lt*TAU*sp*0.5*sg+ph;               // asosiy faza (0.5 Gs × tezlik)
+    switch(lp.k){
+      case 'spin':fx.rot+=sg*lt*sp*(Math.PI/2)+ph;break;                       // 90°/s × tezlik
+      case 'pulse':fx.scale*=1+0.12*a*Math.sin(lt*TAU*sp*0.8+ph);break;
+      case 'heart':{const u=((lt*sp*0.9+ph/TAU)%1+1)%1;
+        const b=Math.exp(-Math.pow((u-0.1)/0.05,2))+0.7*Math.exp(-Math.pow((u-0.3)/0.06,2));fx.scale*=1+0.16*a*b;break;}
+      case 'float':fx.dy+=Math.sin(w*1.2)*H*0.03*a;fx.dx+=Math.cos(w*0.8)*W*0.01*a;break;
+      case 'swing':fx.rot+=Math.sin(w*1.6)*(Math.PI/9)*a;break;
+      case 'orbit':fx.dx+=Math.cos(w*1.6)*Math.min(W,H)*0.06*a;fx.dy+=Math.sin(w*1.6)*Math.min(W,H)*0.06*a;break;
+      case 'bounce':{const q=Math.abs(Math.sin(lt*Math.PI*sp*1.1+ph/2));fx.dy-=q*H*0.07*a;
+        fx.sy*=1-0.1*a*(1-q)*(1-q);fx.sx*=1+0.06*a*(1-q)*(1-q);break;}
+      case 'jelly':{const q=Math.sin(lt*TAU*sp*0.9+ph);fx.sx*=1+0.1*a*q;fx.sy*=1-0.1*a*q;break;}
+      case 'shake':{const t2=lt*sp;
+        fx.dx+=(Math.sin(t2*41+ph)+0.6*Math.sin(t2*23+1.7))*W*0.0035*a;
+        fx.dy+=(Math.cos(t2*37+ph)+0.6*Math.sin(t2*19+0.4))*H*0.0025*a;
+        fx.rot+=Math.sin(t2*29+ph)*0.012*a;break;}
+      case 'turnY':fx.sx*=Math.max(0.03,Math.abs(Math.cos(w*1.6)));break;
+      case 'turnX':fx.sy*=Math.max(0.03,Math.abs(Math.cos(w*1.6)));break;
+      case 'blink':fx.alpha*=1-0.8*a*(0.5-0.5*Math.cos(w*2));break;
+      case 'marquee':case 'rain':{
+        const horiz=lp.k==='marquee', span=(horiz?W:H)+(horiz?bw:bh);
+        const base=horiz?L.x:L.y, v=sg*sp*(horiz?W:H)*0.14;
+        let pos=base+lt*v+ph*(horiz?W:H)*0.05;
+        pos=(((pos+(horiz?bw:bh)/2)%span)+span)%span-(horiz?bw:bh)/2;
+        if(horiz)fx.dx+=pos-base;else fx.dy+=pos-base;break;}
+      case 'tada':{const u=((lt*sp*0.5+ph/TAU)%1+1)%1;
+        if(u<0.3){const q=u/0.3;fx.rot+=Math.sin(q*TAU*3)*0.14*a*(1-q);fx.scale*=1+0.1*a*Math.sin(q*Math.PI);}break;}
+      case 'zoom':fx.scale*=1+0.15*a*(0.5-0.5*Math.cos(lt*TAU*sp*0.4+ph));break;
+    }
+  }
+}
+function loopsBlock(L){
+  const lps=L.loops||[];
+  return `<div style="font-weight:700;font-size:11px;margin:10px 0 4px;letter-spacing:.4px;color:var(--accent2)">♾ DOIMIY ANIMATSIYALAR</div>
+    <div class="hintline">Bir bosishda qo'shing — masalan rasmga <b>🔄 Aylanish</b>. Bir nechtasini birga ishlatish mumkin (aylanish + suzish + puls). Barcha kadrlarda doimiy takrorlanadi.</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-bottom:6px">
+      ${LOOPS.map(([k,n])=>`<button class="lpAdd" data-k="${k}" style="padding:4px 6px;justify-content:center;font-size:11px">${n}</button>`).join('')}
+    </div>
+    ${lps.map((lp,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-bottom:6px">
+      <div class="row2" style="align-items:center">
+        <select class="lpK" data-i="${i}">${LOOPS.map(([k,n])=>`<option value="${k}" ${lp.k===k?'selected':''}>${n}</option>`).join('')}</select>
+        <button class="lpDel" data-i="${i}" style="justify-content:center;color:#f87171">🗑 Olib tashlash</button>
+      </div>
+      <div class="field"><label>Tezlik: <b id="lpSpV${i}">${(+lp.sp||1).toFixed(2)}</b>×</label>
+        <input type="range" class="lpSp" data-i="${i}" min="0.1" max="6" step="0.05" value="${lp.sp||1}"></div>
+      ${LOOP_NOAMP.includes(lp.k)?'':`<div class="field"><label>Kuch: <b id="lpAmV${i}">${lp.amp??100}</b>%</label>
+        <input type="range" class="lpAmp" data-i="${i}" min="10" max="300" value="${lp.amp??100}"></div>`}
+      <div class="row2">
+        <div class="field"><label>Boshlang'ich faza (°)</label><input type="number" class="lpPh" data-i="${i}" step="15" value="${lp.ph||0}"></div>
+        <div class="field"><label>Kechikish (s)</label><input type="number" class="lpDl" data-i="${i}" min="0" step="0.1" value="${lp.dl||0}"></div>
+      </div>
+      <label class="chk"><input type="checkbox" class="lpRev" data-i="${i}" ${lp.rev?'checked':''}> Teskari yo'nalish</label>
+    </div>`).join('')}`;
+}
+function loopsBind(L){
+  const ch=()=>{seekDirty=true;};
+  document.querySelectorAll('.lpAdd').forEach(b=>b.onclick=()=>{
+    historyMaybe();L.loops=L.loops||[];
+    if(L.loops.length>=6){toast('Ko\'pi bilan 6 ta doimiy animatsiya');return;}
+    L.loops.push({k:b.dataset.k,sp:1,amp:100,ph:0,dl:0,rev:false});ch();renderProps();
+  });
+  document.querySelectorAll('.lpDel').forEach(b=>b.onclick=()=>{historyMaybe();L.loops.splice(+b.dataset.i,1);if(!L.loops.length)delete L.loops;ch();renderProps();});
+  document.querySelectorAll('.lpK').forEach(e=>e.onchange=()=>{historyMaybe();L.loops[+e.dataset.i].k=e.value;ch();renderProps();});
+  document.querySelectorAll('.lpSp').forEach(e=>e.oninput=()=>{L.loops[+e.dataset.i].sp=+e.value;const v=document.getElementById('lpSpV'+e.dataset.i);if(v)v.textContent=(+e.value).toFixed(2);ch();});
+  document.querySelectorAll('.lpAmp').forEach(e=>e.oninput=()=>{L.loops[+e.dataset.i].amp=+e.value;const v=document.getElementById('lpAmV'+e.dataset.i);if(v)v.textContent=e.value;ch();});
+  document.querySelectorAll('.lpPh').forEach(e=>e.onchange=()=>{L.loops[+e.dataset.i].ph=+e.value||0;ch();});
+  document.querySelectorAll('.lpDl').forEach(e=>e.onchange=()=>{L.loops[+e.dataset.i].dl=Math.max(0,+e.value||0);ch();});
+  document.querySelectorAll('.lpRev').forEach(e=>e.onchange=()=>{L.loops[+e.dataset.i].rev=e.checked;ch();});
 }
 /* 🧱 Kadr devorlariga urilib qaytish: animatsiya elementni ekrandan chiqarib
    yubormaydi — devorga tegib, ortiqcha qismi qaytariladi (yumshoq zarba hissi). */
@@ -4765,7 +4854,7 @@ function drawCaret(L,x,y,typing,alpha,t){
 }
 
 /* ---------- 2. UI SHAKLLAR: ikonka, toggle, grafik, plyonka ---------- */
-const UI_SHAPES=['icon','toggle','chart','filmstrip','studio'];
+const UI_SHAPES=['icon','toggle','chart','filmstrip','studio','counter'];
 const ICONS=[
   ['send','⬆ Yuborish'],['clip','📎 Biriktirish'],['image','🖼 Rasm'],['file','📄 Fayl'],['video','🎥 Video'],
   ['mic','🎤 Mikrofon'],['search','🔍 Qidiruv'],['back','‹ Orqaga'],['forward','› Oldinga'],['refresh','↻ Yangilash'],
@@ -4896,6 +4985,7 @@ function filmThumbs(src,n){
 function drawUIShape(L,fx,t,local,alpha){
   const w=L.w,h=L.h,k=L.shape;
   const col=L.fillColor||'#22c55e';
+  if(k==='counter'){drawCounter(L,local,alpha);return;}
   if(k==='icon'){
     const s=Math.min(w,h);
     const bg=L.iconBg||'none';
@@ -5053,11 +5143,13 @@ function uiShapeDefaults(L){
   else if(L.shape==='toggle'){L.w=Math.round(S*0.2);L.h=Math.round(S*0.1);L.fillColor='#34c759';L.tgAt=L.tgAt??0.6;}
   else if(L.shape==='chart'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.32);L.fillColor='#22c55e';L.chartType=L.chartType||'area';L.animIn='fade';}
   else if(L.shape==='studio'){L.w=state.W;L.h=state.H;L.x=state.W/2;L.y=state.H/2;L.fillColor='#9bd65a';L.radius=0;L.stA=L.stA??32;}
+  else if(L.shape==='counter'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.22);L.fillColor='#22c55e';L.cnStyle=L.cnStyle||'big';L.cnFrom=L.cnFrom??0;L.cnTo=L.cnTo??1000;L.cnDur=L.cnDur??2;L.cnSep=L.cnSep??true;L.animIn='fade';}
   else if(L.shape==='filmstrip'){L.w=Math.round(S*0.62);L.h=Math.round(S*0.1);L.fillColor='#9bd65a';L.radius=Math.round(S*0.016);
     if(!L.fsSrc){const m=state.layers.find(x=>x.type==='video')||state.layers.find(x=>x.type==='image');if(m)L.fsSrc=m.id;}}
 }
 function uiShapeBlock(L){
   const k=L.shape;
+  if(k==='counter')return counterShapeBlock(L);
   if(k==='icon')return `
     <div class="field"><label>Ikonka</label>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px">
@@ -5115,6 +5207,437 @@ function uiShapeBlock(L){
     <div class="hintline">Plyonkadagi marker shu videoning joriy vaqtini ko'rsatib yuradi. Marker rangi — "Rang 1".</div>`;
   }
   return '';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🔢 HISOBLAGICH (Counter) — 10 xil dizayn, ixtiyoriy boshlanish/oxirgi son
+   Hammasi vaqtdan deterministik hisoblanadi (holat saqlanmaydi) — eksportda ham
+   aynan bir xil, qotishsiz va yengil (faqat oddiy 2D chizish).
+   ═══════════════════════════════════════════════════════════════════════════ */
+const CN_STYLES=[
+  ['big','🔢 Katta raqam'],['pill','💊 Kapsula'],['ring','⭕ Halqa (foiz)'],['bar','▬ Progress chiziq'],
+  ['odo','🎰 Odometr (g\'ildirak)'],['flip','📟 Flip soat'],['seg','🔴 7-segment LED'],
+  ['gauge','🎚 Spidometr'],['badge','🪪 Statistika kartasi'],['neon','💡 Neon']];
+const CN_DARK=['odo','flip','seg'];
+function cnVal(L,local){
+  const a=+L.cnFrom||0, b=(L.cnTo===undefined||L.cnTo==='')?100:+L.cnTo;
+  const d=Math.max(0.05,+L.cnDur||2), dl=+L.cnDelay||0;
+  const u=clamp((local-dl)/d,0,1), z=L.cnEase||'out';
+  const e=z==='linear'?u:z==='inout'?(u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2):z==='back'?easeBackOut(u):1-Math.pow(1-u,3);
+  return {v:a+(b-a)*e, u:(b===a?1:clamp(e,0,1.0)), a, b};
+}
+function cnNum(L,v){
+  const dec=clamp(Math.round(+L.cnDec||0),0,4);
+  let s=Math.abs(v).toFixed(dec);
+  if(L.cnSep){const [ip,fp]=s.split('.');s=ip.replace(/\B(?=(\d{3})+(?!\d))/g,' ')+(fp?'.'+fp:'');}
+  return (v<0&&Math.abs(v)>=Math.pow(10,-dec)?'-':'')+s;
+}
+function cnStr(L,v){return (L.cnPre||'')+cnNum(L,v)+(L.cnSuf||'');}
+function cnTplVal(L){const a=+L.cnFrom||0,b=(L.cnTo===undefined||L.cnTo==='')?100:+L.cnTo;return Math.abs(a)>Math.abs(b)?a:b;}
+function cnFont(L,px,wt){return `${wt||L.cnW||800} ${px}px ${L.cnFont||FONTS[0].v}`;}
+function cnFitPx(L,str,maxW,maxH,wt){
+  ctx.font=cnFont(L,100,wt);
+  const w=ctx.measureText(String(str).replace(/\d/g,'0')).width;
+  return Math.max(6,Math.min(maxH,100*maxW/Math.max(1,w)));
+}
+/* Raqamlar bir xil kenglikda (tabular) — son o'zgarganda matn "titramaydi" */
+function cnTab(L,str,x,y,px,align,wt){
+  ctx.font=cnFont(L,px,wt);
+  const w0=ctx.measureText('0').width;
+  const ch=[...String(str)];
+  const ws=ch.map(c=>/\d/.test(c)?w0:ctx.measureText(c).width);
+  const tot=ws.reduce((p,q)=>p+q,0);
+  let cx=align==='left'?x:align==='right'?x-tot:x-tot/2;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<ch.length;i++){ctx.fillText(ch[i],cx+ws[i]/2,y);cx+=ws[i];}
+  return tot;
+}
+/* Odometr/flip/LED uchun: har bir raqam o'z "g'ildiragi" (d=joriy, n=keyingi, f=aylanish ulushi) */
+function cnReels(L,v){
+  const dec=clamp(Math.round(+L.cnDec||0),0,4);
+  const tplNum=cnNum(L,cnTplVal(L));
+  const iv=Math.round(Math.abs(v)*Math.pow(10,dec)*1e6)/1e6;
+  const chars=[...tplNum], out=new Array(chars.length);
+  let j=0;
+  for(let i=chars.length-1;i>=0;i--){
+    if(/\d/.test(chars[i])){
+      const p=iv/Math.pow(10,j), fl=Math.floor(p+1e-9), d=((fl%10)+10)%10;
+      let f;
+      if(j===0)f=p-fl; else{const pl=iv/Math.pow(10,j-1);f=Math.max(0,(pl%10)-9);}
+      f=clamp(f,0,1);f=f*f*(3-2*f);
+      out[i]={d,n:(d+1)%10,f};j++;
+    }else out[i]={ch:chars[i]};
+  }
+  const R=[];
+  for(const c of [...(L.cnPre||'')])R.push({ch:c});
+  R.push(...out);
+  for(const c of [...(L.cnSuf||'')])R.push({ch:c});
+  return R;
+}
+const SEG7={0:'abcdef',1:'bc',2:'abdeg',3:'abcdg',4:'bcfg',5:'acdfg',6:'acdefg',7:'abc',8:'abcdefg',9:'abcdfg'};
+function cnSeg(c,dw,dh,d,on,off,glow){
+  const t=dw*0.17, L1=dw-t*1.15, L2=dh/2-t*0.95;
+  const poly=(cx,cy,len,vert)=>{
+    c.save();c.translate(cx,cy);if(vert)c.rotate(Math.PI/2);
+    c.beginPath();c.moveTo(-len/2,0);c.lineTo(-len/2+t/2,-t/2);c.lineTo(len/2-t/2,-t/2);c.lineTo(len/2,0);
+    c.lineTo(len/2-t/2,t/2);c.lineTo(-len/2+t/2,t/2);c.closePath();c.restore();
+  };
+  const S={a:[0,-dh/2+t/2,L1,0],g:[0,0,L1,0],d:[0,dh/2-t/2,L1,0],
+    f:[-dw/2+t/2,-dh/4,L2,1],b:[dw/2-t/2,-dh/4,L2,1],e:[-dw/2+t/2,dh/4,L2,1],c:[dw/2-t/2,dh/4,L2,1]};
+  const act=SEG7[d]||'';
+  for(const k in S){
+    const [x,y,len,v]=S[k];
+    const isOn=act.includes(k);
+    c.save();
+    c.fillStyle=isOn?on:off;
+    if(isOn&&glow){c.shadowColor=on;c.shadowBlur=t*1.1;}
+    // vertikal segment: markazga siljitilgan bo'lgani uchun poly() ichida burilgan
+    c.translate(x,y);if(v)c.rotate(Math.PI/2);
+    c.beginPath();c.moveTo(-len/2,0);c.lineTo(-len/2+t/2,-t/2);c.lineTo(len/2-t/2,-t/2);c.lineTo(len/2,0);
+    c.lineTo(len/2-t/2,t/2);c.lineTo(-len/2+t/2,t/2);c.closePath();c.fill();
+    c.restore();
+  }
+}
+function drawCounter(L,local,alpha){
+  const w=L.w,h=L.h,st=L.cnStyle||'big';
+  const col=L.fillColor||'#22c55e';
+  const dark=CN_DARK.includes(st);
+  const tx=L.cnTxt||(dark?'#ffffff':'#111827');
+  const bg=L.cnBg||(dark?'#1f2937':'#e5e7eb');
+  const V=cnVal(L,local), str=cnStr(L,V.v), tpl=cnStr(L,cnTplVal(L));
+  const lab=L.cnLabel||'';
+  ctx.save();
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  const labPx=Math.max(8,h*0.13);
+  if(st==='big'){
+    const lh=lab?h*0.2:0;
+    const px=cnFitPx(L,tpl,w*0.96,(h-lh)*0.92);
+    ctx.fillStyle=tx;cnTab(L,str,0,-lh/2,px,'center');
+    if(lab){ctx.font=cnFont(L,labPx,600);ctx.fillStyle=hexA(tx,0.6);ctx.fillText(lab,0,h/2-labPx*0.9);}
+  }else if(st==='pill'){
+    const r=h/2;
+    pathRound4(ctx,-w/2,-h/2,w,h,[r,r,r,r]);
+    const g=ctx.createLinearGradient(0,-h/2,0,h/2);g.addColorStop(0,tMix(col,'#ffffff',0.22));g.addColorStop(1,col);
+    ctx.fillStyle=g;ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.22)';pathRound4(ctx,-w/2+h*0.08,-h/2+h*0.07,w-h*0.16,h*0.34,[r*0.8,r*0.8,r*0.3,r*0.3]);ctx.fill();
+    let lw=0,lpx=Math.min(labPx*1.1,h*0.26);
+    if(lab){ctx.font=cnFont(L,lpx,600);lw=Math.min(ctx.measureText(lab).width,w*0.32)+h*0.35;}
+    const px=cnFitPx(L,tpl,(w-lw)*0.92,h*0.62);
+    ctx.fillStyle=L.cnTxt||'#ffffff';
+    cnTab(L,str,lw/2,0,px,'center');
+    if(lab){ctx.font=cnFont(L,lpx,600);ctx.fillStyle='rgba(255,255,255,.88)';ctx.textAlign='left';ctx.fillText(lab,-w/2+h*0.32,0);ctx.textAlign='center';}
+  }else if(st==='ring'){
+    const s=Math.min(w,h), th=s*0.085, R=s/2-th;
+    ctx.lineWidth=th;ctx.lineCap='round';
+    ctx.strokeStyle=bg;ctx.beginPath();ctx.arc(0,0,R,0,Math.PI*2);ctx.stroke();
+    if(V.u>0.001){ctx.strokeStyle=col;ctx.beginPath();ctx.arc(0,0,R,-Math.PI/2,-Math.PI/2+Math.PI*2*clamp(V.u,0,1));ctx.stroke();}
+    const lh=lab?0.18:0;
+    const px=cnFitPx(L,tpl,R*1.5,R*0.72);
+    ctx.fillStyle=tx;cnTab(L,str,0,-R*lh,px,'center');
+    if(lab){ctx.font=cnFont(L,Math.max(8,R*0.2),600);ctx.fillStyle=hexA(tx,0.6);ctx.fillText(lab,0,R*0.42);}
+  }else if(st==='bar'){
+    const bh=h*0.2, by=h/2-bh/2;
+    const topH=h-bh-h*0.1;
+    const px=cnFitPx(L,tpl,w*0.5,topH*0.8);
+    ctx.fillStyle=tx;cnTab(L,str,-w/2,-h/2+topH/2,px,'left');
+    if(lab){ctx.font=cnFont(L,Math.max(8,topH*0.28),600);ctx.textAlign='right';ctx.fillStyle=hexA(tx,0.6);ctx.fillText(lab,w/2,-h/2+topH/2);}
+    ctx.fillStyle=bg;pathRound4(ctx,-w/2,by-bh/2,w,bh,[bh/2,bh/2,bh/2,bh/2]);ctx.fill();
+    const fw=Math.max(bh,w*clamp(V.u,0,1));
+    if(V.u>0.001){const g=ctx.createLinearGradient(-w/2,0,w/2,0);g.addColorStop(0,tMix(col,'#ffffff',0.25));g.addColorStop(1,col);
+      ctx.fillStyle=g;pathRound4(ctx,-w/2,by-bh/2,fw,bh,[bh/2,bh/2,bh/2,bh/2]);ctx.fill();}
+  }else if(st==='odo'||st==='flip'||st==='seg'){
+    const R=cnReels(L,V.v);
+    const n=R.length;
+    const gap=h*0.06;
+    // har bir katak kengligi: raqam = dw, belgi = dw*0.45
+    const kw=(it)=>it.ch!==undefined?0.45:1;
+    const unit=kw;
+    let tot=0;for(const it of R)tot+=unit(it);
+    const dw=Math.min((w-gap*(n-1))/tot,h*0.62), dh=Math.min(h*(lab?0.7:0.96),dw*1.5);
+    const totW=dw*tot+gap*(n-1);
+    let x=-totW/2;
+    const yC=lab?-h*0.12:0;
+    for(const it of R){
+      const cw=dw*unit(it);
+      ctx.save();ctx.translate(x+cw/2,yC);
+      if(it.ch!==undefined){
+        if(st==='seg'&&(it.ch==='.'||it.ch===',')){ctx.fillStyle=col;ctx.beginPath();ctx.arc(0,dh*0.38,dw*0.07,0,7);ctx.fill();}
+        else if(st==='seg'&&it.ch===' '){}
+        else{ctx.fillStyle=st==='seg'?col:tx;ctx.font=cnFont(L,dh*0.55,800);ctx.fillText(it.ch,0,0);}
+      }else if(st==='odo'){
+        const r=dw*0.14;
+        pathRound4(ctx,-dw/2,-dh/2,dw,dh,[r,r,r,r]);
+        const g=ctx.createLinearGradient(0,-dh/2,0,dh/2);g.addColorStop(0,tMix(bg,'#000000',0.25));g.addColorStop(0.5,bg);g.addColorStop(1,tMix(bg,'#000000',0.25));
+        ctx.fillStyle=g;ctx.fill();
+        ctx.save();ctx.clip();
+        ctx.fillStyle=tx;ctx.font=cnFont(L,dh*0.74,800);
+        ctx.fillText(it.d,0,-it.f*dh);ctx.fillText(it.n,0,(1-it.f)*dh);
+        const sh=ctx.createLinearGradient(0,-dh/2,0,dh/2);sh.addColorStop(0,'rgba(0,0,0,.45)');sh.addColorStop(0.28,'rgba(0,0,0,0)');sh.addColorStop(0.72,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(0,0,0,.45)');
+        ctx.fillStyle=sh;ctx.fillRect(-dw/2,-dh/2,dw,dh);
+        ctx.restore();
+      }else if(st==='flip'){
+        const r=dw*0.12, hh=dh/2;
+        const card=(y0,hgt,top)=>{ctx.beginPath();
+          if(top)pathRound4(ctx,-dw/2,y0,dw,hgt,[r,r,0,0]);else pathRound4(ctx,-dw/2,y0,dw,hgt,[0,0,r,r]);};
+        const half=(d,top,sy)=>{ // sy: balandlik koeffitsienti (flip)
+          ctx.save();
+          ctx.translate(0,0);ctx.scale(1,Math.max(0.001,sy));
+          card(top?-hh:0,hh,top);
+          ctx.fillStyle=top?tMix(bg,'#ffffff',0.06):tMix(bg,'#000000',0.12);ctx.fill();
+          ctx.save();ctx.clip();
+          ctx.fillStyle=tx;ctx.font=cnFont(L,dh*0.78,800);ctx.fillText(d,0,0);
+          ctx.restore();ctx.restore();
+        };
+        // orqa: keyingi raqamning tepasi, joriyning pastki yarmi
+        const f=it.f;
+        half(f>0?it.n:it.d,true,1);
+        half(it.d,false,1);
+        if(f>0&&f<0.5)half(it.d,true,1-f*2);           // tepa varaq tushadi
+        else if(f>=0.5){ctx.save();half(it.n,false,(f-0.5)*2);ctx.restore();}   // pastki varaq ochiladi
+        ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(-dw/2,-dh*0.012,dw,dh*0.024);
+      }else{ // seg
+        const r=dw*0.14;
+        pathRound4(ctx,-dw*0.62,-dh*0.62,dw*1.24,dh*1.24,[r,r,r,r]);ctx.fillStyle=bg;ctx.fill();
+        cnSeg(ctx,dw*0.9,dh*0.92,it.d,col,hexA(col,0.1),true);
+      }
+      ctx.restore();
+      x+=cw+gap;
+    }
+    if(lab){ctx.font=cnFont(L,Math.max(8,h*0.12),600);ctx.fillStyle=L.cnTxt&&!dark?hexA(tx,0.65):'rgba(107,114,128,.95)';ctx.fillText(lab,0,h/2-h*0.1);}
+  }else if(st==='gauge'){
+    const R=Math.min(w*0.46,h/1.7), th=R*0.16, cy=R*0.19;
+    ctx.lineWidth=th;ctx.lineCap='round';
+    ctx.strokeStyle=bg;ctx.beginPath();ctx.arc(0,cy,R-th/2,Math.PI,Math.PI*2);ctx.stroke();
+    const u=clamp(V.u,0,1);
+    if(u>0.001){ctx.strokeStyle=col;ctx.beginPath();ctx.arc(0,cy,R-th/2,Math.PI,Math.PI+Math.PI*u);ctx.stroke();}
+    ctx.lineWidth=Math.max(1,R*0.012);ctx.strokeStyle=hexA(tx,0.35);
+    for(let i=0;i<=10;i++){const a=Math.PI+Math.PI*i/10,r1=R-th*1.35,r2=R-th*1.75;
+      ctx.beginPath();ctx.moveTo(Math.cos(a)*r1,cy+Math.sin(a)*r1);ctx.lineTo(Math.cos(a)*r2,cy+Math.sin(a)*r2);ctx.stroke();}
+    const a=Math.PI+Math.PI*u;
+    ctx.strokeStyle=tx;ctx.lineWidth=Math.max(2,R*0.035);
+    ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(Math.cos(a)*(R-th*1.9),cy+Math.sin(a)*(R-th*1.9));ctx.stroke();
+    ctx.fillStyle=tx;ctx.beginPath();ctx.arc(0,cy,R*0.07,0,7);ctx.fill();
+    const px=cnFitPx(L,tpl,R*1.3,R*0.3);
+    ctx.fillStyle=tx;cnTab(L,str,0,cy+R*0.3,px,'center');
+    if(lab){ctx.font=cnFont(L,Math.max(8,R*0.13),600);ctx.fillStyle=hexA(tx,0.6);ctx.fillText(lab,0,cy+R*0.56);}
+  }else if(st==='badge'){
+    const r=Math.min(h*0.22,w*0.1);
+    ctx.save();
+    if(L.shadow!==false){ctx.shadowColor='rgba(0,0,0,.18)';ctx.shadowBlur=h*0.12;ctx.shadowOffsetY=h*0.04;}
+    pathRound4(ctx,-w/2,-h/2,w,h,[r,r,r,r]);ctx.fillStyle=L.cnBg||'#ffffff';ctx.fill();ctx.restore();
+    const ic=h*0.5, ix=-w/2+h*0.12+ic/2;
+    ctx.fillStyle=hexA(col,0.16);ctx.beginPath();ctx.arc(ix,0,ic/2,0,7);ctx.fill();
+    ctx.strokeStyle=col;ctx.lineWidth=Math.max(2,ic*0.1);ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.beginPath();ctx.moveTo(ix-ic*0.2,ic*0.12);ctx.lineTo(ix,-ic*0.12);ctx.lineTo(ix+ic*0.2,ic*0.12);ctx.stroke();
+    const tw=w-h*0.3-ic;
+    const px=cnFitPx(L,tpl,tw*0.96,h*(lab?0.5:0.62));
+    ctx.fillStyle=tx;cnTab(L,str,w/2-h*0.15-tw/2-(w*0.0),lab?-h*0.08:0,px,'center');
+    if(lab){ctx.font=cnFont(L,Math.max(8,h*0.14),600);ctx.fillStyle=hexA(tx,0.55);ctx.fillText(lab,w/2-h*0.15-tw/2,h*0.3);}
+  }else{ // neon
+    const lh=lab?h*0.2:0;
+    const px=cnFitPx(L,tpl,w*0.96,(h-lh)*0.9);
+    ctx.font=cnFont(L,px,700);
+    ctx.shadowColor=col;ctx.shadowBlur=px*0.35;
+    ctx.fillStyle=hexA(col,0.9);cnTab(L,str,0,-lh/2,px,'center');
+    ctx.shadowBlur=px*0.12;ctx.fillStyle='#ffffff';cnTab(L,str,0,-lh/2,px,'center');
+    ctx.shadowBlur=0;
+    if(lab){ctx.font=cnFont(L,Math.max(8,labPx),600);ctx.fillStyle=hexA(col,0.9);ctx.shadowColor=col;ctx.shadowBlur=labPx*0.6;ctx.fillText(lab,0,h/2-labPx*0.9);}
+  }
+  ctx.restore();
+}
+function counterShapeBlock(L){
+  const st=L.cnStyle||'big';
+  return `
+    <div class="field"><label>Dizayn (10 xil)</label>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">
+      ${CN_STYLES.map(([v,n])=>`<button class="cnPick" data-cn="${v}" style="padding:5px 6px;justify-content:center;font-size:11px;${st===v?'border-color:var(--accent);background:var(--accent-soft)':''}">${n}</button>`).join('')}
+      </div></div>
+    <div class="row2">
+      <div class="field"><label>Boshlanish soni</label><input type="number" id="pCnFrom" step="any" value="${L.cnFrom??0}"></div>
+      <div class="field"><label>Oxirgi son</label><input type="number" id="pCnTo" step="any" value="${L.cnTo??1000}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Davomiyligi (s)</label><input type="number" id="pCnDur" min="0.1" step="0.1" value="${L.cnDur??2}"></div>
+      <div class="field"><label>Kechikish (s)</label><input type="number" id="pCnDelay" min="0" step="0.1" value="${L.cnDelay??0}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>O'nlik xona</label><select id="pCnDec">${[0,1,2,3].map(n=>`<option value="${n}" ${(L.cnDec||0)===n?'selected':''}>${n}</option>`).join('')}</select></div>
+      <div class="field"><label>Harakat</label><select id="pCnEase">
+        <option value="out" ${(L.cnEase||'out')==='out'?'selected':''}>Sekinlashib tugaydi</option>
+        <option value="linear" ${L.cnEase==='linear'?'selected':''}>Bir tekis</option>
+        <option value="inout" ${L.cnEase==='inout'?'selected':''}>Silliq (boshi-oxiri)</option>
+        <option value="back" ${L.cnEase==='back'?'selected':''}>Elastik</option></select></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="pCnSep" ${L.cnSep?'checked':''}> Minglik ajratgich (1 250 000)</label>
+    <div class="row2">
+      <div class="field"><label>Oldidan (prefiks)</label><input type="text" id="pCnPre" value="${escapeHtml(L.cnPre||'')}" placeholder="$"></div>
+      <div class="field"><label>Ortidan (suffiks)</label><input type="text" id="pCnSuf" value="${escapeHtml(L.cnSuf||'')}" placeholder="% yoki K+"></div>
+    </div>
+    <div class="field"><label>Yozuv (ixtiyoriy)</label><input type="text" id="pCnLab" value="${escapeHtml(L.cnLabel||'')}" placeholder="Obunachilar"></div>
+    <div class="row2">
+      <div class="field"><label>Raqam rangi</label><input type="color" id="pCnTx" value="${L.cnTxt||(CN_DARK.includes(st)?'#ffffff':'#111827')}"></div>
+      <div class="field"><label>Fon rangi</label><input type="color" id="pCnBg" value="${L.cnBg||(CN_DARK.includes(st)?'#1f2937':'#e5e7eb')}"></div>
+    </div>
+    <div class="field"><label>Shrift</label><select id="pCnFont">${fontOpts(L.cnFont||FONTS[0].v)}</select></div>
+    <div class="hintline">Asosiy rang — "Rang 1" (halqa, chiziq, LED, neon). Raqam keyframe'siz, vaqtdan o'zi hisoblanadi.</div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎠 3D KARUSEL — guruh ichidagi ISTALGAN elementlar halqa/coverflow/... bo'ylab
+   aylanadi. WebGL ham, izolyatsiya kanvasi ham KERAK EMAS: har bir element
+   oddiy 2D transform (siljish + masshtab + torayish) bilan chiziladi — shuning
+   uchun 3D ko'rinishda ham juda yengil, qotmaydi. Chuqurlik tartibi — z bo'yicha.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const CAR_STYLES=[
+  ['ring','🎡 Halqa'],['cover','🎴 Coverflow'],['wheel','🎢 G\'ildirak (vertikal)'],['tilt','🪐 Egilgan halqa'],
+  ['helix','🌀 Spiral'],['cyl','🧊 Silindr (kartalar buriladi)'],['fan','🪭 Yelpig\'ich'],
+  ['stack','🗂 Stopka'],['tunnel','🕳 Tunnel'],['slide','▶ Slayd']];
+function carDefaults(G,style){
+  return {on:true,style:style||'ring',mode:'spin',speed:40,dir:1,hold:1.2,move:0.7,delay:0,start:0,
+    R:Math.round(Math.max(160,(G.w||300)*1.1)),gap:0,tilt:35,sMin:50,fade:60,angle:18};
+}
+function carWrapD(d,N){return ((d+N/2)%N+N)%N-N/2;}
+function carPhase(c,N,local){
+  const dir=c.dir===-1?-1:1, t=Math.max(0,local-(+c.delay||0));
+  if(c.mode==='step'){
+    const hold=Math.max(0.05,+c.hold||1.2), mv=Math.max(0.1,+c.move||0.7), per=hold+mv;
+    const k=Math.floor(t/per), r=t-k*per;
+    const u=r<hold?0:clamp((r-hold)/mv,0,1), e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;
+    return dir*(k+e)+(+c.start||0);
+  }
+  return dir*t*((c.speed??40)/360)*N+(+c.start||0);
+}
+/* Bitta a'zoning karusel holati */
+function carItem(c,i,N,p,gx,gy){
+  const R=+c.R||300, gap=(+c.gap)||0, fadeA=clamp((c.fade??60)/100,0,1), sMin=clamp((c.sMin??50)/100,0.1,1);
+  const tilt=clamp((c.tilt??35)/100,0,1);
+  let d=carWrapD(i-p,N);
+  const o={x:gx,y:gy,s:1,sx:1,rot:0,a:1,z:0};
+  const th=Math.PI*2*d/N, cs=Math.cos(th), sn=Math.sin(th), f=(1+cs)/2;
+  const st=c.style||'ring';
+  if(st==='ring'||st==='tilt'||st==='wheel'||st==='helix'||st==='cyl'){
+    o.z=cs;
+    o.s=sMin+(1-sMin)*f; o.a=1-fadeA*(1-f);
+    if(st==='ring'){o.x=gx+R*sn;o.y=gy;}
+    else if(st==='tilt'){o.x=gx+R*sn;o.y=gy+R*tilt*cs;}
+    else if(st==='wheel'){o.x=gx;o.y=gy+R*sn;}
+    else if(st==='helix'){const gp=gap||R*0.34;o.x=gx+R*sn;o.y=gy+(i-(N-1)/2)*gp;}
+    else{ // cyl: kartalar silindr yuzasida — yonbosh torayadi, orqasi xira
+      o.x=gx+R*sn;o.y=gy;o.sx=Math.max(0.04,Math.abs(cs));o.s=0.8+0.2*f;
+      if(cs<0)o.a*=0.35;
+    }
+  }else if(st==='cover'){
+    const g=gap||R*0.6, ad=Math.abs(d), sg=d<0?-1:1;
+    o.x=gx+d*g+sg*Math.min(ad,1)*g*0.5;o.y=gy;
+    o.s=Math.max(0.45,1.12-0.3*ad);o.sx=1-0.42*Math.min(ad,1);o.z=-ad;
+    o.a=1-fadeA*Math.min(ad/2.2,1);if(ad>3.2)o.a=0;
+  }else if(st==='fan'){
+    const ang=(+c.angle||18)*Math.PI/180*d;
+    o.x=gx+R*Math.sin(ang);o.y=gy+R-R*Math.cos(ang);o.rot=ang;
+    o.z=-Math.abs(d);o.s=1;o.a=1-fadeA*Math.min(Math.abs(d)/3,1)*0.6;
+    if(Math.abs(d)>4)o.a=0;
+  }else if(st==='stack'){
+    const g=gap||R*0.12;
+    if(d<-1)d+=N;
+    if(d<0){const t=clamp(-d,0,1);o.x=gx-t*R*1.1;o.y=gy;o.rot=-t*0.3;o.a=1-t;o.z=2;o.s=1;}
+    else{o.x=gx+d*g;o.y=gy-d*g*0.8;o.s=Math.max(0.5,1-0.08*d);o.a=1-fadeA*Math.min(d/4,1);o.z=-d;if(d>5)o.a=0;}
+  }else if(st==='tunnel'){
+    if(d<-1)d+=N;
+    if(d<0){const t=clamp(-d,0,1);o.s=1+t*1.4;o.a=1-t;o.z=2;o.y=gy+t*R*0.2;}
+    else{const s=Math.pow(0.76,d);o.s=s;o.y=gy-(1-s)*R*0.55;o.x=gx;o.z=-d;o.a=1-fadeA*Math.min(d/5,1);if(d>6)o.a=0;}
+  }else{ // slide
+    const g=gap||R, ad=Math.abs(d);
+    o.x=gx+d*g;o.y=gy;o.s=1-0.25*Math.min(ad,1);o.z=-ad;o.a=1-fadeA*Math.min(ad,1)*0.85;if(ad>2.6)o.a=0;
+  }
+  return o;
+}
+/* Slotlar: bir xil "o'rin" raqamli elementlar BITTA karta bo'lib birga aylanadi
+   (masalan karta fon + sarlavha + rasm). Raqam berilmasa — har element o'z kartasi. */
+function carSlots(kids){
+  const map=new Map();
+  kids.forEach((K,i)=>{
+    const s=(K.carSlot!==undefined&&K.carSlot!==''&&K.carSlot!==null)?+K.carSlot:i+1;
+    if(!map.has(s))map.set(s,[]);map.get(s).push(K);
+  });
+  return [...map.keys()].sort((a,b)=>a-b).map(k=>{
+    const ms=map.get(k);let cx=0,cy=0;
+    for(const m of ms){cx+=m.x;cy+=m.y;}
+    return {kids:ms,cx:cx/ms.length,cy:cy/ms.length};
+  });
+}
+function carAll(G,kids,t){
+  const c=G.car;if(!c||!c.on)return null;
+  const slots=carSlots(kids), N=slots.length, local=clamp(t-G.start,0,G.dur);
+  const p=carPhase(c,Math.max(1,N),local);
+  if(G.gox===undefined){G.gox=G.x;G.goy=G.y;}
+  const m=new Map();
+  slots.forEach((S,i)=>{
+    const xf=carItem(c,i,N,p,G.gox,G.goy);
+    for(const K of S.kids)m.set(K.id,{xf,cx:S.cx,cy:S.cy});
+  });
+  return m;
+}
+function carKids(G){return state.layers.filter(o=>o.linkTo===G.id&&o.type!=='audio');}
+function isCarKid(L){const G=L&&inFlatGroup(L);return !!(G&&G.car&&G.car.on);}
+/* Tanlov ramkasi uchun: a'zoning karuseldagi ko'ringan joyi */
+function carKidXf(L,t,KT){
+  const G=inFlatGroup(L);if(!G||!G.car||!G.car.on)return null;
+  const m=carAll(G,carKids(G),t), r=m&&m.get(L.id);if(!r)return null;
+  const xf=r.xf, dx=(KT.x-r.cx)*xf.s*xf.sx, dy=(KT.y-r.cy)*xf.s, c=Math.cos(xf.rot), sn=Math.sin(xf.rot);
+  return {x:xf.x+dx*c-dy*sn,y:xf.y+dx*sn+dy*c,s:xf.s,rotDeg:xf.rot*180/Math.PI};
+}
+function carouselBlock(G){
+  const c=G.car&&G.car.on?G.car:null;
+  const n=carKids(G).length;
+  let h=`<label class="chk"><input type="checkbox" id="pCarOn" ${c?'checked':''}> 🎠 3D karusel yoqilsin (${n} ta element)</label>`;
+  if(!c)return h+`<div class="hintline">Guruh ichidagi hamma elementlar (matn, rasm, video, shakl, hisoblagich…) halqa bo'ylab aylanadi. Yengil: WebGL kerak emas.</div>`;
+  h+=`<div class="field"><label>Dizayn (10 xil)</label><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">
+    ${CAR_STYLES.map(([v,nm])=>`<button class="carPick" data-st="${v}" style="padding:5px 6px;justify-content:center;font-size:11px;${c.style===v?'border-color:var(--accent);background:var(--accent-soft)':''}">${nm}</button>`).join('')}</div></div>
+    <div class="row2">
+      <div class="field"><label>Harakat</label><select id="pCarMode">
+        <option value="spin" ${c.mode!=='step'?'selected':''}>Doimiy aylanadi</option>
+        <option value="step" ${c.mode==='step'?'selected':''}>Birin-ketin to'xtab</option></select></div>
+      <div class="field"><label>Yo'nalish</label><select id="pCarDir">
+        <option value="1" ${c.dir!==-1?'selected':''}>Oldinga</option><option value="-1" ${c.dir===-1?'selected':''}>Orqaga</option></select></div>
+    </div>
+    ${c.mode==='step'?`<div class="row2">
+      <div class="field"><label>To'xtash (s)</label><input type="number" id="pCarHold" min="0.1" step="0.1" value="${c.hold??1.2}"></div>
+      <div class="field"><label>Siljish (s)</label><input type="number" id="pCarMove" min="0.1" step="0.1" value="${c.move??0.7}"></div></div>`
+    :`<div class="field"><label>Tezlik: <b id="pCarSpV">${c.speed??40}</b>°/s</label><input type="range" id="pCarSp" min="2" max="360" value="${c.speed??40}"></div>`}
+    <div class="field"><label>Radius / masofa: <b id="pCarRV">${Math.round(c.R)}</b> px</label><input type="range" id="pCarR" min="40" max="1800" value="${Math.round(c.R)}"></div>
+    <div class="field"><label>Elementlar oralig'i (0 = avtomatik): <b id="pCarGV">${Math.round(c.gap||0)}</b></label><input type="range" id="pCarG" min="0" max="900" value="${Math.round(c.gap||0)}"></div>
+    <div class="field"><label>Egilish (Egilgan halqa): <b id="pCarTV">${c.tilt??35}</b>%</label><input type="range" id="pCarT" min="0" max="100" value="${c.tilt??35}"></div>
+    <div class="field"><label>Orqadagilar kichrayishi: <b id="pCarSMV">${c.sMin??50}</b>%</label><input type="range" id="pCarSM" min="15" max="100" value="${c.sMin??50}"></div>
+    <div class="field"><label>Orqadagilar xiraligi: <b id="pCarFV">${c.fade??60}</b>%</label><input type="range" id="pCarF" min="0" max="100" value="${c.fade??60}"></div>
+    <div class="field"><label>Yelpig'ich burchagi: <b id="pCarAV">${c.angle??18}</b>°</label><input type="range" id="pCarA" min="4" max="50" value="${c.angle??18}"></div>
+    <div class="row2">
+      <div class="field"><label>Boshlang'ich siljish (element)</label><input type="number" id="pCarSt" step="0.25" value="${c.start??0}"></div>
+      <div class="field"><label>Kechikish (s)</label><input type="number" id="pCarDl" min="0" step="0.1" value="${c.delay??0}"></div></div>
+    <div class="row2">
+      <div class="field"><label>Har karta = nechta ketma-ket element</label><input type="number" id="pCarPer" min="1" max="30" step="1" value="${c.per||1}"></div>
+      <div class="field"><label>&nbsp;</label><button id="pCarSplit" style="justify-content:center">🧩 Kartalarga bo'lish</button></div></div>
+    <div class="hintline">Elementni tanlash: <b>ikki marta bosing</b> (guruh ichiga kirasiz) yoki qatlamlar ro'yxatidan. Elementlar tartibi — qatlamlar ro'yxati tartibida.</div>`;
+  return h;
+}
+function kitCounter(){
+  const S=kitS();
+  const C=kitShape({shape:'counter',w:Math.round(S*0.62),h:Math.round(S*0.26),x:state.W/2,y:state.H/2,animIn:'springPop',inTime:0.5,customName:'Hisoblagich'});
+  kitPlace([C],'',{noGroup:true,dur:5,toast:'🔢 Hisoblagich qo\'shildi — dizayn va sonlarni o\'ng paneldan o\'zgartiring'});
+}
+function kitCarousel(){
+  const S=kitS(), W=Math.round(S*0.3), H=Math.round(S*0.4);
+  const cols=['#8fce4f','#38bdf8','#f59e0b','#f472b6','#a78bfa','#34d399'];
+  const list=[];
+  cols.forEach((c,i)=>{
+    const card=kitShape({shape:'rect',w:W,h:H,x:state.W/2,y:state.H/2,fillColor:c,radius:Math.round(S*0.035),animIn:'none',animOut:'none',
+      shOutC:'#000000',shOutA:18,shOutB:30,shOutY:10,customName:'Karta '+(i+1)});
+    const num=kitText(String(i+1),{x:state.W/2,y:state.H/2,size:Math.round(S*0.14),color:'#ffffff',weight:800,animIn:'none',animOut:'none',customName:'Raqam '+(i+1)});
+    card.carSlot=i+1;num.carSlot=i+1;
+    list.push(card,num);
+  });
+  kitPlace(list,'🎠 3D karusel',{dur:6,toast:'🎠 Karusel qo\'shildi — o\'ng paneldan 10 dizaynni sinab ko\'ring. A\'zoni 2 marta bosib tahrirlang'});
+  const G=state.layers.find(l=>l.id===state.selected);
+  if(G&&isGroupHolder(G)){G.car=carDefaults(G,'ring');G.car.R=Math.round(W*1.1);seekDirty=true;renderProps();}
 }
 
 /* ---------- 3. PIKSELLI O'TISH ---------- */
@@ -5672,6 +6195,10 @@ const KIT_ITEMS=[
   {cat:'ui',ico:'🗳',n:'So\'rovnoma kartasi',d:'Savol va variantlar, bittasi belgilanadi',run:kitPoll,s:['Qo\'shing — savol va variantlarni yozing']},
   {cat:'ui',ico:'🎨',n:'Rang palitrasi',d:'Rang doiralari, kodlari va rang ustuni',run:kitPalette,s:['Qo\'shing — ranglarni o\'zingizniki qiling']},
   {cat:'ui',ico:'📈',n:'Grafik kartasi',d:'Chizilib chiqadigan grafik + sanaladigan foiz',run:kitChartCard,s:['Qo\'shing — qiymatlarni vergul bilan yozing']},
+  {cat:'ui',ico:'🔢',n:'Hisoblagich (10 dizayn)',d:'Katta raqam, halqa, odometr, flip, LED, spidometr… — son va davomiylik o\'zgaradi',run:kitCounter,
+    s:['Qo\'shing','O\'ng panelda dizaynni tanlang, boshlanish va oxirgi sonni yozing']},
+  {cat:'ui',ico:'🎠',n:'3D Karusel (10 dizayn)',d:'6 ta karta halqada aylanadi — istalgan elementlarni ichiga qo\'shing',run:kitCarousel,
+    s:['Qo\'shing','O\'ng panelda dizayn, tezlik, radiusni sozlang','Boshqa elementlar: tanlab → 🎠 3D Karusel yasash']},
   {cat:'ui',ico:'🗂',n:'Bo\'sh UI karta',d:'Oq karta, yashil chegara, yumshoq soya',run:kitUICard,s:['Qo\'shing va ichiga istalgan elementni joylang']},
   {cat:'scene',ico:'🌿',n:'Yorug\' studiya sahnasi',d:'Oq-yashil fon + nur ustunlari, piksel to\'lqin bilan kiradi',run:kitStudio,
     s:['Playheadni UI lavha boshlanadigan joyga qo\'ying','Qo\'shing — timeline\'da uzunligini sozlang','Ustiga UI bloklarni qo\'shing']},
@@ -6230,6 +6757,20 @@ function drawText(L,local,t,baseAlpha){
   let ofx={alpha:1,scale:1,sy:1,dx:0,dy:0};
   if(L.animOut!=='none'&&local>L.dur-oT)
     ofx=outFX(L.animOut,clamp((local-(L.dur-oT))/oT,0,1),t);
+  // ♾ Doimiy harakat (float/sway/aylanish...) — matn bloki bo'yicha, harf animatsiyasidan alohida
+  let _motWrap=false;
+  if((L.loops&&L.loops.length)||(L.motion&&L.motion!=='none')){
+    const _P=Object.create(L);_P.animIn='none';_P.animOut='none';
+    let _mf=null;try{_mf=objectFX(_P,local,t);}catch(e){}
+    if(_mf){
+      ctx.save();_motWrap=true;
+      ctx.translate(_mf.dx||0,_mf.dy||0);
+      if(_mf.rot)ctx.rotate(_mf.rot);
+      const _ms=Math.max(0.01,_mf.scale||1);
+      ctx.scale(_ms*Math.max(0.01,_mf.sx||1),_ms*Math.max(0.01,_mf.sy||1));
+      baseAlpha*=clamp(_mf.alpha??1,0,1);
+    }
+  }
   // 🏛 3D extrude: rang bosqichlarini BIR MARTA (harf-boshiga emas) hisoblaymiz — og'irlikning asosiy sababi shu edi
   let extrudeSteps=null;
   if(L.tdepth>0){
@@ -6354,6 +6895,7 @@ function drawText(L,local,t,baseAlpha){
   if(_hasDeco){ctx.save();ctx.translate(ofx.dx||0,ofx.dy||0);ctx.scale(ofx.scale||1,ofx.scale||1);drawTextDecoFront(L,local,t,_bwAll,blockH,_dA);ctx.restore();}
   if(L.caret)drawCaret(L,_crX+(ofx.dx||0),_crY,L.animIn==='typewriter'&&local<gi*Math.max(L.stagger,0.02),_dA,t);
   if(_liqWrap)ctx.restore();
+  if(_motWrap)ctx.restore();
 }
 
 /* 🌫 Chekka eritish (feather) — IZOLYATSIYALANGAN kanvasda ishlaydi.
@@ -6636,6 +7178,7 @@ function groupToRaw(L,x,y){
 }
 function getSelBox(L){
   let T=kfValue(L,clamp(state.time-L.start,0,L.dur));
+  if(L.linkTo){const _cx=carKidXf(L,state.time,T);if(_cx)T={...T,x:_cx.x,y:_cx.y,scale:(T.scale||1)*_cx.s,rotDeg:(T.rotDeg||0)+_cx.rotDeg};}
   const _gm=groupWorldM(L);
   if(_gm){
     const dx=(T.x-_gm.px)*_gm.s*_gm.sx, dy=(T.y-_gm.py)*_gm.s*_gm.sy, c=Math.cos(_gm.r), sn=Math.sin(_gm.r);
@@ -7197,10 +7740,13 @@ function render(){
       // 🧩 Guruh: hudud BARCHA a'zolarni qamrab olishi kerak, aks holda
       // chekkadagi yozuvlar qirqilib qolardi
       if(isGroupHolder(L)){
+        const _carM=L.car&&L.car.on?carAll(L,carKids(L),t):null;
         for(const K of groupKids(L)){
           if(t<K.start||t>K.start+K.dur)continue;
           let KT; try{KT=kfValue(K,clamp(t-K.start,0,K.dur));}catch(e){continue;}
-          const kr=isoRegion(K,KT.x,KT.y,KT.scale||1,_use3D);
+          let kx=KT.x,ky=KT.y,ksc=KT.scale||1;
+          if(_carM){const r=_carM.get(K.id);if(r){kx=r.xf.x;ky=r.xf.y;ksc*=r.xf.s;}}
+          const kr=isoRegion(K,kx,ky,ksc,_use3D);
           if(kr.x0<__isoReg.x0)__isoReg.x0=kr.x0;
           if(kr.y0<__isoReg.y0)__isoReg.y0=kr.y0;
           if(kr.x1>__isoReg.x1)__isoReg.x1=kr.x1;
@@ -7341,9 +7887,12 @@ function render(){
     // 🧩 GURUH: a'zolar AYNAN shu buferga, YASSI holda chiziladi. Keyin pastdagi
     // kompozitsiya butun buferni guruhning 3D si bilan BIR MARTA proyeksiya qiladi.
     if(isGroupHolder(L)){
-      const kids=groupKids(L);
+      let kids=groupKids(L);
       const _GM=groupPlateM(L,T,local,t);
       const gA=clamp((T.alpha??1)*_GM.a,0,1);
+      // 🎠 3D karusel: a'zolar chuqurlik (z) bo'yicha tartiblanadi, har biri 2D transform bilan chiziladi
+      const _carM=(L.car&&L.car.on)?carAll(L,carKids(L),t):null;
+      if(_carM)kids=kids.slice().sort((a,b)=>((_carM.get(a.id)?.xf.z)||0)-((_carM.get(b.id)?.xf.z)||0));
       for(const K of kids){
         if(K.type==='audio')continue;
         if(t<K.start||t>K.start+K.dur)continue;
@@ -7358,11 +7907,18 @@ function render(){
           }
           ctx.save();
           applyGroupM(ctx,_GM);
-          ctx.translate(KT.x,KT.y);
+          let kA=clamp((KT.alpha??1)*gA,0,1);
+          const _cr=_carM?_carM.get(K.id):null;
+          if(_cr){
+            const xf=_cr.xf;
+            if(xf.a<0.015){ctx.restore();if(ksaved)for(const kk in ksaved)K[kk]=ksaved[kk];continue;}
+            ctx.translate(xf.x,xf.y);ctx.rotate(xf.rot);ctx.scale(xf.s*xf.sx,xf.s);
+            ctx.translate(KT.x-_cr.cx,KT.y-_cr.cy);
+            kA*=xf.a;
+          }else ctx.translate(KT.x,KT.y);
           ctx.rotate((KT.rotDeg||0)*Math.PI/180);
           const ks=Math.max(0.01,KT.scale||1);
           ctx.scale(ks,ks);
-          const kA=clamp((KT.alpha??1)*gA,0,1);
           if(K.blend&&K.blend!=='normal')ctx.globalCompositeOperation=K.blend;
           if(K.type==='shape')drawShape(K,kl,t,kA);
           else if(K.type==='progress')drawProgress(K,kl,t,kA);
@@ -7370,7 +7926,7 @@ function render(){
           else if(K.type==='video'||K.type==='image')drawMedia(K,kl,t,kA);
           else drawText(K,kl,t,kA);
           ctx.restore();
-          if(K.burst&&K.burst!=='none'){ctx.save();applyGroupM(ctx,_GM);ctx.translate(KT.x+(K.burstX||0),KT.y+(K.burstY||0));drawBurst(K,kl,kA);ctx.restore();}
+          if(K.burst&&K.burst!=='none'&&!_cr){ctx.save();applyGroupM(ctx,_GM);ctx.translate(KT.x+(K.burstX||0),KT.y+(K.burstY||0));drawBurst(K,kl,kA);ctx.restore();}
           if(ksaved)for(const kk in ksaved)K[kk]=ksaved[kk];
         }catch(e){ try{ctx.restore();}catch(e2){} }
       }
@@ -8185,6 +8741,7 @@ function copyLayer(silent){
   delete c.el;
   for(const k in c)if(k[0]==='_')delete c[k];
   c.kfs=(L.kfs||[]).map(k=>({...k}));
+  if(L.loops)c.loops=L.loops.map(x=>({...x}));
   if(L.crop)c.crop={...L.crop};
   state.clipboard=c;
   if(!silent)toast('Nusxa olindi ✓ — Ctrl+V bilan playhead joyiga qo\'ying');
@@ -8195,6 +8752,7 @@ function pasteLayer(dup){
   saveHistory();
   const L={...c,id:uid++};
   L.kfs=(c.kfs||[]).map(k=>({...k}));
+  if(c.loops)L.loops=c.loops.map(x=>({...x}));
   if(c.crop)L.crop={...c.crop};
   L.start=dup?c.start:clamp(state.time,0,state.duration-0.3);
   L.dur=Math.min(c.dur,state.duration-L.start);
@@ -9904,7 +10462,8 @@ function transformBlock(L){
       <button id="pUngroup" style="justify-content:center">🧩 Guruhni buzish</button>
       <button id="pGrpFit" style="justify-content:center">⤢ Ramkani moslash</button>
     </div>`:(L.linkTo&&isGroupHolder(state.layers.find(x=>x.id===L.linkTo))?`
-    <div class="hintline">🧩 Bu element <b>guruh ichida</b>. 3D burilish va masshtab guruh ramkasiga beriladi — qatlamlar ro'yxatidan <b>🧩 Guruh</b> ni tanlang.</div>`:'')}
+    <div class="hintline">🧩 Bu element <b>guruh ichida</b>. 3D burilish va masshtab guruh ramkasiga beriladi — qatlamlar ro'yxatidan <b>🧩 Guruh</b> ni tanlang.</div>
+    ${(()=>{const G0=state.layers.find(x=>x.id===L.linkTo);return G0&&G0.car&&G0.car.on?`<div class="field"><label>🎠 Karusel o'rni (bir xil raqam = bitta karta)</label><input type="number" id="pCarSlot" min="1" step="1" value="${L.carSlot??''}" placeholder="avtomatik"></div>`:'';})()}`:'')}
     <div style="font-weight:700;font-size:11px;margin:10px 0 4px;letter-spacing:.4px;color:var(--accent2)">🧊 BASIC 3D</div>
     <div class="hintline">Element tekis plastina kabi 3D fazoda buriladi (Premiere Pro "Basic 3D" uslubi). Barchasi ◆ keyframe bilan animatsiya bo'ladi.</div>
     <div class="field"><label>↔ Swivel (vertikal o'q): <b id="pRYV">${Math.round(T.ry)}°</b></label>
@@ -10166,6 +10725,7 @@ function renderBulkProps(box){
     <div class="hintline">🔗 <b>Animatsiyani ulash:</b> avval hammasini belgilang (animatsiyali element OXIRIDA bosilsin — u "ota" bo'ladi), keyin pastdagi tugmani bosing. Ota surilsa/burilsa/3D bukilsa — qolganlar birga harakatlanadi.</div>
     <div class="row2" style="margin:8px 0">
       <button id="mGroup" style="justify-content:center;background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600">🧩 Guruhlash — bitta plastina</button>
+      <button id="mCar" style="justify-content:center">🎠 3D Karusel yasash</button>
       <button id="mLink" style="justify-content:center">🔗 Oxirgi tanlanganga ergashtirish</button>
       <button id="mUnlink" style="justify-content:center">⛓️‍💥 Ulashni bekor qilish</button>
     </div>`;
@@ -10202,6 +10762,7 @@ function renderBulkProps(box){
   const on=(id,ev,fn)=>{const el=$(id);if(el)el[ev]=e=>{historyMaybe();fn(e);};};
   const eachText=fn=>{texts.forEach(t=>{fn(t);if(capTracks.includes(t.track))fitCaptionLayer(t);});renderTimeline();renderLayers();};
   on('mGroup','onclick',()=>{makeGroup(state.multi.slice());});
+  on('mCar','onclick',()=>{const G=makeGroup(state.multi.slice());if(G){G.car=carDefaults(G);G.car.R=Math.round(Math.max(160,G.w*0.8));seekDirty=true;renderProps();}});
   on('mClear','onclick',()=>{state.multi=[];renderTimeline();renderLayers();renderProps();});
   on('mDel','onclick',bulkDelete);
   on('mLink','onclick',()=>{
@@ -10463,6 +11024,7 @@ function renderProps(){
           <input type="range" id="pInT" min="0.2" max="3" step="0.1" value="${L.inTime}"></div>
         <div class="field"><label>Chiqish</label><select id="pOut">${selOpts(ANIMS_OUT,L.animOut)}</select></div>
         <div class="field"><label>Doimiy silliq harakat</label><select id="pMotion">${selOpts(MOTIONS,L.motion)}</select></div>
+        ${loopsBlock(L)}
         ${L.motion&&L.motion!=='none'?`<div class="field"><label>⏸ Harakat to'xtash vaqti (s, bo'sh = doimiy)</label>
           <input type="number" id="pMotStop" min="0" step="0.1" value="${L.motStop??''}" placeholder="masalan 4.5"></div>`:''}
         ${L.motion==='carousel'?`<div class="row2">
@@ -10562,7 +11124,7 @@ function renderProps(){
       transformBlock(L)+maskBlock(L)+featherBlock(L)+timingBlock(L);
   }
   else if(L.type==='shape'){
-    html=
+    html=(isGroupHolder(L)?sec('🎠 3D Karusel',carouselBlock(L),!!(L.car&&L.car.on)):'')+
       sec('◇ Shakl',`
         <div class="field"><label>Tayyor shakl</label><select id="pShape">${selOpts(SHAPES,L.shape)}</select></div>
         ${UI_SHAPES.includes(L.shape)?uiShapeBlock(L):''}
@@ -10631,6 +11193,7 @@ function renderProps(){
         ${animTimesBlock(L)}
         ${burstBlock(L)}
         <div class="field"><label>Doimiy silliq harakat</label><select id="pMotion">${selOpts(MOTIONS,L.motion)}</select></div>
+        ${loopsBlock(L)}
         ${L.motion&&L.motion!=='none'?`<div class="field"><label>⏸ Harakat to'xtash vaqti (s, bo'sh = doimiy)</label>
           <input type="number" id="pMotStop" min="0" step="0.1" value="${L.motStop??''}" placeholder="masalan 4.5"></div>`:''}
         ${L.motion==='carousel'?`<div class="row2">
@@ -10965,6 +11528,7 @@ function renderProps(){
         ${animTimesBlock(L)}
         ${burstBlock(L)}
         <div class="field"><label>Doimiy silliq harakat</label><select id="pMotion">${selOpts(MOTIONS,L.motion)}</select></div>
+        ${loopsBlock(L)}
         ${L.motion&&L.motion!=='none'?`<div class="field"><label>⏸ Harakat to'xtash vaqti (s, bo'sh = doimiy)</label>
           <input type="number" id="pMotStop" min="0" step="0.1" value="${L.motStop??''}" placeholder="masalan 4.5"></div>`:''}
         ${L.motion==='carousel'?`<div class="row2">
@@ -11155,6 +11719,7 @@ function renderProps(){
     L.borderCols.push('#ffffff');renderProps();
   });
   on('pMotion','onchange',e=>{L.motion=e.target.value;renderProps();});
+  if(L)loopsBind(L);
   on('pMotStop','onchange',e=>{L.motStop=e.target.value===''?null:Math.max(0,+e.target.value);seekDirty=true;});
   on('pCarR','oninput',e=>{L.carR=+e.target.value;$('pCarRV').textContent=e.target.value;seekDirty=true;});
   on('pCarS','oninput',e=>{L.carSpd=+e.target.value;$('pCarSV').textContent=(+e.target.value).toFixed(2);seekDirty=true;});
@@ -11215,12 +11780,58 @@ function renderProps(){
     on('pChSuf','oninput',e=>{L.chartSuf=e.target.value;DS();});
     on('pFsSrc','onchange',e=>{L.fsSrc=e.target.value?+e.target.value:null;const m=state.layers.find(x=>x.id===L.fsSrc);if(m)filmThumbs(m,L.fsN||6);DS();});
     on('pFsN','oninput',e=>{L.fsN=+e.target.value;$('pFsNV').textContent=e.target.value;const m=state.layers.find(x=>x.id===L.fsSrc);if(m)filmThumbs(m,L.fsN);DS();});
+    document.querySelectorAll('.cnPick').forEach(b=>b.onclick=()=>{historyMaybe();L.cnStyle=b.dataset.cn;delete L.cnTxt;delete L.cnBg;
+      const S=Math.min(state.W,state.H),st=L.cnStyle;
+      if(st==='ring'||st==='gauge'){L.w=Math.round(S*(st==='ring'?0.34:0.5));L.h=Math.round(S*(st==='ring'?0.34:0.28));}
+      else if(st==='pill'||st==='badge'||st==='bar'){L.w=Math.round(S*0.55);L.h=Math.round(S*(st==='pill'?0.14:0.18));}
+      else{L.w=Math.round(S*0.55);L.h=Math.round(S*0.2);}
+      DS();renderProps();});
+    on('pCnFrom','onchange',e=>{L.cnFrom=+e.target.value||0;DS();});
+    on('pCnTo','onchange',e=>{L.cnTo=+e.target.value||0;DS();});
+    on('pCnDur','onchange',e=>{L.cnDur=Math.max(0.1,+e.target.value||2);DS();});
+    on('pCnDelay','onchange',e=>{L.cnDelay=Math.max(0,+e.target.value||0);DS();});
+    on('pCnDec','onchange',e=>{L.cnDec=+e.target.value;DS();});
+    on('pCnEase','onchange',e=>{L.cnEase=e.target.value;DS();});
+    on('pCnSep','onchange',e=>{L.cnSep=e.target.checked;DS();});
+    on('pCnPre','oninput',e=>{L.cnPre=e.target.value;DS();});
+    on('pCnSuf','oninput',e=>{L.cnSuf=e.target.value;DS();});
+    on('pCnLab','oninput',e=>{L.cnLabel=e.target.value;DS();});
+    on('pCnTx','oninput',e=>{L.cnTxt=e.target.value;DS();});
+    on('pCnBg','oninput',e=>{L.cnBg=e.target.value;DS();});
+    on('pCnFont','onchange',e=>{L.cnFont=e.target.value;DS();});
     on('pStTop','oninput',e=>{L.stTop=e.target.value;DS();});
     on('pStBot','oninput',e=>{L.stBot=e.target.value;DS();});
     on('pStA','oninput',e=>{L.stA=+e.target.value;$('pStAV').textContent=e.target.value;DS();});
     on('pStFull','onchange',e=>{L.stFull=e.target.checked;DS();});
   }
 
+  /* 🎠 3D Karusel (guruh egasi) */
+  if(L&&isGroupHolder(L)){
+    const CS=()=>{seekDirty=true;};
+    on('pCarOn','onchange',e=>{historyMaybe();if(e.target.checked){L.car=L.car&&L.car.R?Object.assign(L.car,{on:true}):carDefaults(L);}else if(L.car)L.car.on=false;CS();renderProps();});
+    if(L.car&&L.car.on){
+      const c=L.car;
+      document.querySelectorAll('.carPick').forEach(b=>b.onclick=()=>{historyMaybe();c.style=b.dataset.st;CS();renderProps();});
+      on('pCarMode','onchange',e=>{c.mode=e.target.value;CS();renderProps();});
+      on('pCarDir','onchange',e=>{c.dir=+e.target.value;CS();});
+      on('pCarHold','onchange',e=>{c.hold=Math.max(0.1,+e.target.value||1.2);CS();});
+      on('pCarMove','onchange',e=>{c.move=Math.max(0.1,+e.target.value||0.7);CS();});
+      const sl=(id,key,vid,fmt)=>on(id,'oninput',e=>{c[key]=+e.target.value;const v=$(vid);if(v)v.textContent=fmt?fmt(e.target.value):e.target.value;CS();});
+      sl('pCarSp','speed','pCarSpV');sl('pCarR','R','pCarRV');sl('pCarG','gap','pCarGV');sl('pCarT','tilt','pCarTV');
+      sl('pCarSM','sMin','pCarSMV');sl('pCarF','fade','pCarFV');sl('pCarA','angle','pCarAV');
+      on('pCarSt','onchange',e=>{c.start=+e.target.value||0;CS();});
+      on('pCarDl','onchange',e=>{c.delay=Math.max(0,+e.target.value||0);CS();});
+      on('pCarPer','onchange',e=>{c.per=clamp(Math.round(+e.target.value||1),1,30);});
+      on('pCarSplit','onclick',()=>{
+        historyMaybe();const per=clamp(Math.round(+($('pCarPer')?.value)||1),1,30);c.per=per;
+        carKids(L).forEach((K,i)=>{K.carSlot=Math.floor(i/per)+1;});
+        CS();toast('🧩 Elementlar '+per+' tadan kartalarga bo\'lindi');
+      });
+    }
+  }
+  if(L&&inFlatGroup(L)&&inFlatGroup(L).car&&inFlatGroup(L).car.on){
+    on('pCarSlot','onchange',e=>{historyMaybe();L.carSlot=e.target.value===''?undefined:Math.max(1,Math.round(+e.target.value));if(L.carSlot===undefined)delete L.carSlot;seekDirty=true;});
+  }
   if(L&&L.type==='timer'){
     const TS=()=>{seekDirty=true;};
     document.querySelectorAll('.tmrPick').forEach(b=>b.onclick=()=>{
@@ -12716,6 +13327,13 @@ document.getElementById('inDuration').onchange=e=>{
       if(!state.multi.length&&!isGroupHolder(pick.L)&&!inFlatGroup(pick.L)){
         const fam=linkFamily(pick.L);
         if(fam.length>1)state.multi=fam;
+      }
+      // 🎠 Karusel a'zosi: o'rni karusel tomonidan belgilanadi — faqat tanlanadi, surilmaydi
+      if(isCarKid(pick.L)){
+        state.selected=pick.L.id;state.multi=[];
+        renderLayers();renderProps();renderTimeline();
+        toast('🎠 Karusel a\'zosi — o\'rnini o\'ng paneldan (radius/dizayn) boshqaring',2200);
+        return;
       }
       saveHistory();
       dragging=pick.L;
