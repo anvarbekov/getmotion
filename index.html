@@ -483,7 +483,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>6.6</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>6.7</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -2752,8 +2752,14 @@ function groupPlateM(G,T,local,t){
   const r=(T.rotDeg||0)*Math.PI/180+(F?(F.rot||0):0);
   const dx=F?(F.dx||0):0, dy=F?(F.dy||0):0;
   const a=F?clamp(F.alpha??1,0,1):1;
-  const on=Math.abs(s*sx-1)>1e-4||Math.abs(s*sy-1)>1e-4||Math.abs(r)>1e-5||Math.abs(dx)>0.01||Math.abs(dy)>0.01;
-  return {on,s,sx,sy,r,dx,dy,a,px:T.x,py:T.y};
+  // 📌 Guruh BOSHLANG'ICH markazi (gox/goy): ramka shu joydan ko'chsa — butun plastina
+  // ko'chadi. A'zolarning o'z koordinatalari umuman o'zgarmaydi (AE "null parent" kabi),
+  // shuning uchun a'zolarda keyframe bo'lsa ham guruh to'liq birga suriladi.
+  if(G.gox===undefined){G.gox=G.x;G.goy=G.y;}
+  const tx=T.x-G.gox, ty=T.y-G.goy;
+  const dX=dx+tx, dY=dy+ty;
+  const on=Math.abs(s*sx-1)>1e-4||Math.abs(s*sy-1)>1e-4||Math.abs(r)>1e-5||Math.abs(dX)>0.01||Math.abs(dY)>0.01;
+  return {on,s,sx,sy,r,dx:dX,dy:dY,a,px:G.gox,py:G.goy};
 }
 function applyGroupM(c,M){
   if(!M||!M.on)return;
@@ -2765,13 +2771,18 @@ function makeGroup(ids){
   const sel=state.layers.filter(l=>ids.includes(l.id)&&l.type!=='audio');
   if(sel.length<2){toast('Kamida 2 ta element tanlang');return null;}
   saveHistory();
-  // qamrov to'rtburchagi
+  // qamrov to'rtburchagi — ko'ringan (keyframe/burilish/masshtab hisobga olingan) chegaralar
   let mnx=1e9,mny=1e9,mxx=-1e9,mxy=-1e9, st=1e9, en=-1e9;
   for(const L of sel){
-    let b={w:200,h:200}; try{b=layerBounds(L);}catch(e){}
-    const sc=L.kscale||1, hw=b.w*sc/2, hh=b.h*sc/2;
-    mnx=Math.min(mnx,L.x-hw); mxx=Math.max(mxx,L.x+hw);
-    mny=Math.min(mny,L.y-hh); mxy=Math.max(mxy,L.y+hh);
+    let B=null; try{B=getSelBox(L);}catch(e){}
+    if(B){
+      const a=(B.T.rotDeg||0)*Math.PI/180,c=Math.cos(a),sn=Math.sin(a);
+      const hw=B.bw/2,hh=B.bh/2;
+      for(const [ux,uy] of [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]]){
+        const X=B.T.x+ux*c-uy*sn, Y=B.T.y+ux*sn+uy*c;
+        mnx=Math.min(mnx,X);mxx=Math.max(mxx,X);mny=Math.min(mny,Y);mxy=Math.max(mxy,Y);
+      }
+    }
     st=Math.min(st,L.start); en=Math.max(en,L.start+L.dur);
   }
   const G=newShape();
@@ -2780,6 +2791,7 @@ function makeGroup(ids){
     x:Math.round((mnx+mxx)/2), y:Math.round((mny+mxy)/2),
     fill:'color', fillColor:'#ffffff', fillA:0,     // ko'rinmas ramka
     border:false, shadow:false, radius:0, groupFlat:true,
+    gox:Math.round((mnx+mxx)/2), goy:Math.round((mny+mxy)/2),
     animIn:'none', animOut:'none', motion:'none', wallBounce:false,
     start:Math.max(0,st), dur:Math.max(0.4,en-Math.max(0,st)),
     customName:'Guruh', track:trackSeq++
@@ -2797,6 +2809,27 @@ function ungroup(G){
   if(!isGroupHolder(G))return;
   saveHistory();
   const kids=groupKids(G);
+  // 📌 Guruh plastinasining joriy siljishi/masshtabi/aylanishi a'zolarga "pishiriladi" —
+  // buzilganda ular ko'ringan joyida qoladi (sakramaydi)
+  try{
+    const T=kfValue(G,clamp(state.time-G.start,0,G.dur));
+    if(G.gox===undefined){G.gox=G.x;G.goy=G.y;}
+    const s=Math.max(0.01,T.scale||1), r=(T.rotDeg||0)*Math.PI/180, c=Math.cos(r), sn=Math.sin(r);
+    const tx=T.x-G.gox, ty=T.y-G.goy;
+    if(Math.abs(s-1)>1e-4||Math.abs(r)>1e-5||Math.abs(tx)>0.01||Math.abs(ty)>0.01){
+      const mp=(x,y)=>{const ux=(x-G.gox)*s, uy=(y-G.goy)*s;return {x:G.gox+tx+ux*c-uy*sn,y:G.goy+ty+ux*sn+uy*c};};
+      for(const K of kids){
+        const p=mp(K.x,K.y);K.x=p.x;K.y=p.y;
+        K.kscale=(K.kscale||1)*s;K.rotDeg=(K.rotDeg||0)+T.rotDeg;
+        for(const kf of (K.kfs||[])){
+          const q=mp(kf.x??K.x,kf.y??K.y);
+          if(kf.x!==undefined)kf.x=q.x; if(kf.y!==undefined)kf.y=q.y;
+          if(kf.scale!==undefined)kf.scale*=s;
+          if(kf.rot!==undefined)kf.rot+=T.rotDeg||0;
+        }
+      }
+    }
+  }catch(e){}
   for(const K of kids)delete K.linkTo;
   state.layers=state.layers.filter(l=>l.id!==G.id);
   state.selected=kids.length?kids[0].id:null;
@@ -5232,7 +5265,7 @@ function kitGroup(list,name,anim){
   }
   const G=newShape();
   Object.assign(G,{shape:'rect',w:Math.max(40,Math.round(mxx-mnx)),h:Math.max(40,Math.round(mxy-mny)),
-    x:Math.round((mnx+mxx)/2),y:Math.round((mny+mxy)/2),fill:'color',fillColor:'#ffffff',fillA:0,
+    x:Math.round((mnx+mxx)/2),y:Math.round((mny+mxy)/2),gox:Math.round((mnx+mxx)/2),goy:Math.round((mny+mxy)/2),fill:'color',fillColor:'#ffffff',fillA:0,
     border:false,shadow:false,radius:0,groupFlat:true,animIn:anim||'none',inTime:0.55,animOut:'none',motion:'none',wallBounce:false,
     start:Math.max(0,st),dur:Math.max(0.4,en-Math.max(0,st)),customName:name||'Guruh',track:trackSeq++});
   for(const L of list){L.linkTo=G.id;L.wallBounce=false;}
@@ -7893,6 +7926,15 @@ const IS_TOUCH_DEV=matchMedia('(pointer:coarse)').matches;
 const PLAY_GAP=IS_TOUCH_DEV?32:0;  // mobil: ~30fps play (batareya/issiqlik)
 ['mousemove','mousedown','wheel','keydown','touchstart','touchmove'].forEach(ev=>
   addEventListener(ev,()=>{lastInput=Date.now();},{passive:true}));
+let _grainChk={t:0,v:false,n:-1};
+function nowMs_idleGrainCheck(){
+  // grain borligini sekundiga ~2 marta tekshiramiz (har kadrda butun ro'yxatni aylanmaymiz)
+  const n=Date.now();
+  if(n-_grainChk.t<500)return _grainChk.v;
+  _grainChk.t=n;
+  _grainChk.v=state.layers.some(l=>(l.faceGrain>0)&&state.time>=l.start&&state.time<=l.start+l.dur);
+  return _grainChk.v;
+}
 function loop(now){
   const dt=(now-lastT)/1000;lastT=now;
   if(state.playing&&!__holdTime){
@@ -7906,20 +7948,19 @@ function loop(now){
   const nowMs=Date.now();
   // Doimiy jonli elementlar (karusel, aylanuvchi border, ilon chiziq, spinner)
   // playheadda faol bo'lsa — idle sekinlashuvi o'chadi, ular silliq aylanadi
-  const hasLive=state.layers.some(l=>{
-    if(!(state.time>=l.start&&state.time<=l.start+l.dur))return false;
-    const lo=state.time-l.start;
-    const motAlive=l.motion&&l.motion!=='none'&&!(l.motStop!=null&&l.motStop!==''&&lo>+l.motStop);
-    return motAlive||(l.border&&(l.borderSpin||l.borderSparkOn))||(l.olOn&&l.olSpin)||(l.faceGrain>0)||(l.type==='progress'&&l.pspin)
-      ||l.shape==='snake'||l.shape==='select';
-  });
+  // ⚡ Pauzada (vaqt to'xtagan) barcha effektlar vaqtga bog'liq — tasvir O'ZGARMAYDI,
+  // shuning uchun "jonli" elementlar uchun idle'da 24fps chizish kerak emas edi (qizish
+  // va og'irlikning asosiy sababi shu edi). Faqat devor-soatiga bog'liq kino donasi
+  // (grain) haqiqatan o'zgaradi — u ham kam kadrda yetarli.
+  let hasLive=false;
+  if(!state.playing&&!exporting&&nowMs_idleGrainCheck()){hasLive=true;}
   if(document.hidden&&!exporting){setTimeout(()=>requestAnimationFrame(loop),500);return;}
   const calm=!state.playing&&!exporting&&(nowMs-lastInput>400)&&!seekDirty;
   // ⚡ Bo'sh turganda: jonli element bo'lsa 24fps, bo'lmasa 3fps —
   // protsessor deyarli bo'shaydi, qurilma qizimaydi
-  const liveGap=IS_TOUCH_DEV?42:33;
+  const liveGap=IS_TOUCH_DEV?100:66;
   if(calm&&hasLive&&nowMs-lastIdleRender<liveGap){requestAnimationFrame(loop);return;}
-  if(calm&&!hasLive&&nowMs-lastIdleRender<330){requestAnimationFrame(loop);return;}
+  if(calm&&!hasLive&&nowMs-lastIdleRender<420){requestAnimationFrame(loop);return;}
   // ⚡ Play paytida ham kadr tezligini cheklaymiz (60fps shart emas —
   // 40fps ko'zga bir xil, lekin yuk 1.5x kam). Eksportda cheklov YO'Q.
   if(state.playing&&!exporting&&nowMs-lastIdleRender<PLAY_GAP){requestAnimationFrame(loop);return;}
@@ -12656,25 +12697,44 @@ document.getElementById('inDuration').onchange=e=>{
         e.preventDefault();
         return;
       }
+      // 🧩 Figma uslubi: guruh a'zosini bir marta bossangiz — GURUHNING O'ZI tanlanadi
+      // (hammasi birga suriladi/buriladi/masshtablanadi). Ichiga kirish: 2 marta bosish,
+      // yoki guruh ichidagi biror a'zo allaqachon tanlangan bo'lsa.
+      {
+        const _FG=inFlatGroup(pick.L);
+        if(_FG){
+          const cur=state.layers.find(x=>x.id===state.selected);
+          const inside=cur&&cur.linkTo===_FG.id&&!(state.multi&&state.multi.length>1);
+          if(!inside&&!(state.multi&&state.multi.includes(pick.L.id))){
+            state.multi=[];
+            pick={L:_FG,B:getSelBox(_FG),area:0};
+          }
+        }
+      }
       if(!(state.multi&&state.multi.includes(pick.L.id)))state.multi=[];
-      // 🔗 Bog'langan oila: a'zosini bossangiz — BUTUN oila avtomatik guruh bo'lib,
-      // huddi BITTA JISM kabi birga suriladi
-      if(!state.multi.length){
+      // 🔗 Bog'langan oila (eski usul, tekis guruh EMAS): butun oila bir jism kabi suriladi
+      if(!state.multi.length&&!isGroupHolder(pick.L)&&!inFlatGroup(pick.L)){
         const fam=linkFamily(pick.L);
         if(fam.length>1)state.multi=fam;
       }
       saveHistory();
       dragging=pick.L;
       off={x:p.x-pick.B.T.x,y:p.y-pick.B.T.y};
-      // 🔗 Guruh: tanlov ichidan ushlab surish = hammasi birga
+      // 🔗 Ko'p tanlov: ushlab surish = hammasi birga
       if(state.multi.length>1&&state.multi.includes(pick.L.id)){
         const starts=new Map();
         for(const gl of state.layers){
           if(!state.multi.includes(gl.id))continue;
+          // 🧩 Guruh egasi ham tanlovda bo'lsa — uning a'zolarini ALOHIDA surmaymiz
+          // (ular egasi bilan birga ko'chadi), aks holda ikki marta siljirdi
+          const _g=inFlatGroup(gl);
+          if(_g&&state.multi.includes(_g.id))continue;
           const gt=kfValue(gl,clamp(state.time-gl.start,0,gl.dur));
-          starts.set(gl.id,{x:gt.x,y:gt.y});
+          const gw=getSelBox(gl).T;
+          starts.set(gl.id,{x:gt.x,y:gt.y,wx:gw.x,wy:gw.y});
         }
-        groupMove={starts,main:starts.get(pick.L.id),mainW:{x:pick.B.T.x,y:pick.B.T.y}};
+        const _ms=starts.get(pick.L.id)||{x:pick.B.T.x,y:pick.B.T.y};
+        groupMove={starts,main:_ms,mainW:{x:pick.B.T.x,y:pick.B.T.y}};
       }
       state.selected=pick.L.id;
       renderLayers();renderProps();renderTimeline();
@@ -12733,8 +12793,26 @@ document.getElementById('inDuration').onchange=e=>{
   /* ✏️ Sahnadagi matnni IKKI MARTA bosib to'g'ridan-to'g'ri tahrirlash */
   cv.addEventListener('dblclick',e=>{
     const p=toCanvas(e);
+    // 🧩 Guruh ichiga kirish: 2 marta bosilgan a'zo tanlanadi (matn bo'lsa quyida tahrirlanadi)
+    let kid=null;
+    {
+      for(let i=state.layers.length-1;i>=0;i--){
+        const K=state.layers[i];
+        if(K.type==='audio'||!inFlatGroup(K))continue;
+        if(state.time<K.start||state.time>K.start+K.dur)continue;
+        const B=getSelBox(K), a=-(B.T.rotDeg||0)*Math.PI/180;
+        const dx=p.x-B.T.x, dy=p.y-B.T.y;
+        const lx=dx*Math.cos(a)-dy*Math.sin(a), ly=dx*Math.sin(a)+dy*Math.cos(a);
+        if(Math.abs(lx)<B.bw/2+8&&Math.abs(ly)<B.bh/2+8){kid=K;break;}
+      }
+      if(kid&&state.selected!==kid.id){
+        state.multi=[];state.selected=kid.id;
+        renderLayers();renderProps();renderTimeline();
+      }
+    }
     let hit=null;
-    for(let i=state.layers.length-1;i>=0;i--){
+    if(kid&&kid.type==='text')hit=kid;
+    else for(let i=state.layers.length-1;i>=0;i--){
       const L=state.layers[i];
       if(L.type!=='text')continue;
       if(state.time<L.start||state.time>L.start+L.dur)continue;
@@ -12755,9 +12833,9 @@ document.getElementById('inDuration').onchange=e=>{
     ta.value=hit.text;
     ta.spellcheck=false;
     Object.assign(ta.style,{
-      position:'fixed', left:sx+'px', top:sy+'px', transform:'translate(-50%,-50%) rotate('+(hit.rotDeg||0)+'deg)',
+      position:'fixed', left:sx+'px', top:sy+'px', transform:'translate(-50%,-50%) rotate('+(B.T.rotDeg||0)+'deg)',
       minWidth:'60px', maxWidth:'86vw',
-      font:`${hit.weight} ${Math.round(hit.size*(hit.kscale||1)*scr)}px ${hit.font}`,
+      font:`${hit.weight} ${Math.round(hit.size*(B.T.scale||1)*scr)}px ${hit.font}`,
       color:hit.color, background:'rgba(20,20,26,.92)', border:'2px solid var(--accent)',
       borderRadius:'8px', padding:'6px 10px', textAlign:hit.align||'center',
       zIndex:200, resize:'none', outline:'none', lineHeight:'1.15', overflow:'hidden'
@@ -12768,14 +12846,16 @@ document.getElementById('inDuration').onchange=e=>{
     ta.focus();
     ta.select();
     ta.addEventListener('input',autoH);
+    let _done=false;
     const commit=()=>{
+      if(_done)return;_done=true;
       hit.text=ta.value||hit.text;
-      ta.remove();
+      if(ta.isConnected)ta.remove();
       renderAll();
     };
     ta.addEventListener('keydown',ev=>{
       ev.stopPropagation();
-      if(ev.key==='Escape'){ev.preventDefault();ta.remove();}
+      if(ev.key==='Escape'){ev.preventDefault();_done=true;if(ta.isConnected)ta.remove();}
       if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();commit();}
     });
     ta.addEventListener('blur',commit);
@@ -12925,12 +13005,14 @@ document.getElementById('inDuration').onchange=e=>{
         // guruh aylangan/masshtablangan bo'lsa ham element sakramaydi
         const mw=groupMove.mainW||groupMove.main;
         const dx=nx-mw.x, dy=ny-mw.y;
-        const s0=groupMove.starts.get(L.id)||groupMove.main;
-        setTransformProp(L,{x:s0.x+dx,y:s0.y+dy});
         for(const gl of state.layers){
-          if(gl.id===L.id||!state.multi.includes(gl.id))continue;
           const g0=groupMove.starts.get(gl.id);
-          if(g0)setTransformProp(gl,{x:g0.x+dx,y:g0.y+dy});
+          if(!g0)continue;
+          if(g0.wx!==undefined&&inFlatGroup(gl)){
+            // guruh ichidagi a'zo: ko'ringan siljishni guruh koordinatasiga qaytaramiz
+            const rw=groupToRaw(gl,g0.wx+dx,g0.wy+dy);
+            setTransformProp(gl,{x:rw.x,y:rw.y});
+          }else setTransformProp(gl,{x:g0.x+dx,y:g0.y+dy});
         }
       }else{
         const rw=groupToRaw(L,nx,ny);
@@ -13134,6 +13216,29 @@ async function primeMedia(){
   for(const el of els){try{el.pause();}catch(e){}}
   await new Promise(r=>setTimeout(r,120));
 }
+/* 🔥 Eksport isitish o'tishi: namunaviy kadrlarni chizib keshlarni to'ldiradi va
+   eng sekin kadr vaqtini (p90) qaytaradi. Sahna holati keyin tiklanadi. */
+async function exportWarmup(endT){
+  const keep={t:state.time,sel:state.selected,multi:state.multi};
+  state.selected=null;state.multi=[];
+  const N=Math.min(48,Math.max(10,Math.round(endT*3)));
+  const ms=[];
+  try{
+    for(let i=0;i<=N;i++){
+      state.time=Math.min(endT,endT*i/N);
+      const t0=performance.now();
+      try{render();}catch(e){}
+      ms.push(performance.now()-t0);
+      if(i%4===3)await new Promise(r=>setTimeout(r,0));   // UI nafas olsin
+    }
+  }finally{
+    state.time=keep.t;state.selected=keep.sel;state.multi=keep.multi;
+  }
+  // birinchi kadrlar kesh to'ldirish uchun — o'lchovdan chiqaramiz
+  const m=ms.slice(Math.min(3,ms.length>6?3:0)).sort((a,b)=>a-b);
+  const p90=m.length?m[Math.min(m.length-1,Math.floor(m.length*0.9))]:0;
+  return {p90,max:m.length?m[m.length-1]:0,n:ms.length};
+}
 document.getElementById('btnExport').onclick=async()=>{
   if(exporting)return;
   if(!('MediaRecorder'in window)){toast('Brauzeringiz video yozishni qo\'llamaydi');return;}
@@ -13157,13 +13262,21 @@ document.getElementById('btnExport').onclick=async()=>{
     render();
     toast('🖥 Eksport uchun to\'liq sifatga o\'tildi');
   }
+  // 🔥 ISITISH O'TISHI: yozishdan OLDIN butun timeline bo'ylab namunaviy kadrlar chiziladi.
+  // Shunda katta kanvaslar, WebGL shaderlari, shrift/matn o'lchamlari va keshlar yozish
+  // BOSHLANGANDA emas, oldindan tayyor bo'ladi (aks holda aynan shu paytda kadr "qotardi").
+  // Eng sekin kadrlar ham o'lchanadi — barqaror fps shunga qarab tanlanadi.
+  const contentEnd0=state.layers.length
+    ?Math.min(state.duration,Math.max(...state.layers.map(l=>l.start+l.dur))+0.05):state.duration;
+  toast('⏳ Eksportga tayyorlanmoqda…',2500);
+  const warm=await exportWarmup(contentEnd0);
   // 🎬 Maksimal sifat: yuqori bitrate (artefaktsiz, professional darajada)
   const bitrate={720:20_000_000,1080:40_000_000,1440:70_000_000}[state.quality]||40_000_000;
   // 🎬 DOIMIY kadr tezligi (CFR): ovoz va tasvir aniq sinxron bo'ladi.
   // O'zgaruvchan tezlik (VFR) pleyerlarda videoni tezlashtirib, ovozni "orqada
   // qolgandek" qilib qo'yardi — shuning uchun render tezligiga qarab barqaror
   // fps tanlaymiz (kompyuter uddalay olmasa 30 fps, bemalol bo'lsa 60).
-  const expFps=(_rndMs<14?60:_rndMs<26?30:24);
+  const expFps=(warm.p90<12?60:warm.p90<24?30:24);
   const stream=cv.captureStream(expFps);
   __expTrack=null;
   if(state.sfx.length)ensureSfx();
