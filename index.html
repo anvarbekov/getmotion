@@ -483,7 +483,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>7.0</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>7.1</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -1954,7 +1954,7 @@ const KF_EXTRA=['radius','borderW','maskW','maskH','innerX','innerY','blur','w',
   'mkW','mkH','mkX','mkY','mkRot','mkFeather','mkRadius','pval','borderAng',
   'boxOpenT','boxOpenB','boxOpenL','boxOpenR','mkBgA','borderHue','olHue','tgradAng','olAng','dist3','persp3','depth3','depth3S','spec3I',
   'shOutA','shOutB','shOutS','shOutX','shOutY','shInA','shInB','shInS','shInX','shInY',
-  'borderGlowI','borderGlowA','borderRunSpd','borderRunLen','borderRunGlow','borderSpinSpd','borderSparkSpd','headSize'];
+  'borderGlowI','borderGlowA','nmDist','nmBlur','nmInt','nmAng','nmSpread','nmGrad','nmEdge','nmInW','lgBlur','lgSat','lgBri','lgRefr','lgDisp','lgTintA','lgRim','lgRimI','lgAng','lgSpec','lgSpecS','lgInner','lgInnerW','lgShadow','lgSheen','lgBand','borderRunSpd','borderRunLen','borderRunGlow','borderSpinSpd','borderSparkSpd','headSize'];
 /* kf kaliti → qatlam xususiyati (nom to'qnashuvini oldini olish) */
 const KF_MAP={mscale:'scale', tsize:'size', tsh:'tshadow', td:'tdepth', fxb:'fxBlur',
   fB:'fBright', fC:'fContrast', fS:'fSat', fH:'fHue', fT:'fTemp', fG:'fTint',
@@ -6273,6 +6273,327 @@ function openKit(){
   renderKit();
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   🧊 NEOMORPHISM  +  💧 LIQUID GLASS (aniq sozlanadigan)
+   • Neo — soya/yorug'lik alohida kesh-kanvasda BIR MARTA chiziladi (parametr
+     o'zgarmaguncha faqat drawImage) → animatsiyada ham yengil.
+   • Liquid Glass — mavjud kichik snapshot + gradientlar, og'ir filtrsiz.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const NM_DEF={nmBase:'#e0e5ec',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,
+  nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:40,nmEdge:0,nmSpread:0,nmInW:100};
+const LG_DEF={lgBlur:10,lgSat:160,lgBri:105,lgRefr:10,lgDisp:30,lgTint:'#ffffff',lgTintA:8,
+  lgRim:1.6,lgRimI:85,lgAng:315,lgSpec:45,lgSpecS:40,lgInner:30,lgInnerW:14,lgShadow:25,lgSheen:0,lgBand:30};
+const NM_KEYS=Object.keys(NM_DEF), LG_KEYS=Object.keys(LG_DEF);
+const _nv=(L,D,k)=>L[k]!==undefined?L[k]:D[k];
+
+function hexMix(hex,f){ // f>0 oqqa, f<0 qoraga
+  const [r,g,b]=hexRGB(hex);const t=f>=0?255:0,a=Math.abs(f);
+  const h=v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0');
+  return '#'+h(r+(t-r)*a)+h(g+(t-g)*a)+h(b+(t-b)*a);
+}
+function hexLum(hex){const [r,g,b]=hexRGB(hex);return (0.299*r+0.587*g+0.114*b)/255;}
+
+/* ---------- NEO kesh ---------- */
+const _neoCache=new Map();
+let _neoTmp=null;
+function neoRender(L){
+  const V=k=>_nv(L,NM_DEF,k);
+  const m0=ctx.getTransform();
+  let k=Math.hypot(m0.a,m0.b)||1;
+  let kq=Math.pow(1.15,Math.round(Math.log(k)/Math.log(1.15)));
+  const w=L.w,h=L.h;
+  const dist=V('nmDist'),blur=V('nmBlur'),sp=V('nmSpread'),inW=V('nmInW')/100;
+  const M=Math.ceil(Math.abs(dist)+blur*1.6+Math.abs(sp)+10);
+  const maxPx=3000;
+  if((Math.max(w,h)+2*M)*kq>maxPx)kq=maxPx/(Math.max(w,h)+2*M);
+  kq=Math.max(0.05,kq);
+  const key=[L.shape,Math.round(w),Math.round(h),L.radius,L.radMulti?[L.rTL,L.rTR,L.rBR,L.rBL].join():'',L.id,
+    NM_KEYS.map(q=>Math.round(+V(q)*100)/100||V(q)).join('|'),kq.toFixed(3)].join('~');
+  let ent=_neoCache.get(key);
+  if(ent){_neoCache.delete(key);_neoCache.set(key,ent);return ent;}
+  const cw=Math.max(2,Math.ceil((w+2*M)*kq)),ch=Math.max(2,Math.ceil((h+2*M)*kq));
+  const c=document.createElement('canvas');c.width=cw;c.height=ch;
+  const nc=c.getContext('2d');
+  if(!_neoTmp)_neoTmp=document.createElement('canvas');
+  const tcv=_neoTmp;tcv.width=cw;tcv.height=ch;
+  const tc=tcv.getContext('2d');
+  const prev=ctx;
+  const T=(x)=>x.setTransform(kq,0,0,kq,cw/2,ch/2);
+  const mode=V('nmMode'),a=V('nmAng')*Math.PI/180;
+  const lx=Math.sin(a),ly=-Math.cos(a);
+  const I=clamp(V('nmInt')/100,0,1.5);
+  const base=V('nmBase'),LC=V('nmLightC'),DC=V('nmDarkC');
+  const aCol=(col,al)=>hexA(col,clamp(al,0,1));
+  const path=(cx2)=>{ctx=cx2;shapePath(L);};
+  const ext=0.5*(Math.abs(lx)*w+Math.abs(ly)*h);
+  const grd=(cx2,sgn)=>{
+    const gr=V('nmGrad')/100*0.16*sgn;
+    const g=cx2.createLinearGradient(lx*ext,ly*ext,-lx*ext,-ly*ext);
+    g.addColorStop(0,hexMix(base,gr));g.addColorStop(1,hexMix(base,-gr));return g;
+  };
+  try{
+    T(nc);
+    const raised=(mode!=='pressed');
+    if(raised){
+      // tashqi soyalar (shakl ostida qoladi, ustidan asosiy sirt chiziladi)
+      const sc=(1+2*sp/Math.max(10,w)),sc2=(1+2*sp/Math.max(10,h));
+      for(const [col,sg] of [[DC,-1],[LC,1]]){
+        nc.save();
+        if(blur>0.2)nc.filter=`blur(${blur*kq}px)`;
+        nc.translate(lx*dist*sg,ly*dist*sg);
+        nc.scale(sc,sc2);
+        path(nc);nc.fillStyle=aCol(col,I);nc.fill();
+        nc.restore();
+      }
+    }
+    // asosiy sirt
+    path(nc);
+    nc.fillStyle=(mode==='convex')?grd(nc,1):(mode==='concave')?grd(nc,-1):base;
+    nc.fill();
+    // ichki soyalar: pressed (botiq) va puffy (shishgan)
+    if(mode==='pressed'||mode==='puffy'){
+      const innerPass=(col,ox,oy)=>{
+        tc.setTransform(1,0,0,1,0,0);tc.clearRect(0,0,cw,ch);tc.globalCompositeOperation='source-over';
+        tc.fillStyle=aCol(col,I);tc.fillRect(0,0,cw,ch);
+        T(tc);tc.globalCompositeOperation='destination-out';
+        tc.save();tc.translate(ox,oy);
+        const s2=1-2*sp/Math.max(10,w),s3=1-2*sp/Math.max(10,h);tc.scale(s2,s3);
+        path(tc);tc.fillStyle='#000';tc.fill();tc.restore();
+        tc.globalCompositeOperation='source-over';
+        nc.save();T(nc);path(nc);nc.clip();
+        nc.setTransform(1,0,0,1,0,0);
+        if(blur>0.2)nc.filter=`blur(${blur*kq*0.6}px)`;
+        nc.drawImage(tcv,0,0);
+        nc.restore();
+      };
+      const dd=dist*inW;
+      const s=(mode==='pressed')?1:-1;
+      innerPass(DC, -lx*dd*s, -ly*dd*s);   // pressed: qorong'u — yorug'lik tomonida
+      innerPass(LC,  lx*dd*s,  ly*dd*s);
+      T(nc);
+    }
+    // nozik qirra yaltirashi
+    const eg=V('nmEdge');
+    if(eg>0.5){
+      path(nc);
+      const g=nc.createLinearGradient(lx*ext,ly*ext,-lx*ext,-ly*ext);
+      g.addColorStop(0,aCol(LC,eg/100));g.addColorStop(0.5,aCol(LC,0));g.addColorStop(1,aCol(DC,eg/100*0.8));
+      nc.strokeStyle=g;nc.lineWidth=1.4;nc.stroke();
+    }
+  }finally{ctx=prev;}
+  ent={c,M,w:w+2*M,h:h+2*M};
+  _neoCache.set(key,ent);
+  if(_neoCache.size>14){const fk=_neoCache.keys().next().value;_neoCache.delete(fk);}
+  return ent;
+}
+function drawNeo(L){
+  const R=neoRender(L);
+  ctx.drawImage(R.c,-R.w/2,-R.h/2,R.w,R.h);
+}
+
+/* ---------- LIQUID GLASS PRO ---------- */
+function drawLG(L,t){
+  const V=k=>_nv(L,LG_DEF,k);
+  const w=L.w,h=L.h;
+  const dm=ctx.getTransform();
+  const k=Math.hypot(dm.a,dm.b)||1;
+  const ccx=dm.e,ccy=dm.f;
+  const a=V('lgAng')*Math.PI/180,lx=Math.sin(a),ly=-Math.cos(a);
+  const ext=0.5*(Math.abs(lx)*w+Math.abs(ly)*h);
+  sctx.clearRect(0,0,snapCv.width,snapCv.height);
+  sctx.drawImage(cv,0,0,cv.width,cv.height,0,0,snapCv.width,snapCv.height);
+  // tashqi chuqurlik soyasi (shakl ichi baribir qoplanadi)
+  const shA=V('lgShadow')/100;
+  if(shA>0.01){
+    ctx.save();
+    ctx.shadowColor=`rgba(6,14,40,${(0.5*shA).toFixed(3)})`;
+    ctx.shadowBlur=(10+22*shA)*k;
+    ctx.shadowOffsetX=-lx*5*shA*k;ctx.shadowOffsetY=(-ly*5*shA+4)*k;
+    shapePath(L);ctx.fillStyle='#000';ctx.fill();
+    ctx.restore();
+  }
+  shapePath(L);
+  ctx.save();ctx.clip();
+  ctx.save();
+  { const _B=sceneBase(); ctx.setTransform(1,0,0,1,_B,_B); }
+  const zs=1+V('lgRefr')/100;
+  if(zs>1.001){ctx.translate(ccx,ccy);ctx.scale(zs,zs);ctx.translate(-ccx,-ccy);}
+  const bl=Math.max(0.3,V('lgBlur')*k/snapSF());
+  ctx.filter=`blur(${bl}px) saturate(${V('lgSat')/100}) brightness(${V('lgBri')/100})`;
+  ctx.imageSmoothingQuality='low';
+  ctx.drawImage(snapCv,0,0,snapCv.width,snapCv.height,0,0,cv.width,cv.height);
+  ctx.filter='none';
+  ctx.restore();
+  // tint
+  const ta=V('lgTintA')/100;
+  if(ta>0.002){ctx.fillStyle=hexA(V('lgTint'),ta);ctx.fill();}
+  // tana yorug'ligi (yorug'lik tomoni → qarama-qarshi)
+  let g=ctx.createLinearGradient(lx*ext,ly*ext,-lx*ext,-ly*ext);
+  g.addColorStop(0,'rgba(255,255,255,.20)');g.addColorStop(.45,'rgba(255,255,255,.02)');g.addColorStop(1,'rgba(0,10,30,.10)');
+  ctx.fillStyle=g;ctx.fill();
+  // spekulyar yorug' dog'
+  const sp=V('lgSpec')/100;
+  if(sp>0.01){
+    const R=Math.max(10,V('lgSpecS')/100*Math.max(w,h)*0.9);
+    const px=lx*w*0.3,py=ly*h*0.3;
+    const rg=ctx.createRadialGradient(px,py,0,px,py,R);
+    rg.addColorStop(0,`rgba(255,255,255,${(0.75*sp).toFixed(3)})`);
+    rg.addColorStop(0.5,`rgba(255,255,255,${(0.18*sp).toFixed(3)})`);
+    rg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=rg;ctx.fill();
+  }
+  // yuqori yaltiroq band (shisha aksi)
+  const bd=V('lgBand')/100;
+  if(bd>0.01){
+    ctx.save();
+    pathRound(ctx,-w/2+w*0.05,-h/2+h*0.05,w*0.9,h*0.38,Math.max(4,Math.min(w,h)*0.18));
+    const tg=ctx.createLinearGradient(0,-h/2,0,-h/2+h*0.45);
+    tg.addColorStop(0,`rgba(255,255,255,${(0.5*bd).toFixed(3)})`);tg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=tg;ctx.fill();ctx.restore();
+    shapePath(L);
+  }
+  // ichki nur (qirra bo'ylab yumshoq, blur'siz — ko'p qatlamli stroke)
+  const ig=V('lgInner')/100;
+  if(ig>0.01){
+    const iw=Math.max(2,V('lgInnerW'));
+    ctx.save();ctx.setLineDash([]);
+    for(const [mul,al] of [[2.0,0.30],[1.35,0.35],[0.85,0.45],[0.45,0.55]]){
+      ctx.lineWidth=iw*mul;ctx.strokeStyle=`rgba(255,255,255,${(al*ig*0.22).toFixed(3)})`;ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // harakatlanuvchi yaltirash
+  const shn=V('lgSheen');
+  if(shn>0.5){
+    const spd=shn/60;
+    const p=((t*spd)%1.6)-0.3;
+    const gx=-w/2+p*w*1.3;
+    const gl=ctx.createLinearGradient(gx-w*0.25,-h/2,gx+w*0.25,h/2);
+    gl.addColorStop(0,'rgba(255,255,255,0)');gl.addColorStop(.5,'rgba(255,255,255,.22)');gl.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=gl;ctx.fill();
+  }
+  ctx.restore();
+  // qirra (rim): yorug'lik tomonida yorqin, o'rtada xira, qarshisida o'rtacha
+  const rw=V('lgRim'),ri=V('lgRimI')/100;
+  shapePath(L);
+  const disp=V('lgDisp')/100;
+  if(disp>0.01&&rw>0){
+    const o=0.5+disp*1.6;
+    ctx.save();ctx.setLineDash([]);ctx.lineWidth=rw;
+    ctx.translate(o,0);ctx.strokeStyle=`rgba(255,70,110,${(0.42*disp*ri).toFixed(3)})`;ctx.stroke();
+    ctx.translate(-2*o,0);ctx.strokeStyle=`rgba(60,190,255,${(0.42*disp*ri).toFixed(3)})`;ctx.stroke();
+    ctx.restore();
+  }
+  if(rw>0.05&&ri>0.01){
+    const rg=ctx.createLinearGradient(lx*ext,ly*ext,-lx*ext,-ly*ext);
+    rg.addColorStop(0,`rgba(255,255,255,${ri})`);rg.addColorStop(.38,`rgba(255,255,255,${(ri*0.16).toFixed(3)})`);
+    rg.addColorStop(.62,`rgba(255,255,255,${(ri*0.16).toFixed(3)})`);rg.addColorStop(1,`rgba(255,255,255,${(ri*0.6).toFixed(3)})`);
+    ctx.save();ctx.setLineDash([]);ctx.lineWidth=rw;ctx.strokeStyle=rg;ctx.stroke();ctx.restore();
+  }
+}
+
+/* ---------- Presetlar ---------- */
+const NM_PRESETS={
+  'Klassik':{nmBase:'#e0e5ec',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:40,nmEdge:0,nmSpread:0,nmInW:100},
+  'Yumshoq':{nmBase:'#e8ecf1',nmMode:'flat',nmDist:6,nmBlur:14,nmInt:80,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#b4bfd0',nmGrad:40,nmEdge:20,nmSpread:0,nmInW:100},
+  'Qavariq':{nmBase:'#e0e5ec',nmMode:'convex',nmDist:14,nmBlur:28,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:70,nmEdge:30,nmSpread:0,nmInW:100},
+  'Botiq':{nmBase:'#e0e5ec',nmMode:'concave',nmDist:10,nmBlur:20,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:70,nmEdge:0,nmSpread:0,nmInW:100},
+  'Bosilgan':{nmBase:'#e0e5ec',nmMode:'pressed',nmDist:9,nmBlur:18,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:0,nmEdge:0,nmSpread:0,nmInW:100},
+  'Shishgan':{nmBase:'#e0e5ec',nmMode:'puffy',nmDist:10,nmBlur:16,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:0,nmEdge:0,nmSpread:0,nmInW:100},
+  'Qorong\'u':{nmBase:'#2b2f3a',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,nmLightC:'#3a4050',nmDarkC:'#14161c',nmGrad:40,nmEdge:20,nmSpread:0,nmInW:100},
+  'Pushti':{nmBase:'#f0d9e4',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,nmLightC:'#fff4fa',nmDarkC:'#cfaabd',nmGrad:40,nmEdge:20,nmSpread:0,nmInW:100},
+};
+const LG_PRESETS={
+  'Apple':{lgBlur:10,lgSat:160,lgBri:105,lgRefr:10,lgDisp:30,lgTint:'#ffffff',lgTintA:8,lgRim:1.6,lgRimI:85,lgAng:315,lgSpec:45,lgSpecS:40,lgInner:30,lgInnerW:14,lgShadow:25,lgSheen:0,lgBand:30},
+  'Muzlagan':{lgBlur:22,lgSat:120,lgBri:108,lgRefr:3,lgDisp:0,lgTint:'#ffffff',lgTintA:18,lgRim:1.2,lgRimI:60,lgAng:315,lgSpec:25,lgSpecS:55,lgInner:20,lgInnerW:10,lgShadow:20,lgSheen:0,lgBand:15},
+  'Billur':{lgBlur:3,lgSat:190,lgBri:110,lgRefr:18,lgDisp:70,lgTint:'#cfe8ff',lgTintA:6,lgRim:2,lgRimI:100,lgAng:315,lgSpec:70,lgSpecS:35,lgInner:45,lgInnerW:18,lgShadow:30,lgSheen:25,lgBand:45},
+  'Suv':{lgBlur:6,lgSat:170,lgBri:104,lgRefr:22,lgDisp:40,lgTint:'#7dd3fc',lgTintA:14,lgRim:1.8,lgRimI:90,lgAng:315,lgSpec:55,lgSpecS:45,lgInner:40,lgInnerW:16,lgShadow:28,lgSheen:20,lgBand:40},
+  'Qorong\'u':{lgBlur:14,lgSat:130,lgBri:78,lgRefr:8,lgDisp:20,lgTint:'#0b1020',lgTintA:30,lgRim:1.4,lgRimI:70,lgAng:315,lgSpec:30,lgSpecS:40,lgInner:22,lgInnerW:12,lgShadow:40,lgSheen:0,lgBand:18},
+  'Rangli':{lgBlur:12,lgSat:200,lgBri:104,lgRefr:12,lgDisp:50,lgTint:'#a78bfa',lgTintA:22,lgRim:1.6,lgRimI:90,lgAng:315,lgSpec:45,lgSpecS:40,lgInner:35,lgInnerW:14,lgShadow:30,lgSheen:15,lgBand:30},
+};
+
+/* ---------- Panel bloklari ---------- */
+function fxSlider(L,D,key,label,min,max,step,unit){
+  const v=_nv(L,D,key);
+  const shown=(step<1)?(+v).toFixed(step<0.1?2:1):Math.round(v);
+  return `<div class="field"><label>${label}: <b id="fxv_${key}">${shown}</b>${unit||''}</label>
+    <input type="range" data-fxk="${key}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
+}
+function fxColor(L,D,key,label){
+  return `<div class="field"><label>${label}</label><input type="color" data-fxk="${key}" data-fxc="1" value="${_nv(L,D,key)}"></div>`;
+}
+function fxPresets(P,attr){
+  return `<div class="fxpre" style="display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 8px">`+
+    Object.keys(P).map(n=>`<button data-${attr}="${escapeHtml(n)}" style="padding:4px 9px;font-size:11px">${escapeHtml(n)}</button>`).join('')+`</div>`;
+}
+function neoBlock(L){
+  const D=NM_DEF,mode=_nv(L,D,'nmMode');
+  const modes=[['flat','Tekis (raised)'],['convex','Qavariq (gradient)'],['concave','Botiq (gradient)'],['pressed','Bosilgan (inset)'],['puffy','Shishgan (pillow)']];
+  return `<div class="hintline">🧊 <b>Neomorphism</b> — fon rangi element rangiga yaqin bo'lsa eng yaxshi chiqadi.</div>
+    ${fxPresets(NM_PRESETS,'nmpre')}
+    <div class="field"><label>Shakl turi</label><select data-fxk="nmMode">${modes.map(([v,n])=>`<option value="${v}" ${mode===v?'selected':''}>${n}</option>`).join('')}</select></div>
+    <div class="row2">${fxColor(L,D,'nmBase','Asosiy rang')}${fxColor(L,D,'nmLightC','Yorug\' soya')}</div>
+    <div class="row2">${fxColor(L,D,'nmDarkC','Qorong\'u soya')}
+      <div class="field"><label>&nbsp;</label><button id="nmAuto" style="width:100%;justify-content:center" title="Asosiy rangdan yorug' va qorong'u soyalarni avtomatik hisoblaydi">⚙ Avto-soya</button></div></div>
+    <button id="nmBg" style="width:100%;justify-content:center;margin-bottom:8px">🎨 Fonni asosiy rangga moslash</button>
+    ${fxSlider(L,D,'nmAng','Yorug\'lik yo\'nalishi (0=tepa, 90=o\'ng)',0,360,1,'°')}
+    ${fxSlider(L,D,'nmDist','Soya masofasi',0,60,0.5,'px')}
+    ${fxSlider(L,D,'nmBlur','Soya xiraligi (blur)',0,100,0.5,'px')}
+    ${fxSlider(L,D,'nmInt','Soya kuchi',0,150,1,'%')}
+    ${fxSlider(L,D,'nmSpread','Soya kengayishi (spread)',-20,40,0.5,'px')}
+    ${fxSlider(L,D,'nmGrad','Sirt gradienti (qavariq/botiq)',0,100,1,'%')}
+    ${fxSlider(L,D,'nmEdge','Qirra yaltirashi',0,100,1,'%')}
+    ${(mode==='pressed'||mode==='puffy')?fxSlider(L,D,'nmInW','Ichki soya chuqurligi',20,250,1,'%'):''}`;
+}
+function lglassBlock(L){
+  const D=LG_DEF;
+  return `<div class="hintline">💧 <b>Liquid Glass</b> — orqa fon blur/refraksiya, qirra nuri, spekulyar yorug'lik. Elementni rasm/video/rangli fon USTIGA qo'ying.</div>
+    ${fxPresets(LG_PRESETS,'lgpre')}
+    <div style="font-size:11px;color:var(--muted);margin:6px 0 2px">ORQA FON</div>
+    ${fxSlider(L,D,'lgBlur','Blur (xiralik)',0,50,0.5,'px')}
+    ${fxSlider(L,D,'lgRefr','Refraksiya (linza kattalashtirish)',0,50,1,'%')}
+    ${fxSlider(L,D,'lgSat','To\'yinganlik',50,300,1,'%')}
+    ${fxSlider(L,D,'lgBri','Yorqinlik',50,150,1,'%')}
+    <div class="row2">${fxColor(L,D,'lgTint','Tint rangi')}</div>
+    ${fxSlider(L,D,'lgTintA','Tint kuchi',0,80,1,'%')}
+    <div style="font-size:11px;color:var(--muted);margin:6px 0 2px">YORUG'LIK</div>
+    ${fxSlider(L,D,'lgAng','Yorug\'lik yo\'nalishi (0=tepa, 90=o\'ng)',0,360,1,'°')}
+    ${fxSlider(L,D,'lgSpec','Spekulyar yorug\' dog\'',0,100,1,'%')}
+    ${fxSlider(L,D,'lgSpecS','Dog\' o\'lchami',10,100,1,'%')}
+    ${fxSlider(L,D,'lgBand','Yuqori shisha aksi (band)',0,100,1,'%')}
+    ${fxSlider(L,D,'lgInner','Ichki nur',0,100,1,'%')}
+    ${fxSlider(L,D,'lgInnerW','Ichki nur kengligi',2,60,1,'px')}
+    ${fxSlider(L,D,'lgSheen','Harakatlanuvchi yaltirash tezligi',0,100,1,'')}
+    <div style="font-size:11px;color:var(--muted);margin:6px 0 2px">QIRRA va SOYA</div>
+    ${fxSlider(L,D,'lgRim','Qirra qalinligi',0,12,0.1,'px')}
+    ${fxSlider(L,D,'lgRimI','Qirra yorqinligi',0,100,1,'%')}
+    ${fxSlider(L,D,'lgDisp','Dispersiya (rang chekkasi)',0,100,1,'%')}
+    ${fxSlider(L,D,'lgShadow','Pastki soya (chuqurlik)',0,100,1,'%')}`;
+}
+/* Neo/LG panel hodisalari — renderProps ichidan chaqiriladi */
+function fxBind(L,box){
+  const upd=(el,key,v)=>{const lb=document.getElementById('fxv_'+key);if(lb){const st=+el.step;lb.textContent=st<1?(+v).toFixed(st<0.1?2:1):Math.round(v);}};
+  box.querySelectorAll('[data-fxk]').forEach(el=>{
+    const h=e=>{
+      historyMaybe();
+      const key=el.dataset.fxk;
+      if(el.type==='range'){const v=+el.value;setAnimProp(L,key,v);upd(el,key,v);}
+      else L[key]=el.value;
+      if(key==='nmMode')renderProps();
+    };
+    el.oninput=h;el.onchange=h;
+  });
+  box.querySelectorAll('[data-nmpre]').forEach(b=>b.onclick=()=>{historyMaybe();Object.assign(L,NM_PRESETS[b.dataset.nmpre]);renderProps();});
+  box.querySelectorAll('[data-lgpre]').forEach(b=>b.onclick=()=>{historyMaybe();Object.assign(L,LG_PRESETS[b.dataset.lgpre]);renderProps();});
+  const au=document.getElementById('nmAuto');
+  if(au)au.onclick=()=>{historyMaybe();const b=_nv(L,NM_DEF,'nmBase'),dk=hexLum(b)<0.4;
+    L.nmLightC=dk?hexMix(b,0.12):hexMix(b,0.85);L.nmDarkC=dk?hexMix(b,-0.55):hexMix(b,-0.2);
+    if(!dk){const [r,g,bb]=hexRGB(L.nmDarkC);L.nmDarkC=hexMix('#'+[r,g,Math.min(255,bb+10)].map(v=>v.toString(16).padStart(2,'0')).join(''),0);}
+    renderProps();};
+  const bg=document.getElementById('nmBg');
+  if(bg)bg.onclick=()=>{historyMaybe();state.bg=_nv(L,NM_DEF,'nmBase');state.bgGrad=null;renderProps();seekDirty=true;};
+}
+
 function drawShape(L,local,t,baseAlpha){
   const fx=objectFX(L,local,t);
   applyWalls(L,fx,L.w,L.h,local);
@@ -6294,7 +6615,7 @@ function drawShape(L,local,t,baseAlpha){
     ctx.transform(Math.cos(a),Math.sin(a)*0.18,0,1,0,0);
   }
   ctx.globalAlpha=alpha;
-  if(L.fill!=='glass'&&L.fill!=='liquid'&&L.fill!=='liquid2'){
+  if(L.fill!=='glass'&&L.fill!=='liquid'&&L.fill!=='liquid2'&&L.fill!=='lglass'){
     const _tb=(fx.blur||0)+(L.fxBlur||0);
     if(_tb>0.3)ctx.filter=`blur(${_tb}px)`;
   }
@@ -6427,6 +6748,10 @@ function drawShape(L,local,t,baseAlpha){
       eg.addColorStop(1,'rgba(255,255,255,.45)');
       ctx.strokeStyle=eg;ctx.lineWidth=1.4;ctx.setLineDash([]);ctx.stroke();
     }
+  }else if(L.fill==='neo'){
+    drawNeo(L);
+  }else if(L.fill==='lglass'){
+    drawLG(L,t);
   }else if(L.fill==='gradient'){
     const g=ctx.createLinearGradient(0,-L.h/2,0,L.h/2);
     g.addColorStop(0,hexA(L.fillColor,L.fillA));
@@ -11223,10 +11548,13 @@ function renderProps(){
             <option value="glass" ${L.fill==='glass'?'selected':''}>Glass (shisha)</option>
             <option value="liquid" ${L.fill==='liquid'?'selected':''}>✨ Liquid Glass (jonli shisha)</option>
             <option value="liquid2" ${L.fill==='liquid2'?'selected':''}>💧 Liquid Glass Pro (suv)</option>
+            <option value="lglass" ${L.fill==='lglass'?'selected':''}>💎 Liquid Glass — aniq sozlash</option>
+            <option value="neo" ${L.fill==='neo'?'selected':''}>🧊 Neomorphism — aniq sozlash</option>
             <option value="color" ${L.fill==='color'?'selected':''}>Bir rang</option>
             <option value="gradient" ${L.fill==='gradient'?'selected':''}>Gradient</option>
           </select></div>
-        <div class="row2">
+        ${L.fill==='neo'?neoBlock(L):L.fill==='lglass'?lglassBlock(L):''}
+        ${(L.fill==='neo'||L.fill==='lglass')?'':`<div class="row2">
           <div class="field"><label>Rang 1</label><input type="color" id="pFillC" value="${L.fillColor}"></div>
           <div class="field"><label>Rang 2 (gradient)</label><input type="color" id="pGrad2" value="${L.grad2}"></div>
         </div>
@@ -11238,7 +11566,7 @@ function renderProps(){
           <div class="field"><label>Glass tint: <b id="pTAV">${Math.round(L.tintA*100)}%</b></label>
             <input type="range" id="pTA" min="0" max="60" value="${Math.round(L.tintA*100)}"></div>
         </div>
-        <div class="field"><label>Tint rangi</label><input type="color" id="pTint" value="${L.tint}"></div>
+        <div class="field"><label>Tint rangi</label><input type="color" id="pTint" value="${L.tint}"></div>`}
         <div class="row2">
           <div class="field"><label>3D burilish: <b id="pD3V">${L.d3}°</b></label>
             <input type="range" id="pD3" min="-40" max="40" value="${L.d3}"></div>
@@ -11717,7 +12045,10 @@ function renderProps(){
   on('pRtr','oninput',e=>{setAnimProp(L,'rTR',+e.target.value);$('pRtrV').textContent=e.target.value;});
   on('pRbr','oninput',e=>{setAnimProp(L,'rBR',+e.target.value);$('pRbrV').textContent=e.target.value;});
   on('pRbl','oninput',e=>{setAnimProp(L,'rBL',+e.target.value);$('pRblV').textContent=e.target.value;});
-  on('pFill','onchange',e=>{L.fill=e.target.value;});
+  on('pFill','onchange',e=>{L.fill=e.target.value;
+    if((L.fill==='neo'||L.fill==='lglass')&&!L._fxInit){L._fxInit=1;L.border=false;}
+    renderProps();});
+  fxBind(L,box);
   on('pFillC','oninput',e=>{L.fillColor=e.target.value;});
   on('pGrad2','oninput',e=>{L.grad2=e.target.value;});
   on('pFA','oninput',e=>{L.fillA=+e.target.value/100;$('pFAV').textContent=Math.round(L.fillA*100)+'%';});
