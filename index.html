@@ -483,7 +483,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>6.9</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>7.0</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -10440,6 +10440,63 @@ function featherBlock(L){
     </div>`:''}
   `,L.featherOn);
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎯 O'RTAGA KELTIRISH — butun sahnada YOKI tanlangan elementning ichida
+   Bitta element yoki ko'p tanlov (birgalikda, bitta jism kabi) uchun.
+   Ko'ringan (guruh/burilish/masshtab hisobga olingan) markaz bo'yicha ishlaydi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function centerTargets(excl){
+  return state.layers.filter(x=>x.type!=='audio'&&!excl.includes(x.id)&&!x.linkTo);
+}
+function centerBlock(excl,pre){
+  const tg=centerTargets(excl);
+  return `<div style="font-weight:700;font-size:11px;margin:8px 0 4px;letter-spacing:.4px;color:var(--accent2)">🎯 O'RTAGA KELTIRISH</div>
+    <div class="field"><label>Qayerning o'rtasiga</label>
+      <select id="${pre}Tg"><option value="">🖼 Butun sahna</option>
+      ${tg.map(x=>`<option value="${x.id}">${TICONS[x.type]||'●'} ${escapeHtml(layerName(x)).slice(0,30)} ichida</option>`).join('')}</select></div>
+    <div class="row3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:6px">
+      <button id="${pre}H" style="justify-content:center;padding:5px 4px" title="Gorizontal o'rtaga">⬌ Gor.</button>
+      <button id="${pre}V" style="justify-content:center;padding:5px 4px" title="Vertikal o'rtaga">⬍ Vert.</button>
+      <button id="${pre}B" style="justify-content:center;padding:5px 4px;background:var(--accent);border-color:var(--accent);color:#fff" title="Ikkala yo'nalishda">✛ O'rtaga</button>
+    </div>`;
+}
+/* Ko'ringan qamrov (burilgan chegaralar ham) */
+function centerBox(L){
+  const B=getSelBox(L), a=(B.T.rotDeg||0)*Math.PI/180, c=Math.cos(a), sn=Math.sin(a);
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const [ux,uy] of [[-B.bw/2,-B.bh/2],[B.bw/2,-B.bh/2],[B.bw/2,B.bh/2],[-B.bw/2,B.bh/2]]){
+    const X=B.T.x+ux*c-uy*sn, Y=B.T.y+ux*sn+uy*c;
+    x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);
+  }
+  return {x0,y0,x1,y1};
+}
+function centerLayers(ids,tgId,mode){
+  let list=state.layers.filter(l=>ids.includes(l.id)&&l.type!=='audio');
+  // guruh egasi ham tanlangan bo'lsa — uning a'zolari alohida siljitilmaydi (ular egasi bilan ko'chadi)
+  list=list.filter(l=>{const g=inFlatGroup(l);return !(g&&ids.includes(g.id));});
+  if(!list.length)return;
+  let cx=state.W/2, cy=state.H/2;
+  if(tgId){
+    const T=state.layers.find(x=>x.id===+tgId);
+    if(T){const b=centerBox(T);cx=(b.x0+b.x1)/2;cy=(b.y0+b.y1)/2;}
+  }
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const l of list){const b=centerBox(l);x0=Math.min(x0,b.x0);x1=Math.max(x1,b.x1);y0=Math.min(y0,b.y0);y1=Math.max(y1,b.y1);}
+  const dx=(mode==='v')?0:cx-(x0+x1)/2, dy=(mode==='h')?0:cy-(y0+y1)/2;
+  saveHistory();
+  for(const l of list){
+    const B=getSelBox(l);
+    const rw=groupToRaw(l,B.T.x+dx,B.T.y+dy);
+    const T0=kfValue(l,clamp(state.time-l.start,0,l.dur));
+    setTransformProp(l,{x:mode==='v'?T0.x:rw.x,y:mode==='h'?T0.y:rw.y});
+  }
+  seekDirty=true;renderProps();if(list.some(hasKF))renderTimeline();
+  toast('🎯 '+(tgId?'Element ichida':'Sahna o\'rtasiga')+' keltirildi'+(list.length>1?' ('+list.length+' ta, birgalikda)':''));
+}
+function centerBind(ids,pre){
+  const go=m=>()=>centerLayers(ids,document.getElementById(pre+'Tg')?.value||'',m);
+  [['H','h'],['V','v'],['B','b']].forEach(([k,m])=>{const e=document.getElementById(pre+k);if(e)e.onclick=go(m);});
+}
 function transformBlock(L){
   const T=kfValue(L,clamp(state.time-L.start,0,L.dur));
   return sec('◆ Transformatsiya va Keyframe',`
@@ -10449,6 +10506,7 @@ function transformBlock(L){
       <div class="field"><label>Y (px)</label>
         <input type="number" id="pY" step="1" value="${Math.round(T.y)}"></div>
     </div>
+    ${centerBlock([L.id],'pCt')}
     <div class="row2">
       <div class="field"><label>Masshtab: <b id="pKsV">${Math.round(T.scale*100)}%</b></label>
         <input type="range" id="pKs" min="10" max="400" value="${Math.round(T.scale*100)}"></div>
@@ -10723,6 +10781,7 @@ function renderBulkProps(box){
       <button id="mDel" style="justify-content:center;color:#f87171">🗑 O'chirish</button>
     </div>
     <div class="hintline">🔗 <b>Animatsiyani ulash:</b> avval hammasini belgilang (animatsiyali element OXIRIDA bosilsin — u "ota" bo'ladi), keyin pastdagi tugmani bosing. Ota surilsa/burilsa/3D bukilsa — qolganlar birga harakatlanadi.</div>
+    ${centerBlock(state.multi,'mCt')}
     <div class="row2" style="margin:8px 0">
       <button id="mGroup" style="justify-content:center;background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600">🧩 Guruhlash — bitta plastina</button>
       <button id="mCar" style="justify-content:center">🎠 3D Karusel yasash</button>
@@ -10761,6 +10820,7 @@ function renderBulkProps(box){
   const $=id=>document.getElementById(id);
   const on=(id,ev,fn)=>{const el=$(id);if(el)el[ev]=e=>{historyMaybe();fn(e);};};
   const eachText=fn=>{texts.forEach(t=>{fn(t);if(capTracks.includes(t.track))fitCaptionLayer(t);});renderTimeline();renderLayers();};
+  centerBind(state.multi.slice(),'mCt');
   on('mGroup','onclick',()=>{makeGroup(state.multi.slice());});
   on('mCar','onclick',()=>{const G=makeGroup(state.multi.slice());if(G){G.car=carDefaults(G);G.car.R=Math.round(Math.max(160,G.w*0.8));seekDirty=true;renderProps();}});
   on('mClear','onclick',()=>{state.multi=[];renderTimeline();renderLayers();renderProps();});
@@ -12121,6 +12181,7 @@ function renderProps(){
     renderProps();renderTimeline();seekDirty=true;toast('🗑 Barcha nuqtalar o\'chirildi');
   });
   on('pKfBind','onclick',()=>{openKeymap&&openKeymap('kfAdd');});
+  if(L)centerBind([L.id],'pCt');
   on('pKs','oninput',e=>{setTransformProp(L,'scale',+e.target.value/100);$('pKsV').textContent=e.target.value+'%';if(hasKF(L))renderTimeline();});
   on('pRot','oninput',e=>{setTransformProp(L,'rot',+e.target.value);$('pRotV').textContent=e.target.value+'°';if(hasKF(L))renderTimeline();});
   on('pRX','oninput',e=>{setTransformProp(L,'rx',+e.target.value);$('pRXV').textContent=e.target.value+'°';if(hasKF(L))renderTimeline();});
