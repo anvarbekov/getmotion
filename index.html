@@ -483,7 +483,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>7.1</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>7.2</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -902,6 +902,11 @@ const TEXT_ANIMS = [
   {v:'pixelFall',  n:'🟩 Piksel to\'lqin (tepadan)'},
   {v:'pixelRise',  n:'🟩 Piksel to\'lqin (pastdan)'},
   {v:'pixelWipe',  n:'🟩 Piksel to\'lqin (chapdan)'},
+  {v:'pixMosaicIn',n:'🟩 Mozaikadan tiniqlashish'},
+  {v:'pixDissIn',n:'🟩 Piksel dissolve (tasodifiy)'},
+  {v:'pixScanIn',n:'🟩 Raqamli skan (qatorma-qator)'},
+  {v:'pixGlitchIn',n:'🟩 Glitch bilan yig\'ilish'},
+  {v:'pixSortIn',n:'🟩 Pixel-sort erib tushish'},
   {v:'appleBlur', n:'✦ Apple xira zoom'},
   {v:'maskUp',    n:'✦ Niqobdan ko\'tarilish'},
   {v:'tracking',  n:'✦ Kengayishdan yig\'ilish'},
@@ -980,6 +985,11 @@ const OBJ_ANIMS = [
   {v:'pixelFall',n:'🟩 Piksel to\'lqin (tepadan)'},
   {v:'pixelRise',n:'🟩 Piksel to\'lqin (pastdan)'},
   {v:'pixelWipe',n:'🟩 Piksel to\'lqin (chapdan)'},
+  {v:'pixMosaicIn',n:'🟩 Mozaikadan tiniqlashish'},
+  {v:'pixDissIn',n:'🟩 Piksel dissolve (tasodifiy)'},
+  {v:'pixScanIn',n:'🟩 Raqamli skan (qatorma-qator)'},
+  {v:'pixGlitchIn',n:'🟩 Glitch bilan yig\'ilish'},
+  {v:'pixSortIn',n:'🟩 Pixel-sort erib tushish'},
   {v:'none',n:'Animatsiyasiz'},
 ];
 const ANIMS_OUT = [
@@ -997,6 +1007,10 @@ const ANIMS_OUT = [
   {v:'inkOut',n:'🖋 Siyoh dog\'i so\'nishi'},
   {v:'pixelOutDown',n:'🟩 Piksel bilan yo\'qolish (tepadan)'},
   {v:'pixelOutSide',n:'🟩 Piksel bilan yo\'qolish (o\'ngdan)'},
+  {v:'pixMosaicOut',n:'🟩 Mozaikaga aylanib yo\'qolish'},
+  {v:'pixDissOut',n:'🟩 Piksel dissolve chiqish'},
+  {v:'pixGlitchOut2',n:'🟩 Glitch bilan sochilish'},
+  {v:'pixSortOut',n:'🟩 Pixel-sort erib ketish'},
 ];
 const SFX_TYPES = [
   {v:'whoosh',n:'Whoosh (shamol)'},{v:'swipe',n:'Swipe (tez surish)'},
@@ -1991,10 +2005,19 @@ const EASE_NAMES=[
   ['spring','Elastik (spring)'],['spline','O\'ta silliq (spline — AE)'],
 ];
 function kfValue(L,local){
+  const r=kfValueRaw(L,local);
+  if(L.ex)exApply(L,local,r);   // ƒ AE expressions
+  return r;
+}
+/* ⚡ kf kaliti → xususiyat xaritasi (keyframe'da faqat MAVJUD kalitlar aylanadi —
+   250+ xususiyat ro'yxatini har chaqiruvda aylanib chiqish shart emas) */
+let _KFPM=null,_KFPMn=0;
+function kfPM(){if(!_KFPM||_KFPMn!==KF_PAIRS.length){_KFPM=Object.create(null);for(const [kk,prop] of KF_PAIRS)_KFPM[kk]=prop;_KFPMn=KF_PAIRS.length;}return _KFPM;}
+function kfValueRaw(L,local){
   const base={x:L.x,y:L.y,scale:L.kscale||1,rotDeg:L.rotDeg||0,rx:L.rx||0,ry:L.ry||0,alpha:L.opacity??1};
   const K=L.kfs;
   if(!K||!K.length)return base;
-  const ex=k=>{const o={};for(const [kk,prop] of KF_PAIRS)if(L[prop]!==undefined)o[kk]=k[kk]??L[prop];return o;};
+  const ex=k=>{const o={},M=kfPM();for(const kk in k){const prop=M[kk];if(prop!==undefined&&L[prop]!==undefined)o[kk]=k[kk]??L[prop];}return o;};
   const toT=k=>({x:k.x,y:k.y,scale:k.scale,rotDeg:k.rot,rx:k.rx??0,ry:k.ry??0,alpha:k.alpha,...ex(k)});
   if(K.length===1||local<=K[0].t)return toT(K[0]);
   const last=K[K.length-1];
@@ -2015,8 +2038,8 @@ function kfValue(L,local){
     const sp=(f,d)=>cr(g(p0,f,d),g(a,f,d),g(b,f,d),g(p3,f,d));
     const out2={x:sp('x',0),y:sp('y',0),scale:sp('scale',1),rotDeg:sp('rot',0),
       rx:sp('rx',0),ry:sp('ry',0),alpha:clamp(sp('alpha',1),0,1)};
-    for(const [kk,prop] of KF_PAIRS)
-      if(L[prop]!==undefined)out2[kk]=sp(kk,L[prop]);
+    {const M=kfPM();for(const q of [p0,a,b,p3])for(const kk in q){if(kk in out2)continue;const prop=M[kk];
+      if(prop!==undefined&&L[prop]!==undefined)out2[kk]=sp(kk,L[prop]);}}
     return out2;
   }
   const eFn=EASE_KF[L.kfEase]||EASE_KF.smooth;
@@ -2024,8 +2047,8 @@ function kfValue(L,local){
   const lp=(p,q)=>p+(q-p)*u;
   const out={x:lp(a.x,b.x),y:lp(a.y,b.y),scale:lp(a.scale,b.scale),
     rotDeg:lp(a.rot,b.rot),rx:lp(a.rx??0,b.rx??0),ry:lp(a.ry??0,b.ry??0),alpha:lp(a.alpha,b.alpha)};
-  for(const [kk,prop] of KF_PAIRS)
-    if(L[prop]!==undefined)out[kk]=lp(a[kk]??L[prop],b[kk]??L[prop]);
+  {const M=kfPM();for(const q of [a,b])for(const kk in q){if(kk in out)continue;const prop=M[kk];
+    if(prop!==undefined&&L[prop]!==undefined)out[kk]=lp(a[kk]??L[prop],b[kk]??L[prop]);}}
   return out;
 }
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2376,7 +2399,7 @@ function applyEffectPreset(L,preset){
     const patch=fn(baseScale,L,diag,bd);
     L.kfs=L.kfs.filter(k=>Math.abs(k.t-t)>0.04);
     const kf={t,x:cur.x,y:cur.y,scale:cur.scale,rot:cur.rotDeg,rx:cur.rx||0,ry:cur.ry||0,alpha:cur.alpha};
-    for(const [kk,prop] of KF_PAIRS)if(L[prop]!==undefined)kf[kk]=cur[kk]??L[prop];
+    for(const [kk,prop] of KF_PAIRS)if(L[prop]!==undefined&&!/^(e_|trim|gt|lv|nm|lg|draw)/.test(kk))kf[kk]=cur[kk]??L[prop];
     Object.assign(kf,patch);
     L.kfs.push(kf);
   }
@@ -2672,6 +2695,11 @@ function letterFX(anim,p,time,i){
     case 'pixelFall':fx.liq={kind:'pixFall',p:ease.outCubic(p)};break;
     case 'pixelRise':fx.liq={kind:'pixRise',p:ease.outCubic(p)};break;
     case 'pixelWipe':fx.liq={kind:'pixWipe',p:ease.outCubic(p)};break;
+    case 'pixMosaicIn':fx.liq={kind:'pixMosaic',p:e};break;
+    case 'pixDissIn':fx.liq={kind:'pixDiss',p:e};break;
+    case 'pixScanIn':fx.liq={kind:'pixScan',p:p};break;
+    case 'pixGlitchIn':fx.liq={kind:'pixGlitch',p:e};break;
+    case 'pixSortIn':fx.liq={kind:'pixSort',p:e};break;
     case 'liquidFall':fx.alpha=Math.min(1,p*6);fx.liq={kind:'fall',p:ease.outCubic(p)};break;
     case 'liquidWipe':fx.alpha=Math.min(1,p*6);fx.liq={kind:'wipe',p:ease.outCubic(p)};break;
     case 'liquidPop':{ // suv tomchisidek sakrab to'lish
@@ -2690,7 +2718,7 @@ function letterFX(anim,p,time,i){
       break;}
     case 'wipeRight':fx.wipe={d:'r',p:e};break;
     case 'wipeUp':fx.wipe={d:'u',p:e};break;
-    case 'drawOn':fx.draw=e;break;
+    case 'drawOn':fx.draw=e;fx.drawIn=e;break;
   }
   return fx;
 }
@@ -2712,11 +2740,15 @@ function outFX(anim,q,time){
   else if(anim==='liquidDrain'){fx.liq={kind:'rise',p:1-q};}
   else if(anim==='pixelOutDown'){fx.liq={kind:'pixRise',p:1-ease.inCubic(q)};}
   else if(anim==='pixelOutSide'){fx.liq={kind:'pixWipe',p:1-ease.inCubic(q)};}
+  else if(anim==='pixMosaicOut'){fx.liq={kind:'pixMosaic',p:1-e};}
+  else if(anim==='pixDissOut'){fx.liq={kind:'pixDiss',p:1-q};}
+  else if(anim==='pixGlitchOut2'){fx.liq={kind:'pixGlitch',p:1-q};}
+  else if(anim==='pixSortOut'){fx.liq={kind:'pixSort',p:1-e};}
   else if(anim==='liquidPour'){fx.liq={kind:'fall',p:1-q};}
   else if(anim==='liquidSweep'){fx.liq={kind:'wipe',p:1-q};}
   else if(anim==='inkOut'){fx.liq={kind:'ink',p:1-q};fx.blur=e*8;}
   else if(anim==='wipeOut'){fx.wipe={d:'l',p:1-e};fx.blur=e*4;}
-  else if(anim==='drawOff'){fx.draw=1-e;}
+  else if(anim==='drawOff'){fx.draw=1-e;fx.drawOut=e;}
   else if(anim==='glitchOut'){
     const seed=Math.floor((time||0)*28);
     const r1=Math.abs(Math.sin(seed*12.9898)*43758.5453)%1;
@@ -2880,6 +2912,7 @@ function objectFX(L,local,time){
     if(o.wipe)fx.wipe=o.wipe;
     if(o.liq)fx.liq=o.liq;
     fx.draw=Math.min(fx.draw??1,o.draw??1);
+    if(o.drawOut!=null)fx.drawOut=o.drawOut;
   }
   if(L.motion==='float')fx.dy+=Math.sin(time*1.6+L.id)*state.H*0.012;
   if(L.motion==='pulse')fx.scale*=1+0.035*Math.sin(time*2.2+L.id);
@@ -3197,6 +3230,7 @@ function drawBG(){
   drawBGPattern();
 }
 function shapePath(L){
+  if(L.pm&&L.pm.on&&!__pmBusy&&!ANNOT.includes(L.shape)&&!UI_SHAPES.includes(L.shape)&&pmPathDraw(L))return;
   const w=L.w,h=L.h;
   ctx.beginPath();
   switch(L.shape){
@@ -3449,6 +3483,8 @@ function liquidPath(kind,p,w,h,t,seed){
 }
 /* Tomchilar — suv sathining oldidan uchib ketadigan mayda sharchalar */
 function liquidDrops(kind,p,w,h,t,seed,alpha,col){
+  if(__glLiq)return;
+  if(!['rise','fall','wipe','ink','pixFall','pixRise','pixWipe'].includes(kind))return;
   if(kind&&kind.startsWith('pix')){pixelFringe(kind,p,w,h,seed||1,alpha,'#c8f169');return;}
   const pp=clamp(p,0,1);
   if(pp<=0.02||pp>=0.92)return;
@@ -3474,6 +3510,8 @@ function rnd01(n){const x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x);
 /* Elementga suv klipini qo'llash. true qaytarsa — chaqiruvchi hech narsa
    qilmaydi (klip joriy save/restore ichida qoladi). */
 function applyLiquidClip(L,fx,w,h,t){
+  if(__glLiq)return false;   // 💧 GPU suv shaderi ishlayapti
+  if(fx&&fx.liq&&!['rise','fall','wipe','ink','pixFall','pixRise','pixWipe'].includes(fx.liq.kind))return false;
   const q=fx&&fx.liq;
   if(!q||q.p>=0.999)return false;
   if(q.p<=0.001){ctx.beginPath();ctx.rect(0,0,0,0);ctx.clip();return true;}
@@ -3633,6 +3671,7 @@ function drawBurst(L,local,baseAlpha){
   ctx.restore();
 }
 function drawAnnotation(L,fx,t){
+  if(drawAnnPath(L,fx,t))return;
   const w=L.w,h=L.h;
   const lw=Math.max(2,L.borderW||8);
   const pr=clamp(fx.draw??1,0,1);
@@ -4986,6 +5025,9 @@ function drawUIShape(L,fx,t,local,alpha){
   const w=L.w,h=L.h,k=L.shape;
   const col=L.fillColor||'#22c55e';
   if(k==='counter'){drawCounter(L,local,alpha);return;}
+  if(k==='gooTab'){drawGooTab(L,local,alpha,t);return;}
+  if(k==='lava'){drawLava(L,local,alpha,t);return;}
+  if(k==='particles'){drawParticles(L,local,alpha,t);return;}
   if(k==='icon'){
     const s=Math.min(w,h);
     const bg=L.iconBg||'none';
@@ -5144,12 +5186,18 @@ function uiShapeDefaults(L){
   else if(L.shape==='chart'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.32);L.fillColor='#22c55e';L.chartType=L.chartType||'area';L.animIn='fade';}
   else if(L.shape==='studio'){L.w=state.W;L.h=state.H;L.x=state.W/2;L.y=state.H/2;L.fillColor='#9bd65a';L.radius=0;L.stA=L.stA??32;}
   else if(L.shape==='counter'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.22);L.fillColor='#22c55e';L.cnStyle=L.cnStyle||'big';L.cnFrom=L.cnFrom??0;L.cnTo=L.cnTo??1000;L.cnDur=L.cnDur??2;L.cnSep=L.cnSep??true;L.animIn='fade';}
+  else if(L.shape==='gooTab'){L.w=Math.round(S*0.66);L.h=Math.round(S*0.26);L.fillColor='#3b82f6';L.radius=Math.round(S*0.04);L.gtStyle=L.gtStyle||'bubble';L.animIn='fade';}
+  else if(L.shape==='particles'){L.w=state.W;L.h=state.H;L.x=state.W/2;L.y=state.H/2;L.fillColor='#ffffff';L.grad2='#bfdbfe';L.ptStyle=L.ptStyle||'snow';L.animIn='fade';}
+  else if(L.shape==='lava'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.5);L.fillColor='#8b5cf6';L.grad2='#ec4899';L.lvStyle=L.lvStyle||'lava';L.animIn='fade';}
   else if(L.shape==='filmstrip'){L.w=Math.round(S*0.62);L.h=Math.round(S*0.1);L.fillColor='#9bd65a';L.radius=Math.round(S*0.016);
     if(!L.fsSrc){const m=state.layers.find(x=>x.type==='video')||state.layers.find(x=>x.type==='image');if(m)L.fsSrc=m.id;}}
 }
 function uiShapeBlock(L){
   const k=L.shape;
   if(k==='counter')return counterShapeBlock(L);
+  if(k==='gooTab')return gooTabBlock(L);
+  if(k==='lava')return lavaBlock(L);
+  if(k==='particles')return ptBlock(L);
   if(k==='icon')return `
     <div class="field"><label>Ikonka</label>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px">
@@ -6302,13 +6350,13 @@ function neoRender(L){
   let k=Math.hypot(m0.a,m0.b)||1;
   let kq=Math.pow(1.15,Math.round(Math.log(k)/Math.log(1.15)));
   const w=L.w,h=L.h;
-  const dist=V('nmDist'),blur=V('nmBlur'),sp=V('nmSpread'),inW=V('nmInW')/100;
+  const _NU=pfxUnit();const dist=V('nmDist')*_NU,blur=V('nmBlur')*_NU,sp=V('nmSpread')*_NU,inW=V('nmInW')/100;
   const M=Math.ceil(Math.abs(dist)+blur*1.6+Math.abs(sp)+10);
   const maxPx=3000;
   if((Math.max(w,h)+2*M)*kq>maxPx)kq=maxPx/(Math.max(w,h)+2*M);
   kq=Math.max(0.05,kq);
   const key=[L.shape,Math.round(w),Math.round(h),L.radius,L.radMulti?[L.rTL,L.rTR,L.rBR,L.rBL].join():'',L.id,
-    NM_KEYS.map(q=>Math.round(+V(q)*100)/100||V(q)).join('|'),kq.toFixed(3)].join('~');
+    NM_KEYS.map(q=>Math.round(+V(q)*100)/100||V(q)).join('|'),kq.toFixed(3),_NU.toFixed(3)].join('~');
   let ent=_neoCache.get(key);
   if(ent){_neoCache.delete(key);_neoCache.set(key,ent);return ent;}
   const cw=Math.max(2,Math.ceil((w+2*M)*kq)),ch=Math.max(2,Math.ceil((h+2*M)*kq));
@@ -6396,7 +6444,7 @@ function drawLG(L,t){
   const V=k=>_nv(L,LG_DEF,k);
   const w=L.w,h=L.h;
   const dm=ctx.getTransform();
-  const k=Math.hypot(dm.a,dm.b)||1;
+  const k=(Math.hypot(dm.a,dm.b)||1)*pfxUnit();
   const ccx=dm.e,ccy=dm.f;
   const a=V('lgAng')*Math.PI/180,lx=Math.sin(a),ly=-Math.cos(a);
   const ext=0.5*(Math.abs(lx)*w+Math.abs(ly)*h);
@@ -6455,7 +6503,7 @@ function drawLG(L,t){
   // ichki nur (qirra bo'ylab yumshoq, blur'siz — ko'p qatlamli stroke)
   const ig=V('lgInner')/100;
   if(ig>0.01){
-    const iw=Math.max(2,V('lgInnerW'));
+    const iw=Math.max(2,V('lgInnerW'))*pfxUnit();
     ctx.save();ctx.setLineDash([]);
     for(const [mul,al] of [[2.0,0.30],[1.35,0.35],[0.85,0.45],[0.45,0.55]]){
       ctx.lineWidth=iw*mul;ctx.strokeStyle=`rgba(255,255,255,${(al*ig*0.22).toFixed(3)})`;ctx.stroke();
@@ -6474,11 +6522,11 @@ function drawLG(L,t){
   }
   ctx.restore();
   // qirra (rim): yorug'lik tomonida yorqin, o'rtada xira, qarshisida o'rtacha
-  const rw=V('lgRim'),ri=V('lgRimI')/100;
+  const rw=V('lgRim')*pfxUnit(),ri=V('lgRimI')/100;
   shapePath(L);
   const disp=V('lgDisp')/100;
   if(disp>0.01&&rw>0){
-    const o=0.5+disp*1.6;
+    const o=(0.5+disp*1.6)*pfxUnit();
     ctx.save();ctx.setLineDash([]);ctx.lineWidth=rw;
     ctx.translate(o,0);ctx.strokeStyle=`rgba(255,70,110,${(0.42*disp*ri).toFixed(3)})`;ctx.stroke();
     ctx.translate(-2*o,0);ctx.strokeStyle=`rgba(60,190,255,${(0.42*disp*ri).toFixed(3)})`;ctx.stroke();
@@ -6594,6 +6642,2073 @@ function fxBind(L,box){
   if(bg)bg.onclick=()=>{historyMaybe();state.bg=_nv(L,NM_DEF,'nmBase');state.bgGrad=null;renderProps();seekDirty=true;};
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ✨ PFX — GPU EFFEKTLAR DVIGATELI (After Effects "Effects & Presets" uslubi)
+   ───────────────────────────────────────────────────────────────────────────
+   • Har bir qatlam o'z izolyatsiya kanvasiga chiziladi, so'ng shu yerda WebGL
+     fragment-shaderlar zanjiridan o'tadi (ripple, glow, pixel, glitch ...).
+   • Faqat element HUDUDI ishlanadi (butun kadr emas) — yengil.
+   • Shaderlar birinchi ishlatilganda kompilyatsiya qilinadi (startup tez).
+   • Barcha effektlar vaqtdan DETERMINISTIK — eksport preview bilan bir xil.
+   • WebGL bo'lmasa — effekt shunchaki o'tkazib yuboriladi, ilova ishlayveradi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const PFX=(function(){
+  let cvs=null,gl=null,ok=null,vbuf=null,maxTex=4096;
+  let capW=0,capH=0,srcTex=null;
+  const fbs=[];               // [{tex,fb}] ×3 — ping-pong + effekt kirishi
+  const progs={};
+  const inCv=document.createElement('canvas');
+  const ictx=inCv.getContext('2d');
+  const VS='attribute vec2 aP;void main(){gl_Position=vec4(aP,0.0,1.0);}';
+  const HDR=`
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform sampler2D uTex;uniform sampler2D uIn;uniform sampler2D uOrig;
+uniform vec2 uRes;uniform vec2 uCap;uniform vec2 uOff;uniform vec4 uBox;
+uniform float uT;uniform float uU;uniform float uSeed;
+uniform vec4 uA;uniform vec4 uB;uniform vec4 uC;uniform vec4 uD;
+vec4 SMP(sampler2D s,vec2 p){p=clamp(p,vec2(0.5),uRes-0.5);return texture2D(s,p/uCap);}
+float h12(vec2 p){vec3 q=fract(vec3(p.xyx)*0.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
+vec2 h22(vec2 p){vec3 q=fract(vec3(p.xyx)*vec3(0.1031,0.1030,0.0973));q+=dot(q,q.yzx+33.33);return fract((q.xx+q.yz)*q.zy);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.0-2.0*f);
+ return mix(mix(h12(i),h12(i+vec2(1.0,0.0)),u.x),mix(h12(i+vec2(0.0,1.0)),h12(i+vec2(1.0,1.0)),u.x),u.y);}
+float fbm(vec2 p){float s=0.0,a=0.5;for(int i=0;i<4;i++){s+=a*vn(p);p=p*2.02+vec2(3.1,1.7);a*=0.5;}return s/0.9375;}
+float lum(vec3 c){return dot(c,vec3(0.2126,0.7152,0.0722));}
+vec3 unp(vec4 c){return c.a>0.0001?c.rgb/c.a:vec3(0.0);}
+vec2 vor(vec2 p,float t){vec2 i=floor(p),f=fract(p);float d1=8.0,d2=8.0;
+ for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){vec2 g=vec2(float(x),float(y));vec2 o=h22(i+g);
+  o=0.5+0.42*sin(t+6.2831*o);float d=length(g+o-f);if(d<d1){d2=d1;d1=d;}else if(d<d2){d2=d;}}
+ return vec2(d1,d2);}
+float caus(vec2 p,float t){vec2 w=p+vec2(fbm(p*0.8+t*0.15),fbm(p*0.8-t*0.13+3.1))*1.3;
+ vec2 a=vor(w,t);vec2 b=vor(w*1.6+vec2(5.2,1.3),t*1.2);
+ float c1=pow(1.0-smoothstep(0.0,0.30,a.y-a.x),3.0);float c2=pow(1.0-smoothstep(0.0,0.24,b.y-b.x),3.0);
+ return c1*0.6+c2*0.4;}
+vec4 addGlow(vec4 o,vec3 add){vec3 c=o.rgb+add;float a=clamp(max(o.a,max(c.r,max(c.g,c.b))),0.0,1.0);return vec4(min(c,vec3(a)),a);}
+`;
+  /* ---------------- FRAGMENT SHADERLAR ---------------- */
+  const FS={
+blit:`void main(){vec2 p=vec2(gl_FragCoord.x,uCap.y-gl_FragCoord.y);gl_FragColor=SMP(uTex,p);}`,
+copy:`void main(){gl_FragColor=SMP(uTex,gl_FragCoord.xy);}`,
+/* uA=(dirX,dirY,radius,threshold<0=yo'q) */
+blur:`void main(){vec2 p=gl_FragCoord.xy;vec4 s=vec4(0.0);float ws=0.0;
+ for(int i=-12;i<=12;i++){float x=float(i)/12.0;float w=exp(-x*x*2.8);vec4 c=SMP(uTex,p+uA.xy*x*uA.z);
+  if(uA.w>=0.0){float l=lum(unp(c));c*=smoothstep(uA.w,uA.w+0.15,l);}s+=c*w;ws+=w;}
+ gl_FragColor=s/ws;}`,
+/* uA=(threshold,softness,keepOrig,0) */
+goo:`void main(){vec2 p=gl_FragCoord.xy;vec4 c=SMP(uTex,p);float a=smoothstep(uA.x-uA.y,uA.x+uA.y,c.a);
+ vec4 o=vec4(unp(c)*a,a);
+ if(uA.z>0.5){vec4 q=SMP(uIn,p);o=q+o*(1.0-q.a);}
+ gl_FragColor=o;}`,
+/* uA=(intensity,0,0,0) uC=(tint rgb, tintMix) */
+glowMix:`void main(){vec2 p=gl_FragCoord.xy;vec4 b=SMP(uTex,p);vec4 o=SMP(uIn,p);
+ vec3 g=mix(b.rgb,uC.rgb*b.a,uC.a)*uA.x;gl_FragColor=addGlow(o,g);}`,
+/* uA=(cx,cy,amp,wavelength) uB=(speed,decay,highlight,0) */
+ripple:`void main(){vec2 p=gl_FragCoord.xy;vec2 d=p-uA.xy;float r=length(d);vec2 n=r>0.001?d/r:vec2(0.0);
+ float ph=r*6.2831/max(uA.w,1.0)-uT*uB.x*6.2831;float env=exp(-r/max(uB.y,1.0));
+ float h=sin(ph)*env;float dh=cos(ph)*env;vec4 c=SMP(uTex,p-n*h*uA.z);
+ float sp=pow(max(0.0,dh),6.0)*uB.z;c.rgb+=vec3(sp*0.55)*c.a;c.rgb*=1.0-max(0.0,-dh)*0.10*uB.z;
+ gl_FragColor=c;}`,
+/* yomg'ir tomchilari suv yuzasida: uA=(density,amp,cell,speed) */
+raindrops:`void main(){vec2 p=gl_FragCoord.xy;vec2 sp=p+uOff;float S=max(uA.z,8.0);vec2 gi=floor(sp/S);vec2 off=vec2(0.0);float hl=0.0;
+ for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){vec2 c=gi+vec2(float(x),float(y));float rn=h12(c+uSeed);
+  if(rn>uA.x)continue;vec2 o=h22(c*1.7+uSeed);vec2 ctr=(c+o)*S;
+  float life=fract(uT*uA.w*(0.6+0.8*h12(c+3.1))+rn*7.0);
+  float R=life*S*1.25;vec2 d=sp-ctr;float dist=length(d);float x0=dist-R;float w=S*0.06+2.0*uU;
+  float prof=sin(x0*0.45/max(uU,0.2))*exp(-x0*x0/(w*w))*(1.0-life)*(1.0-life);
+  vec2 n=dist>0.001?d/dist:vec2(0.0);off+=n*prof;hl+=max(0.0,prof);}
+ vec4 c=SMP(uTex,p-off*uA.y);c.rgb+=vec3(hl*0.35)*c.a;gl_FragColor=c;}`,
+/* uA=(amp,wavelength,speed,angle) uB=(square,0,0,0) */
+waveWarp:`void main(){vec2 p=gl_FragCoord.xy;vec2 dir=vec2(cos(uA.w),sin(uA.w));vec2 nrm=vec2(-dir.y,dir.x);
+ float s=dot(p+uOff,dir);float w=sin(s*6.2831/max(uA.y,1.0)+uT*uA.z*6.2831);
+ if(uB.x>0.5)w=sign(w)*pow(abs(w),0.3);
+ gl_FragColor=SMP(uTex,p+nrm*w*uA.x);}`,
+/* uA=(amount,size,speed,0) */
+turb:`void main(){vec2 p=gl_FragCoord.xy;vec2 q=(p+uOff)/max(uA.y,1.0);float t=uT*uA.z;
+ vec2 d=vec2(fbm(q+vec2(t,uSeed)),fbm(q+vec2(17.3,-t+uSeed)))-0.5;
+ gl_FragColor=SMP(uTex,p+d*2.0*uA.x);}`,
+/* uA=(cx,cy,radius,angle) */
+twirl:`void main(){vec2 p=gl_FragCoord.xy;vec2 d=p-uA.xy;float r=length(d);float f=clamp(1.0-r/max(uA.z,1.0),0.0,1.0);
+ float a=uA.w*f*f;float c=cos(a),s=sin(a);gl_FragColor=SMP(uTex,uA.xy+vec2(c*d.x-s*d.y,s*d.x+c*d.y));}`,
+/* uA=(cx,cy,radius,amount) */
+bulge:`void main(){vec2 p=gl_FragCoord.xy;vec2 d=p-uA.xy;float r=length(d)/max(uA.z,1.0);vec2 q=p;
+ if(r<1.0){float k=1.0-uA.w*(1.0-r*r)*0.8;q=uA.xy+d*k;}gl_FragColor=SMP(uTex,q);}`,
+/* uA=(cx,cy,k,radius) */
+lens:`void main(){vec2 p=gl_FragCoord.xy;vec2 d=(p-uA.xy)/max(uA.w,1.0);float r2=dot(d,d);
+ gl_FragColor=SMP(uTex,uA.xy+d*(1.0+uA.z*r2)*uA.w);}`,
+/* uA=(cx,cy,segments,rotation) */
+kaleido:`void main(){vec2 p=gl_FragCoord.xy;vec2 d=p-uA.xy;float r=length(d);float seg=6.2831/max(uA.z,1.0);
+ float a=atan(d.y,d.x)-uA.w;a=mod(a,seg);a=abs(a-seg*0.5);
+ gl_FragColor=SMP(uTex,uA.xy+r*vec2(cos(a+uA.w),sin(a+uA.w)));}`,
+/* uA=(amount,scale,speed,0) — issiq havo (yuqoriga oqadi) */
+heat:`void main(){vec2 p=gl_FragCoord.xy;vec2 q=(p+uOff)/max(uA.y,1.0);float t=uT*uA.z;
+ float n1=fbm(vec2(q.x*1.6,q.y+t*1.3)+uSeed)-0.5;float n2=fbm(vec2(q.x*2.3+7.0,q.y*1.2+t*1.7))-0.5;
+ gl_FragColor=SMP(uTex,p+vec2(n1,n2*0.6)*uA.x*2.0);}`,
+/* uA=(refraction,caustics,scale,speed) uC=(tint rgb, mix) */
+underwater:`void main(){vec2 p=gl_FragCoord.xy;vec2 w=(p+uOff)/max(uA.z,1.0);float t=uT*uA.w;
+ vec2 d=vec2(fbm(w*1.3+vec2(t*0.6,0.0))-0.5,fbm(w*1.3+vec2(4.0,t*0.5))-0.5);
+ vec4 c=SMP(uTex,p+d*uA.x*2.0);float cs=caus(w*0.9,t*1.6);
+ vec3 col=unp(c);col=mix(col,col*uC.rgb*1.2,uC.a);col+=cs*uA.y*0.6*mix(vec3(1.0),uC.rgb,0.25);
+ gl_FragColor=vec4(clamp(col,0.0,1.0)*c.a,c.a);}`,
+/* oynadagi yomg'ir: uA=(density,size,speed,fog) */
+rainGlass:`void main(){vec2 p=gl_FragCoord.xy;vec2 sp=p+uOff;float S=max(uA.y,6.0);
+ vec4 acc=vec4(0.0);vec2 gi=floor(sp/S);
+ for(int y=-2;y<=1;y++)for(int x=-1;x<=1;x++){vec2 c=gi+vec2(float(x),float(y));float rn=h12(c+uSeed*3.0);
+  if(rn>uA.x)continue;vec2 o=h22(c+11.3);float slide=step(0.72,h12(c+5.0));
+  vec2 ctr=(c+o)*S;float rad=S*(0.16+0.2*h12(c+2.0));
+  if(slide>0.5){ctr.y+=mod(uT*uA.z*S*(0.6+h12(c+9.0))+o.y*S*3.0,S*3.0)-S*1.5;rad*=1.15;}
+  vec2 d=sp-ctr;d.y*=slide>0.5?0.82:1.0;float dist=length(d)/rad;
+  if(dist<1.0){float m=smoothstep(1.0,0.82,dist);vec2 n=d/rad;
+   float sp2=pow(max(0.0,dot(normalize(n+0.0001),vec2(-0.55,-0.75))),5.0)*(1.0-dist);
+   if(m>acc.z){acc.xy=-n*rad*1.25;acc.z=m;acc.w=sp2-smoothstep(0.72,1.0,dist)*0.35;}}}
+ vec4 base=SMP(uTex,p);
+ if(uA.w>0.001){float r=6.0*uU*uA.w*2.0;vec4 b=(SMP(uTex,p+vec2(r,0.0))+SMP(uTex,p-vec2(r,0.0))+SMP(uTex,p+vec2(0.0,r))+SMP(uTex,p-vec2(0.0,r))+SMP(uTex,p+vec2(r,r)*0.7)+SMP(uTex,p-vec2(r,r)*0.7)+base)/7.0;
+  base=mix(base,b,clamp(uA.w,0.0,1.0));base.rgb=mix(base.rgb,vec3(lum(unp(base))*0.9+0.1)*base.a,uA.w*0.25);}
+ vec4 dr=SMP(uTex,p+acc.xy);vec4 c=mix(base,dr,acc.z);
+ c.rgb+=vec3(max(acc.w,0.0)*0.9)*c.a*acc.z;c.rgb*=1.0+min(acc.w,0.0)*acc.z;
+ gl_FragColor=c;}`,
+/* uA=(cx,cy,amount,0) */
+zoomBlur:`void main(){vec2 p=gl_FragCoord.xy;vec4 s=vec4(0.0);
+ for(int i=0;i<24;i++){float k=float(i)/23.0;s+=SMP(uTex,mix(p,uA.xy,k*uA.z));}gl_FragColor=s/24.0;}`,
+/* uA=(cx,cy,angle,0) */
+spinBlur:`void main(){vec2 p=gl_FragCoord.xy;vec2 d=p-uA.xy;vec4 s=vec4(0.0);
+ for(int i=0;i<24;i++){float a=(float(i)/23.0-0.5)*uA.z;float c=cos(a),sn=sin(a);s+=SMP(uTex,uA.xy+vec2(c*d.x-sn*d.y,sn*d.x+c*d.y));}
+ gl_FragColor=s/24.0;}`,
+/* uA=(amount,radius,0,0) */
+sharpen:`void main(){vec2 p=gl_FragCoord.xy;float r=max(uA.y,0.5);vec4 c=SMP(uTex,p);
+ vec4 n=SMP(uTex,p+vec2(0.0,r))+SMP(uTex,p-vec2(0.0,r))+SMP(uTex,p+vec2(r,0.0))+SMP(uTex,p-vec2(r,0.0));
+ vec4 o=c*(1.0+4.0*uA.x)-n*uA.x;o.a=c.a;o.rgb=clamp(o.rgb,vec3(0.0),vec3(o.a));gl_FragColor=o;}`,
+/* uA=(cx,cy,length,intensity) uB=(threshold,0,0,0) uC=tint */
+rays:`void main(){vec2 p=gl_FragCoord.xy;vec2 d=p-uA.xy;vec4 s=vec4(0.0);float dec=1.0,tot=0.0;
+ for(int i=0;i<40;i++){float k=float(i)/40.0*uA.z;vec4 c=SMP(uIn,p-d*k);float l=lum(unp(c))*c.a;c*=smoothstep(uB.x,uB.x+0.25,l);s+=c*dec;tot+=dec;dec*=0.955;}
+ s/=tot;vec4 o=SMP(uIn,p);vec3 g=mix(s.rgb,uC.rgb*s.a,uC.a)*uA.w*0.6;gl_FragColor=addGlow(o,g);}`,
+/* uA=(amount,angle,0,0) */
+chroma:`void main(){vec2 p=gl_FragCoord.xy;vec2 o=vec2(cos(uA.y),sin(uA.y))*uA.x;
+ vec4 a=SMP(uTex,p+o),b=SMP(uTex,p),c=SMP(uTex,p-o);gl_FragColor=vec4(a.r,b.g,c.b,max(max(a.a,b.a),c.a));}`,
+/* uA=(amount,block,fps,rgb) */
+glitch:`void main(){vec2 p=gl_FragCoord.xy;float fr=floor(uT*max(uA.z,1.0));float bs=max(uA.y,2.0);
+ float row=floor((p.y+uOff.y)/bs);float r1=h12(vec2(row,fr)+uSeed);vec2 q=p;
+ if(r1<uA.x*0.55)q.x+=(h12(vec2(row,fr+3.0))-0.5)*bs*7.0*uA.x;
+ vec2 blk=floor((p+uOff)/(bs*2.3));float r2=h12(blk+fr*1.3);if(r2<uA.x*0.14)q+=(h22(blk+fr)-0.5)*bs*5.0;
+ vec2 o=vec2(uA.w*uA.x*(0.5+r1),0.0);
+ vec4 a=SMP(uTex,q+o),b=SMP(uTex,q),c=SMP(uTex,q-o);vec4 res=vec4(a.r,b.g,c.b,max(max(a.a,b.a),c.a));
+ if(h12(vec2(fr,row*0.37))<uA.x*0.04)res=vec4(res.a*0.9);
+ gl_FragColor=res;}`,
+/* uA=(amount,scanlines,noise,jitter) */
+vhs:`void main(){vec2 p=gl_FragCoord.xy;float fr=floor(uT*24.0);float y=p.y+uOff.y;
+ float jit=(vn(vec2(y*0.03,fr*0.7))-0.5)*uA.w*8.0*uU+(h12(vec2(floor(y/3.0),fr))<0.02*uA.x?(h12(vec2(y,fr))-0.5)*20.0*uU:0.0);
+ vec2 q=p+vec2(jit,0.0);float ca=2.5*uU*uA.x;
+ vec4 a=SMP(uTex,q+vec2(ca,0.0)),b=SMP(uTex,q),c=SMP(uTex,q-vec2(ca,0.0));
+ vec4 o=vec4(a.r,b.g,c.b,max(max(a.a,b.a),c.a));
+ float sl=0.5+0.5*sin(y*3.14159/max(1.5*uU,1.0));o.rgb*=1.0-uA.y*0.35*sl;
+ float nz=(h12(p+fr*13.1)-0.5)*uA.z*0.35;o.rgb=clamp(o.rgb+nz*o.a,vec3(0.0),vec3(o.a));
+ gl_FragColor=o;}`,
+/* uA=(cell,angle,mono,0) uC=ink */
+halftone:`void main(){vec2 p=gl_FragCoord.xy;vec2 sp=p+uOff;float cs=max(uA.x,2.0);float c=cos(uA.y),s=sin(uA.y);
+ vec2 r=vec2(c*sp.x+s*sp.y,-s*sp.x+c*sp.y);vec2 cc=(floor(r/cs)+0.5)*cs;vec2 back=vec2(c*cc.x-s*cc.y,s*cc.x+c*cc.y)-uOff;
+ vec4 col=SMP(uTex,back);float l=lum(unp(col));float rad;vec3 dc;
+ if(uA.z>0.5){rad=cs*0.62*sqrt(clamp(1.0-l,0.0,1.0))*sqrt(col.a);dc=uC.rgb;}
+ else{rad=cs*0.6*sqrt(col.a)*(0.35+0.65*(1.0-l*0.65));dc=unp(col);}
+ float d=length(r-cc);float m=smoothstep(rad+0.8,rad-0.8,d);gl_FragColor=vec4(dc*m,m);}`,
+/* uA=(levels,0,0,0) */
+posterize:`void main(){vec4 c=SMP(uTex,gl_FragCoord.xy);float lv=max(uA.x,2.0);vec3 u=floor(unp(c)*lv+0.5)/lv;gl_FragColor=vec4(clamp(u,0.0,1.0)*c.a,c.a);}`,
+/* uA=(strength,mode,width,0) uC=color */
+edges:`float ev(vec2 q){vec4 c=SMP(uTex,q);return c.a*0.5+lum(unp(c))*c.a*0.5;}
+void main(){vec2 p=gl_FragCoord.xy;float r=max(uA.z,0.5);
+ float tl=ev(p+vec2(-r,-r)),t=ev(p+vec2(0.0,-r)),tr=ev(p+vec2(r,-r));
+ float l=ev(p+vec2(-r,0.0)),rr=ev(p+vec2(r,0.0));
+ float bl=ev(p+vec2(-r,r)),b=ev(p+vec2(0.0,r)),br=ev(p+vec2(r,r));
+ float gx=-tl-2.0*l-bl+tr+2.0*rr+br;float gy=-tl-2.0*t-tr+bl+2.0*b+br;float e=clamp(length(vec2(gx,gy))*uA.x,0.0,1.0);
+ vec4 c=SMP(uTex,p);vec4 ec=vec4(uC.rgb*e,e);
+ gl_FragColor=uA.y>0.5?ec:addGlow(c,uC.rgb*e);}`,
+/* uA=(block,0,0,0) */
+pixelate:`void main(){vec2 p=gl_FragCoord.xy;float b=max(uA.x,1.0);vec2 q=(floor((p+uOff)/b)+0.5)*b-uOff;gl_FragColor=SMP(uTex,q);}`,
+/* uA=(amount,block,0,0) */
+pixDiss:`void main(){vec2 p=gl_FragCoord.xy;float b=max(uA.y,1.0);vec2 cell=floor((p+uOff)/b);
+ float r=h12(cell+uSeed);gl_FragColor=r<uA.x?vec4(0.0):SMP(uTex,p);}`,
+/* uA=(levels,scale,mono,0) */
+dither:`float b2(vec2 a){a=floor(a);return fract(dot(a,vec2(0.5,a.y*0.75)));}
+float b4(vec2 a){return b2(0.5*a)*0.25+b2(a);}
+void main(){vec2 p=gl_FragCoord.xy;float sc=max(uA.y,1.0);vec2 q=(floor((p+uOff)/sc)+0.5)*sc-uOff;vec4 c=SMP(uTex,q);
+ vec3 u=unp(c);if(uA.z>0.5)u=vec3(lum(u));float lv=max(uA.x,2.0)-1.0;float th=b4((p+uOff)/sc)-0.5;
+ u=floor(u*lv+0.5+th)/lv;float a=step(0.5,c.a+th*0.3);gl_FragColor=vec4(clamp(u,0.0,1.0)*a,a);}`,
+/* uA=(threshold,length,dir,0) */
+pixSort:`void main(){vec2 p=gl_FragCoord.xy;vec2 dir=uA.z>0.5?vec2(1.0,0.0):vec2(0.0,1.0);
+ vec4 base=SMP(uTex,p);vec4 best=base;float bl=lum(unp(base))*base.a;
+ for(int i=1;i<=24;i++){vec4 c=SMP(uTex,p-dir*float(i)*uA.y/24.0);float l=lum(unp(c))*c.a;if(l>uA.x&&l>bl){best=c;bl=l;}}
+ gl_FragColor=bl>uA.x?best:base;}`,
+/* uA=(cell,gap,glow,0) */
+led:`void main(){vec2 p=gl_FragCoord.xy;float cs=max(uA.x,3.0);vec2 sp=p+uOff;vec2 cc=(floor(sp/cs)+0.5)*cs;
+ vec4 c=SMP(uTex,cc-uOff);float d=length(sp-cc)/(cs*0.5);float r=1.0-uA.y;
+ float m=smoothstep(r,r-0.12,d);float g=exp(-d*d*2.5)*uA.z;float k=clamp(m+g*0.6,0.0,1.0);
+ gl_FragColor=vec4(unp(c)*c.a*k,c.a*k);}`,
+/* uA=(exposure,contrast,saturation,gamma) uB=(temp,tint,vibrance,invert) */
+grade:`void main(){vec4 c=SMP(uTex,gl_FragCoord.xy);vec3 u=unp(c);
+ u*=pow(2.0,uA.x);u+=vec3(uB.x*0.08,-uB.y*0.05+uB.x*0.0,-uB.x*0.08);u.g+=uB.y*0.06;
+ u=(u-0.5)*uA.y+0.5;float l=lum(u);u=mix(vec3(l),u,uA.z);
+ float mx=max(u.r,max(u.g,u.b)),mn=min(u.r,min(u.g,u.b));float sat=mx-mn;u=mix(vec3(l),u,1.0+uB.z*(1.0-sat));
+ u=pow(clamp(u,0.0,1.0),vec3(1.0/max(uA.w,0.05)));if(uB.w>0.5)u=1.0-u;
+ gl_FragColor=vec4(clamp(u,0.0,1.0)*c.a,c.a);}`,
+/* uA=(mix,0,0,0) uC=shadow uD=highlight */
+duotone:`void main(){vec4 c=SMP(uTex,gl_FragCoord.xy);vec3 u=unp(c);float l=smoothstep(0.0,1.0,lum(u));
+ vec3 d=mix(uC.rgb,uD.rgb,l);gl_FragColor=vec4(mix(u,d,uA.x)*c.a,c.a);}`,
+/* uA=(amount,size,soft,round) */
+vignette:`void main(){vec2 p=gl_FragCoord.xy;vec4 c=SMP(uTex,p);vec2 bc=(uBox.xy+uBox.zw)*0.5;vec2 bs=max((uBox.zw-uBox.xy)*0.5,vec2(1.0));
+ vec2 d=(p-bc)/bs;d.x*=mix(1.0,bs.x/bs.y,uA.w);float r=length(d);float v=smoothstep(uA.y,uA.y+uA.z+0.001,r);
+ c.rgb*=1.0-v*uA.x;gl_FragColor=c;}`,
+/* uA=(amount,size,fps,mono) */
+grain:`void main(){vec2 p=gl_FragCoord.xy;vec4 c=SMP(uTex,p);float fr=floor(uT*max(uA.z,1.0));
+ vec2 q=floor((p+uOff)/max(uA.y,1.0));vec3 n=uA.w>0.5?vec3(h12(q+fr*17.31)):vec3(h12(q+fr*17.31),h12(q+fr*9.7+3.0),h12(q+fr*5.3+7.0));
+ vec3 u=unp(c)+(n-0.5)*uA.x;gl_FragColor=vec4(clamp(u,0.0,1.0)*c.a,c.a);}`,
+/* uA=(scale,contrast,speed,mode) uB=(threshold,soft,bright,0) uC=c1 uD=c2 */
+fractal:`void main(){vec2 p=gl_FragCoord.xy;vec4 c=SMP(uTex,p);vec2 q=(p+uOff)/max(uA.x,1.0);float t=uT*uA.z;
+ float n=fbm(q+vec2(fbm(q*0.7+t*0.3),fbm(q*0.7-t*0.25+5.0))*1.6+vec2(t*0.2,uSeed));
+ n=clamp((n-0.5)*uA.y+0.5+uB.z,0.0,1.0);vec3 nc=mix(uC.rgb,uD.rgb,n);
+ if(uA.w<0.5){vec3 u=unp(c);vec3 ov=mix(2.0*u*nc,1.0-2.0*(1.0-u)*(1.0-nc),step(0.5,u));gl_FragColor=vec4(mix(u,ov,0.85)*c.a,c.a);}
+ else if(uA.w<1.5){gl_FragColor=vec4(nc*c.a,c.a);}
+ else{float m=smoothstep(uB.x-uB.y,uB.x+uB.y,n);gl_FragColor=c*m;}}`,
+/* uA=(angle,width,speed,intensity) uC=color */
+sweep:`void main(){vec2 p=gl_FragCoord.xy;vec4 c=SMP(uTex,p);vec2 bc=(uBox.xy+uBox.zw)*0.5;vec2 bs=(uBox.zw-uBox.xy);
+ vec2 dir=vec2(cos(uA.x),sin(uA.x));float Lh=abs(dir.x)*bs.x*0.5+abs(dir.y)*bs.y*0.5+uA.y*2.0;
+ float s=dot(p-bc,dir);float pos=mix(-Lh,Lh,fract(uT*uA.z));float b=exp(-pow((s-pos)/max(uA.y,1.0),2.0));
+ gl_FragColor=addGlow(c,uC.rgb*b*uA.w*c.a);}`,
+/* uA=(angle,length,fade,opacity) uC=color */
+longShadow:`void main(){vec2 p=gl_FragCoord.xy;vec2 dir=vec2(cos(uA.x),sin(uA.x));float a=0.0;
+ for(int i=1;i<=48;i++){float k=float(i)/48.0;float s=SMP(uIn,p-dir*k*uA.y).a*mix(1.0,1.0-k,uA.z);a=max(a,s);}
+ vec4 o=SMP(uIn,p);vec4 sh=vec4(uC.rgb,1.0)*a*uA.w;gl_FragColor=o+sh*(1.0-o.a);}`,
+/* uA=(width,soft,opacity,0) uC=color */
+stroke:`void main(){vec2 p=gl_FragCoord.xy;float a=0.0;
+ for(int j=1;j<=3;j++){float r=uA.x*float(j)/3.0;for(int i=0;i<16;i++){float an=float(i)*0.3927+float(j)*0.13;a=max(a,SMP(uIn,p+vec2(cos(an),sin(an))*r).a);}}
+ a=smoothstep(0.5-uA.y*0.5,0.5+uA.y*0.5+0.001,a)*uA.z;vec4 o=SMP(uIn,p);vec4 sh=vec4(uC.rgb,1.0)*a;gl_FragColor=o+sh*(1.0-o.a);}`,
+/* uA=(tilesX,tilesY,mirror,scroll) */
+tile:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,bs=max(uBox.zw-uBox.xy,vec2(1.0));vec2 u=(p-b0)/bs;
+ vec2 q=u*vec2(max(uA.x,1.0),max(uA.y,1.0))+vec2(uT*uA.w,0.0);vec2 f=fract(q);
+ if(uA.z>0.5){vec2 m=mod(floor(q),2.0);f=mix(f,1.0-f,m);}
+ vec4 c=SMP(uTex,b0+f*bs);float inb=step(0.0,u.x)*step(u.x,1.0)*step(0.0,u.y)*step(u.y,1.0);gl_FragColor=c*inb;}`,
+/* uA=(cx,cy,intensity,size) uC=color */
+flare:`void main(){vec2 p=gl_FragCoord.xy;vec4 o=SMP(uTex,p);vec2 c=uA.xy;vec2 bc=(uBox.xy+uBox.zw)*0.5;vec2 ax=bc-c;
+ vec2 d=p-c;float r=length(d)/max(uA.w,1.0);float ang=atan(d.y,d.x);
+ float core=exp(-r*r*10.0)*1.3+exp(-r*2.6)*0.35;
+ float rays=pow(abs(sin(ang*6.0+0.3)),28.0)*exp(-r*1.3)*0.55+pow(abs(sin(ang*13.0+1.1)),48.0)*exp(-r*1.8)*0.3;
+ float ring=exp(-pow((r-1.55)/0.05,2.0))*0.12;vec3 col=uC.rgb*(core+rays)+vec3(0.6,0.8,1.0)*ring;
+ for(int i=1;i<=6;i++){float k=float(i)*0.33;vec2 gp=c+ax*k*2.0;float gr=uA.w*(0.08+0.05*float(i));float gd=length(p-gp)/gr;
+  vec3 gc=mix(uC.rgb,vec3(0.45,0.75,1.0),fract(k*1.7));col+=gc*smoothstep(1.0,0.55,gd)*0.07+gc*exp(-pow((gd-1.0)/0.08,2.0))*0.05;}
+ gl_FragColor=addGlow(o,col*uA.z);}`,
+/* CC Sphere: uA=(radius,rot,tilt,light) */
+sphere:`void main(){vec2 p=gl_FragCoord.xy;vec2 bc=(uBox.xy+uBox.zw)*0.5;vec2 bs=max(uBox.zw-uBox.xy,vec2(1.0));float R=max(uA.x,2.0);
+ vec2 q=(p-bc)/R;float r2=dot(q,q);if(r2>1.0){gl_FragColor=vec4(0.0);return;}
+ vec3 n=vec3(q.x,q.y,sqrt(1.0-r2));float ct=cos(uA.z),st=sin(uA.z);vec3 m=vec3(n.x,n.y*ct-n.z*st,n.y*st+n.z*ct);
+ float lon=atan(m.x,m.z)+uA.y;float lat=asin(clamp(m.y,-1.0,1.0));
+ vec2 uv=vec2(fract(lon/6.2831853+0.5),lat/3.14159265+0.5);
+ vec4 c=SMP(uTex,uBox.xy+uv*bs);
+ float l=clamp(dot(n,normalize(vec3(-0.5,-0.6,0.8))),0.0,1.0);float sh=mix(1.0,0.3+0.8*l,uA.w);
+ float edge=smoothstep(1.0,0.985,sqrt(r2));vec3 col=unp(c)*sh+vec3(pow(l,40.0)*0.4*uA.w);
+ gl_FragColor=vec4(clamp(col,0.0,1.0)*c.a*edge,c.a*edge);}`,
+/* 4 rangli gradient: uC=c1 uD=c2 uB=(c3,mix) uA=(c4,speed) */
+grad4:`void main(){vec2 p=gl_FragCoord.xy;vec4 o=SMP(uTex,p);vec2 b0=uBox.xy,bs=max(uBox.zw-uBox.xy,vec2(1.0));vec2 u=(p-b0)/bs;float t=uT*uA.w;
+ vec2 P1=vec2(0.2+0.12*sin(t),0.2+0.12*cos(t*1.3)),P2=vec2(0.8+0.12*cos(t*0.9),0.25+0.12*sin(t*1.1)),P3=vec2(0.25+0.12*cos(t*1.2),0.8+0.12*sin(t*0.8)),P4=vec2(0.8+0.12*sin(t*0.7),0.8+0.12*cos(t));
+ float w1=1.0/pow(length(u-P1)+0.05,2.2),w2=1.0/pow(length(u-P2)+0.05,2.2),w3=1.0/pow(length(u-P3)+0.05,2.2),w4=1.0/pow(length(u-P4)+0.05,2.2);
+ vec3 g=(uC.rgb*w1+uD.rgb*w2+uB.rgb*w3+uA.rgb*w4)/(w1+w2+w3+w4);gl_FragColor=vec4(mix(unp(o),g,uB.w)*o.a,o.a);}`,
+/* AE o'tishlari: uA=(kind,completion,feather,angle) uB=(blinds,0,0,0) */
+wipeT:`void main(){vec2 p=gl_FragCoord.xy;vec4 o=SMP(uTex,p);vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(b1-b0,vec2(1.0));vec2 bc=(b0+b1)*0.5;
+ float k=uA.x,c=clamp(uA.y,0.0,1.0),f=max(uA.z,0.5);float s,Lt;vec2 d=vec2(cos(uA.w),sin(uA.w));vec2 q=p-bc;
+ if(k<0.5){Lt=abs(d.x)*bs.x+abs(d.y)*bs.y;s=dot(q,d)+Lt*0.5;}
+ else if(k<1.5){float a=atan(q.x,-q.y);Lt=360.0;s=(a/6.2831853+0.5)*360.0;f=f*0.25;}
+ else if(k<2.5){Lt=length(bs)*0.5;s=Lt-length(q);}
+ else if(k<3.5){float W=(abs(d.x)*bs.x+abs(d.y)*bs.y)/max(uB.x,1.0);Lt=W;s=mod(dot(q,d)+10000.0*W,W);f=min(f,W*0.3);}
+ else if(k<4.5){vec2 cell=floor((p+uOff)/max(f,4.0));Lt=100.0;s=h12(cell+uSeed)*100.0;f=0.5;}
+ else if(k<5.5){Lt=(bs.x+bs.y)*0.5;s=Lt-(abs(q.x)+abs(q.y));}
+ else{Lt=100.0;s=lum(unp(o))*100.0;f=f*0.1+0.5;}
+ float e=c*(Lt+2.0*f)-f;float m=smoothstep(e-f,e+f,s);gl_FragColor=o*m;}`,
+/* uA=(strength,angle,mix,0) */
+emboss:`void main(){vec2 p=gl_FragCoord.xy;vec4 o=SMP(uTex,p);vec2 d=vec2(cos(uA.y),sin(uA.y))*1.5*max(uU,0.5);
+ vec4 a=SMP(uTex,p-d),b=SMP(uTex,p+d);float v=(lum(unp(b))*b.a-lum(unp(a))*a.a)*uA.x+0.5;
+ vec3 col=mix(unp(o),vec3(v),uA.z);gl_FragColor=vec4(clamp(col,0.0,1.0)*o.a,o.a);}`,
+lumaToAlpha:`void main(){vec4 c=SMP(uTex,gl_FragCoord.xy);float a=lum(unp(c))*c.a;gl_FragColor=vec4(a);}`,
+/* ═══ 💧 HAQIQIY SUV — kirish/chiqish va doimiy suv sathi ═══
+   uA=(kind,p,E,slosh) kind:0=pastdan,1=tepadan(tomchilar),2=chapdan,3=siyoh,4=doimiy sath
+   uB=(drips,bubbles,splash,emptyAlpha) uC=(tint rgb,tintMix) uD=(waveAmp,caustic,refr,0) */
+liquid:`
+float surfY(float x,float lvl,float A,float W,float t){float u=x/max(W,1.0);
+ return lvl+A*(0.55*sin(u*6.5+t*3.1+uSeed)+0.3*sin(u*13.7-t*4.3+uSeed*2.0)+0.15*sin(u*29.0+t*7.0))
+  +A*0.6*(vn(vec2(u*9.0-t*1.4,t*0.6+uSeed))-0.5);}
+void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(b1-b0,vec2(1.0));
+ float kind=uA.x,P=uA.y,E=uA.z,t=uT;vec4 res=vec4(0.0);
+ vec3 tint=uC.rgb;float tm=uC.a;
+ if(kind<2.5||kind>3.5){
+  // 0/4: pastdan ko'tariladi, 1: tepadan quyiladi, 2: chapdan (o'qlar almashadi)
+  bool side=kind>1.5&&kind<2.5;bool down=kind>0.5&&kind<1.5;
+  vec2 q=side?vec2(p.y-b0.y,b1.x-p.x):vec2(p.x-b0.x,p.y-b0.y);vec2 S=side?vec2(bs.y,bs.x):bs;
+  if(down)q.y=S.y-q.y;
+  float A=(S.y*0.03+5.0*uU)*(0.35+uA.w*sin(min(P,1.0)*3.14159))*uD.x;
+  float lvl=S.y-S.y*1.14*P+S.y*0.07;
+  float ys=surfY(q.x,lvl,A,S.x,t);
+  if(down&&uB.x>0.0){float N=6.0+uB.x*10.0;float cu=q.x/S.x*N;float k=floor(cu);float v=fract(cu)-0.5;
+   float ww=0.12+0.22*h12(vec2(k,uSeed));float len=h12(vec2(k+7.0,uSeed))*S.y*0.22*sin(min(P,1.0)*3.14159)*uB.x;
+   ys-=len*sqrt(max(0.0,1.0-(v*v)/(ww*ww)));}
+  float d=q.y-ys;
+  float ysL=surfY(q.x-1.5,lvl,A,S.x,t),ysR=surfY(q.x+1.5,lvl,A,S.x,t);float slope=(ysR-ysL)/3.0;
+  float m=smoothstep(-0.9,0.9,d);
+  float depthF=exp(-max(d,0.0)/(S.y*0.22));
+  vec2 rq=vec2(slope*14.0*uD.z,0.0)*depthF*E;
+  vec2 wq=(p+uOff)/(36.0*uU);vec2 wob=(vec2(fbm(wq+t*0.5),fbm(wq+5.0-t*0.45))-0.5)*6.0*uU*uD.z*E;
+  vec2 off=(side?vec2(-rq.y,rq.x):rq)*uU+wob;
+  vec4 c0=SMP(uTex,p);vec4 c=SMP(uTex,p+off);if(c.a<0.02)c=c0;
+  vec3 col=unp(c);
+  // suv rangi va chuqurlik bo'yicha yutilish
+  col=mix(col,col*tint*1.25+tint*0.08,tm*E*(0.35+0.65*(1.0-depthF)));
+  // kaustikalar (suv ostidagi yorug'lik to'ri)
+  float cs=caus((p+uOff)/(110.0*uU),t*1.1);col+=cs*uD.y*0.28*E*depthF*depthF*mix(vec3(1.0),tint,0.35);
+  // meniskus: yuqori yorqin chiziq + ostida qorong'u band
+  float band=smoothstep(0.0,3.0*uU,d)*(1.0-smoothstep(4.0*uU,14.0*uU,d));
+  col*=1.0-0.18*band*E;
+  float lip=exp(-pow(d/(1.3*uU),2.0));
+  float glint=0.55+0.45*sin(q.x*0.08/uU+t*5.0+fbm(vec2(q.x*0.02,t))*6.0);
+  vec4 under=SMP(uTex,p+(side?vec2(-6.0,0.0):vec2(0.0,down?-6.0:6.0))*uU);
+  float ua=under.a;
+  col+=vec3(0.95)*lip*glint*E*0.85;
+  float a=c0.a*m;
+  a=max(a,lip*E*ua*0.9*c0.a);
+  res=vec4(clamp(col,0.0,1.0)*a,a);
+  // pufakchalar
+  if(uB.y>0.0&&E>0.01){for(int i=0;i<14;i++){float fi=float(i);float rx=h12(vec2(fi,uSeed+1.0));float sp=0.25+0.5*h12(vec2(fi,uSeed+2.0));
+   float rr=(1.5+2.5*h12(vec2(fi,uSeed+3.0)))*uU*(1.0+uB.y);float life=fract(t*sp+rx*3.0);
+   vec2 bp=vec2(rx*S.x+sin(t*3.0+fi)*4.0*uU,S.y-life*max(S.y-lvl,0.0)*1.1);float bd=length(q-bp);
+   if(bp.y>ys+rr){float ring=smoothstep(rr,rr-1.2*uU,bd)-smoothstep(rr-1.4*uU,rr-2.6*uU,bd);
+    float hi=smoothstep(rr*0.6,0.0,length(q-bp+vec2(rr*0.35,rr*0.35)));
+    vec4 bc=SMP(uTex,p);res.rgb+=vec3(0.9)*(ring*0.55+hi*0.5)*bc.a*E*uB.y;}}}
+  // sachragan tomchilar (yuzadan otiladi, ballistik)
+  if(uB.z>0.0&&E>0.01&&P<0.97){for(int i=0;i<12;i++){float fi=float(i);float rx=h12(vec2(fi,uSeed+11.0));
+   float ph=fract(t*0.9*(0.6+0.8*h12(vec2(fi,uSeed+12.0)))+rx);float vx=(h12(vec2(fi,uSeed+13.0))-0.5)*40.0*uU;
+   float vy=(60.0+90.0*h12(vec2(fi,uSeed+14.0)))*uU*uB.z;float x0=rx*S.x;float y0=surfY(x0,lvl,A,S.x,t);
+   vec2 dp=vec2(x0+vx*ph,y0-vy*ph+vy*1.2*ph*ph);float rr=(1.6+2.4*h12(vec2(fi,uSeed+15.0)))*uU*(1.0-ph*0.5);
+   float dd=length(q-dp);if(dd<rr+1.0){float mm=smoothstep(rr+0.8,rr-0.8,dd)*(1.0-ph)*E;
+    vec4 wc=SMP(uTex,side?vec2(b1.x-(y0+8.0*uU),b0.y+x0):vec2(b0.x+x0,(down?b1.y-(y0+8.0*uU):b0.y+y0+8.0*uU)));
+    vec3 cc=unp(wc);if(wc.a<0.05)cc=tint;float hi=smoothstep(rr*0.7,0.0,length(q-dp+vec2(rr*0.3,rr*0.4)));
+    vec3 dc=clamp(cc*1.05+hi*0.6,0.0,1.0);float aa=mm*max(wc.a,0.6);res=vec4(dc*aa,aa)+res*(1.0-aa);}}}
+  // doimiy sath: yuqoridagi bo'sh qism
+  if(kind>3.5){vec4 c0=SMP(uTex,p);res=res+c0*uB.w*(1.0-m)*(1.0-res.a);}
+ }else{
+  // 🖋 siyoh/suv dog'i: organik, tolali chekka + "kofe halqasi"
+  vec2 bc=(b0+b1)*0.5;vec2 d=p-bc;float R=length(bs)*0.5*1.1*P;float ang=atan(d.y,d.x);
+  float n=fbm(vec2(ang*1.6+uSeed,t*0.15))*0.25+fbm(vec2(ang*5.0,uSeed*2.0))*0.10;
+  float fib=fbm((p+uOff)/(9.0*uU)+t*0.05)*0.12;
+  float edge=R*(0.86+n+fib*(1.0-P));float r=length(d);
+  float m=smoothstep(edge+2.0*uU,edge-2.0*uU,r);
+  vec2 wq=(p+uOff)/(40.0*uU);vec2 wob=(vec2(fbm(wq),fbm(wq+3.0))-0.5)*5.0*uU*E;
+  vec4 c0=SMP(uTex,p);vec4 c=SMP(uTex,p+wob);if(c.a<0.02)c=c0;vec3 col=unp(c);
+  float ring=exp(-pow((edge-r)/(7.0*uU),2.0));col*=1.0-0.28*ring*E;
+  col=mix(col,col*tint*1.2,tm*E*0.5);
+  float a=c0.a*m;res=vec4(clamp(col,0.0,1.0)*a,a);
+ }
+ gl_FragColor=res;}`,
+/* ═══ 🟩 PIKSEL o'tishlari: uA=(kind,p,cell,0)
+   0=tepadan 1=pastdan 2=chapdan 3=mozaika 4=dissolve 5=scan 6=glitch 7=sort ═══ */
+pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(b1-b0,vec2(1.0));
+ float k=uA.x,P=clamp(uA.y,0.0,1.0),cs=max(uA.z,2.0);vec4 o=vec4(0.0);
+ if(k<2.5){vec2 cell=floor((p-b0)/cs);vec2 nc=vec2(floor(bs.x/cs)+1.0,floor(bs.y/cs)+1.0);
+  float pos=k<0.5?cell.y/nc.y:(k<1.5?1.0-cell.y/nc.y:cell.x/nc.x);
+  float th=pos*0.78+h12(cell+uSeed)*0.22;float f=P*1.25-th;
+  if(f>0.16){o=SMP(uTex,p);}
+  else if(f>0.0){float q=f/0.16;vec2 cc=b0+(cell+0.5)*cs;
+   vec2 dir=k<0.5?vec2(0.0,-1.0):(k<1.5?vec2(0.0,1.0):vec2(-1.0,0.0));
+   vec4 c=SMP(uTex,cc-dir*(1.0-q)*cs*2.5);vec2 lp=fract((p-b0)/cs);
+   float inset=step(0.06,lp.x)*step(lp.x,0.94)*step(0.06,lp.y)*step(lp.y,0.94);
+   vec3 u=unp(c)*(1.0+0.35*(1.0-q));o=vec4(clamp(u,0.0,1.0)*c.a,c.a)*mix(inset,1.0,q);}}
+ else if(k<3.5){float b=mix(cs*3.0,1.0,pow(P,0.6));vec2 q=(floor((p+uOff)/b)+0.5)*b-uOff;o=SMP(uTex,b<1.5?p:q)*clamp(P*3.0,0.0,1.0);}
+ else if(k<4.5){float b=mix(cs,cs*0.25,P);vec2 cell=floor((p+uOff)/b);float r=h12(cell+uSeed);
+  o=r<P*1.08?SMP(uTex,p):vec4(0.0);}
+ else if(k<5.5){float rowp=(p.y-b0.y)/bs.y;float f=P*1.15-rowp;
+  if(f>0.05)o=SMP(uTex,p);else if(f>-0.02){float g=1.0-abs(f-0.015)/0.035;vec4 c=SMP(uTex,p+vec2((h12(vec2(floor(p.y/2.0),floor(uT*30.0)))-0.5)*12.0*uU,0.0));
+   o=vec4(mix(unp(c),vec3(0.55,1.0,0.95),0.6)*c.a,c.a)*clamp(g+0.3,0.0,1.0);}}
+ else if(k<6.5){float fr=floor(uT*24.0);float row=floor((p.y+uOff.y)/(cs*0.8));float r1=h12(vec2(row,fr)+uSeed);
+  float amt=pow(1.0-P,1.5);vec2 q=p;if(r1<amt*0.8)q.x+=(h12(vec2(row,fr+5.0))-0.5)*bs.x*0.25*amt;
+  vec2 of=vec2(14.0*uU*amt,0.0);vec4 a=SMP(uTex,q+of),b=SMP(uTex,q),c=SMP(uTex,q-of);
+  o=vec4(a.r,b.g,c.b,max(max(a.a,b.a),c.a))*(r1<amt*0.25?0.0:1.0)*clamp(P*2.5,0.0,1.0);}
+ else{float col=floor((p.x+uOff.x)/max(cs*0.4,1.0));float L=(1.0-P)*(0.4+0.6*h12(vec2(col,uSeed)))*bs.y*0.9;
+  vec4 c=SMP(uTex,p-vec2(0.0,L));o=c*clamp(P*2.0,0.0,1.0);}
+ gl_FragColor=o;}`,
+  };
+
+  function sh(t,src){
+    const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.warn('PFX shader:',gl.getShaderInfoLog(s));return null;}
+    return s;
+  }
+  let vsh=null;
+  function prog(name){
+    let P=progs[name];
+    if(P!==undefined)return P;
+    P=null;
+    try{
+      const f=sh(gl.FRAGMENT_SHADER,HDR+FS[name]);
+      if(f){
+        const p=gl.createProgram();gl.attachShader(p,vsh);gl.attachShader(p,f);
+        gl.bindAttribLocation(p,0,'aP');gl.linkProgram(p);
+        if(gl.getProgramParameter(p,gl.LINK_STATUS)){
+          const U={};
+          for(const n of ['uTex','uIn','uOrig','uRes','uCap','uOff','uBox','uT','uU','uSeed','uA','uB','uC','uD'])
+            U[n]=gl.getUniformLocation(p,n);
+          P={p,U};
+        }else console.warn('PFX link:',name,gl.getProgramInfoLog(p));
+      }
+    }catch(e){console.warn('PFX prog',name,e);}
+    progs[name]=P;
+    return P;
+  }
+  function init(){
+    if(ok!==null)return ok;
+    ok=false;
+    try{
+      cvs=document.createElement('canvas');cvs.width=64;cvs.height=64;
+      const at={alpha:true,premultipliedAlpha:true,antialias:false,depth:false,stencil:false,
+                preserveDrawingBuffer:false,powerPreference:'high-performance'};
+      gl=cvs.getContext('webgl2',at)||cvs.getContext('webgl',at)||cvs.getContext('experimental-webgl',at);
+      if(!gl)return false;
+      vsh=sh(gl.VERTEX_SHADER,VS);if(!vsh)return false;
+      vbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbuf);
+      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+      gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);
+      maxTex=Math.min(8192,gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096);
+      cvs.addEventListener('webglcontextlost',e=>{e.preventDefault();ok=false;},false);
+      ok=true;
+    }catch(e){console.warn('PFX init:',e);ok=false;}
+    return ok;
+  }
+  function mkTex(w,h){
+    const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+    if(w)gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+    return t;
+  }
+  function ensure(w,h){
+    const W=Math.ceil(w/128)*128, H=Math.ceil(h/128)*128;
+    if(W<=capW&&H<=capH&&srcTex)return;
+    capW=Math.max(capW,W);capH=Math.max(capH,H);
+    capW=Math.min(capW,maxTex);capH=Math.min(capH,maxTex);
+    cvs.width=capW;cvs.height=capH;
+    inCv.width=capW;inCv.height=capH;
+    if(srcTex)gl.deleteTexture(srcTex);
+    srcTex=mkTex(0,0);
+    for(const f of fbs){gl.deleteTexture(f.tex);gl.deleteFramebuffer(f.fb);}
+    fbs.length=0;
+    for(let i=0;i<3;i++){
+      const tex=mkTex(capW,capH);const fb=gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER,fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+      fbs.push({tex,fb});
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  }
+  function setU(P,common,u){
+    const U=P.U;
+    gl.uniform1i(U.uTex,0);gl.uniform1i(U.uIn,1);gl.uniform1i(U.uOrig,2);
+    gl.uniform2f(U.uRes,common.w,common.h);gl.uniform2f(U.uCap,capW,capH);
+    gl.uniform2f(U.uOff,common.ox,common.oy);
+    const b=common.box;gl.uniform4f(U.uBox,b.x0,b.y0,b.x1,b.y1);
+    gl.uniform1f(U.uT,common.t);gl.uniform1f(U.uU,common.U);gl.uniform1f(U.uSeed,common.seed);
+    for(const n of ['uA','uB','uC','uD']){
+      const v=(u&&u[n.slice(1)])||[0,0,0,0];
+      gl.uniform4f(U[n],v[0]||0,v[1]||0,v[2]||0,v[3]||0);
+    }
+  }
+  /* src kanvasining reg hududini effektlar zanjiridan o'tkazadi.
+     chain: [[{g:'prog',A:[...],B:[...]} ...] , ...] — har effekt = passlar ro'yxati.
+     Natija: WebGL kanvas (0,0,w,h) yoki null. */
+  function process(src,reg,chain,common){
+    if(!init())return null;
+    const w=reg.x1-reg.x0, h=reg.y1-reg.y0;
+    if(w<2||h<2||w>maxTex||h>maxTex)return null;
+    try{
+      ensure(w,h);
+      ictx.setTransform(1,0,0,1,0,0);
+      ictx.globalCompositeOperation='source-over';ictx.globalAlpha=1;ictx.filter='none';
+      ictx.clearRect(0,0,Math.min(capW,w+4),Math.min(capH,h+4));
+      ictx.drawImage(src,reg.x0,reg.y0,w,h,0,0,w,h);
+      gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,srcTex);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,inCv);
+      const C={...common,w,h};
+      let cur=srcTex;
+      for(const passes of chain){
+        const effIn=cur;
+        for(const ps of passes){
+          const P=prog(ps.g);if(!P)continue;
+          let tgt=null;
+          for(const f of fbs)if(f.tex!==cur&&f.tex!==effIn){tgt=f;break;}
+          gl.bindFramebuffer(gl.FRAMEBUFFER,tgt.fb);
+          gl.viewport(0,0,w,h);
+          gl.useProgram(P.p);
+          gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,cur);
+          gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,effIn);
+          gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,srcTex);
+          setU(P,C,ps);
+          gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+          cur=tgt.tex;
+        }
+      }
+      const B=prog('blit');
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+      gl.viewport(0,0,capW,capH);
+      gl.useProgram(B.p);
+      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,cur);
+      gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,cur);
+      setU(B,C,null);
+      gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      return cvs;
+    }catch(e){console.warn('PFX process:',e);return null;}
+  }
+  /* Natijani manba kanvasga QAYTA yozadi (izolyatsiya buferi uchun) */
+  function applyInPlace(src,sctx,reg,chain,common){
+    const out=process(src,reg,chain,common);
+    if(!out)return false;
+    const w=reg.x1-reg.x0,h=reg.y1-reg.y0;
+    sctx.save();
+    sctx.setTransform(1,0,0,1,0,0);
+    sctx.globalAlpha=1;sctx.globalCompositeOperation='source-over';sctx.filter='none';
+    sctx.clearRect(reg.x0,reg.y0,w,h);
+    sctx.drawImage(out,0,0,w,h,reg.x0,reg.y0,w,h);
+    sctx.restore();
+    return true;
+  }
+  function available(){return init();}
+  function compileAll(){if(!init())return {};const r={};for(const n in FS)r[n]=!!prog(n);return r;}
+  return {process,applyInPlace,available,compileAll};
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EFFEKTLAR KATALOGI — har biri: parametrlar (◆ keyframe qilinadi) + passlar
+   Parametr qiymati qatlamda e_<id>_<kalit> nomi bilan saqlanadi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const D2R=Math.PI/180;
+const hx3=h=>{const [r,g,b]=hexRGB(h||'#ffffff');return [r/255,g/255,b/255];};
+const PFX_DEFS=[
+  // 💧 SUV
+  {id:'ripple',cat:'💧 Suv',n:'Suv halqalari (Ripple)',p:[['amp','Kuchi',0,80,0.5,14,'px'],['wl','To\'lqin uzunligi',4,200,1,36,'px'],['sp','Tezlik',0,6,0.05,1.2,''],['dec','Tarqalish',20,1500,5,320,'px'],['cx','Markaz X',-150,150,1,0,'%'],['cy','Markaz Y',-150,150,1,0,'%'],['hl','Yaltirash',0,3,0.05,1,'']],
+   m:V=>V('amp')*1.2,
+   build:(V,U,B)=>[{g:'ripple',A:[B.cx+V('cx')/100*B.w/2,B.cy+V('cy')/100*B.h/2,V('amp')*U,V('wl')*U],B:[V('sp'),V('dec')*U,V('hl'),0]}]},
+  {id:'raindrops',cat:'💧 Suv',n:'Yomg\'ir tomchilari (suv yuzasi)',p:[['den','Zichlik',0.05,1,0.01,0.55,''],['amp','Kuchi',0,30,0.5,8,'px'],['size','Halqa o\'lchami',20,300,1,90,'px'],['sp','Tezlik',0.05,3,0.05,0.7,'']],
+   m:V=>V('amp'),build:(V,U)=>[{g:'raindrops',A:[V('den'),V('amp')*U,V('size')*U,V('sp')]}]},
+  {id:'underwater',cat:'💧 Suv',n:'Suv osti (kaustika + sinish)',p:[['ref','Sinish',0,30,0.5,7,'px'],['cs','Kaustika nuri',0,2,0.05,0.8,''],['sc','Masshtab',20,400,1,120,'px'],['sp','Tezlik',0,3,0.05,0.6,''],['tint','Suv rangi',null,null,null,'#3ab7ff','c'],['tm','Rang kuchi',0,1,0.01,0.35,'']],
+   m:V=>V('ref')*1.5,build:(V,U)=>[{g:'underwater',A:[V('ref')*U,V('cs'),V('sc')*U,V('sp')],C:[...hx3(V('tint')),V('tm')]}]},
+  {id:'rainGlass',cat:'💧 Suv',n:'Oynadagi yomg\'ir (haqiqiy tomchilar)',p:[['den','Zichlik',0.05,1,0.01,0.5,''],['size','Tomchi o\'lchami',8,160,1,64,'px'],['sp','Oqish tezligi',0,3,0.05,0.5,''],['fog','Tuman (xiralik)',0,1,0.01,0.35,'']],
+   m:()=>0,build:(V,U)=>[{g:'rainGlass',A:[V('den'),V('size')*U,V('sp'),V('fog')]}]},
+  {id:'water',cat:'💧 Suv',n:'Suv sathi (ichida suyuqlik)',p:[['lvl','Sath',0,100,0.5,55,'%'],['wave','To\'lqin',0,3,0.05,1,''],['slosh','Chayqalish',0,2,0.05,0.6,''],['tint','Suv rangi',null,null,null,'#38bdf8','c'],['tm','Rang kuchi',0,1,0.01,0.45,''],['cs','Kaustika',0,2,0.05,0.8,''],['bub','Pufakchalar',0,2,0.05,0.8,''],['empty','Bo\'sh qism ko\'rinishi',0,100,1,18,'%']],
+   m:()=>0,build:(V,U)=>[{g:'liquid',A:[4,V('lvl')/100,1,V('slosh')],B:[0,V('bub'),0,V('empty')/100],C:[...hx3(V('tint')),V('tm')],D:[V('wave'),V('cs'),1,0]}]},
+  {id:'waveWarp',cat:'💧 Suv',n:'To\'lqinli buzilish (Wave Warp)',p:[['amp','Balandlik',0,80,0.5,10,'px'],['wl','Uzunlik',4,400,1,80,'px'],['sp','Tezlik',-5,5,0.05,0.8,''],['ang','Yo\'nalish',0,360,1,0,'°'],['sq','Kvadrat to\'lqin',0,1,1,0,'']],
+   m:V=>V('amp'),build:(V,U)=>[{g:'waveWarp',A:[V('amp')*U,V('wl')*U,V('sp'),V('ang')*D2R],B:[V('sq'),0,0,0]}]},
+  // 🌀 BUZILISH
+  {id:'turb',cat:'🌀 Buzilish',n:'Turbulent Displace',p:[['amt','Kuchi',0,120,0.5,18,'px'],['size','O\'lcham',10,600,1,90,'px'],['sp','Evolyutsiya tezligi',0,4,0.05,0.4,'']],
+   m:V=>V('amt'),build:(V,U)=>[{g:'turb',A:[V('amt')*U,V('size')*U,V('sp'),0]}]},
+  {id:'twirl',cat:'🌀 Buzilish',n:'Burama (Twirl)',p:[['ang','Burchak',-1080,1080,1,180,'°'],['rad','Radius',10,200,1,100,'%'],['cx','Markaz X',-150,150,1,0,'%'],['cy','Markaz Y',-150,150,1,0,'%']],
+   m:()=>0,build:(V,U,B)=>[{g:'twirl',A:[B.cx+V('cx')/100*B.w/2,B.cy+V('cy')/100*B.h/2,Math.max(B.w,B.h)/2*V('rad')/100,V('ang')*D2R]}]},
+  {id:'bulge',cat:'🌀 Buzilish',n:'Qavariq linza (Bulge)',p:[['amt','Kuchi',-1,1,0.01,0.6,''],['rad','Radius',10,200,1,70,'%'],['cx','Markaz X',-150,150,1,0,'%'],['cy','Markaz Y',-150,150,1,0,'%']],
+   m:()=>0,build:(V,U,B)=>[{g:'bulge',A:[B.cx+V('cx')/100*B.w/2,B.cy+V('cy')/100*B.h/2,Math.max(B.w,B.h)/2*V('rad')/100,V('amt')]}]},
+  {id:'lens',cat:'🌀 Buzilish',n:'Linza buzilishi (Fisheye)',p:[['k','Kuchi',-0.8,0.8,0.01,0.3,'']],
+   m:()=>0,build:(V,U,B)=>[{g:'lens',A:[B.cx,B.cy,V('k'),Math.max(B.w,B.h)/2]}]},
+  {id:'kaleido',cat:'🌀 Buzilish',n:'Kaleydoskop',p:[['seg','Bo\'laklar',2,24,1,8,''],['rot','Burilish',0,360,1,0,'°'],['spin','Aylanish tezligi',-90,90,1,0,'°/s']],
+   m:()=>0,build:(V,U,B,t)=>[{g:'kaleido',A:[B.cx,B.cy,V('seg'),(V('rot')+V('spin')*t)*D2R]}]},
+  {id:'heat',cat:'🌀 Buzilish',n:'Issiq havo (Heat haze)',p:[['amt','Kuchi',0,30,0.5,5,'px'],['sc','Masshtab',10,300,1,60,'px'],['sp','Tezlik',0,4,0.05,1,'']],
+   m:V=>V('amt'),build:(V,U)=>[{g:'heat',A:[V('amt')*U,V('sc')*U,V('sp'),0]}]},
+  {id:'tile',cat:'🌀 Buzilish',n:'Takrorlash (Motion Tile)',p:[['tx','Gorizontal',1,12,1,3,''],['ty','Vertikal',1,12,1,3,''],['mir','Ko\'zgu chekka',0,1,1,1,''],['sc','Siljish tezligi',-2,2,0.01,0,'']],
+   m:()=>0,build:V=>[{g:'tile',A:[V('tx'),V('ty'),V('mir'),V('sc')]}]},
+  // 🌫 XIRALIK
+  {id:'gblur',cat:'🌫 Xiralik',n:'Gaussian Blur',p:[['r','Radius',0,120,0.5,12,'px']],
+   m:V=>V('r')*1.6,build:(V,U)=>{const r=V('r')*U;return r<0.3?[]:[{g:'blur',A:[1,0,r,-1]},{g:'blur',A:[0,1,r,-1]}];}},
+  {id:'dirBlur',cat:'🌫 Xiralik',n:'Yo\'nalishli blur (Motion)',p:[['len','Uzunlik',0,200,0.5,30,'px'],['ang','Burchak',0,360,1,0,'°']],
+   m:V=>V('len'),build:(V,U)=>[{g:'blur',A:[Math.cos(V('ang')*D2R),Math.sin(V('ang')*D2R),V('len')*U,-1]}]},
+  {id:'zoomBlur',cat:'🌫 Xiralik',n:'Radial zoom blur',p:[['amt','Kuchi',0,0.8,0.01,0.2,''],['cx','Markaz X',-150,150,1,0,'%'],['cy','Markaz Y',-150,150,1,0,'%']],
+   m:()=>0,build:(V,U,B)=>[{g:'zoomBlur',A:[B.cx+V('cx')/100*B.w/2,B.cy+V('cy')/100*B.h/2,V('amt'),0]}]},
+  {id:'spinBlur',cat:'🌫 Xiralik',n:'Aylanma blur (Spin)',p:[['ang','Burchak',0,90,0.5,12,'°']],
+   m:()=>0,build:(V,U,B)=>[{g:'spinBlur',A:[B.cx,B.cy,V('ang')*D2R,0]}]},
+  {id:'sharpen',cat:'🌫 Xiralik',n:'Tiniqlashtirish (Sharpen)',p:[['amt','Kuchi',0,3,0.05,0.6,''],['r','Radius',0.5,4,0.1,1,'px']],
+   m:()=>0,build:(V,U)=>[{g:'sharpen',A:[V('amt'),V('r')*U,0,0]}]},
+  // ✨ NUR / STIL
+  {id:'glow',cat:'✨ Nur / Stil',n:'Glow (porlash)',p:[['th','Chegara (yorqinlik)',0,1,0.01,0.6,''],['r','Radius',1,150,0.5,18,'px'],['int','Kuchi',0,4,0.05,0.9,''],['col','Rang',null,null,null,'#ffffff','c'],['cm','Rang aralashuvi',0,1,0.01,0,'']],
+   m:V=>V('r')*2,build:(V,U)=>{const r=V('r')*U;return [{g:'blur',A:[1,0,r,V('th')]},{g:'blur',A:[0,1,r,-1]},{g:'glowMix',A:[V('int'),0,0,0],C:[...hx3(V('col')),V('cm')]}];}},
+  {id:'rays',cat:'✨ Nur / Stil',n:'Nur tolalari (Light Rays)',p:[['len','Uzunlik',0,0.9,0.01,0.35,''],['int','Kuchi',0,4,0.05,0.7,''],['th','Chegara',0,1,0.01,0.55,''],['cx','Markaz X',-200,200,1,0,'%'],['cy','Markaz Y',-200,200,1,-60,'%'],['col','Rang',null,null,null,'#fff4d6','c'],['cm','Rang aralashuvi',0,1,0.01,0.4,'']],
+   m:(V,B)=>Math.max(B?B.w:300,B?B.h:300)*V('len')*0.6,
+   build:(V,U,B)=>[{g:'rays',A:[B.cx+V('cx')/100*B.w/2,B.cy+V('cy')/100*B.h/2,V('len'),V('int')],B:[V('th'),0,0,0],C:[...hx3(V('col')),V('cm')]}]},
+  {id:'sweep',cat:'✨ Nur / Stil',n:'Yorug\'lik o\'tishi (Light Sweep)',p:[['ang','Burchak',0,360,1,20,'°'],['wid','Kenglik',4,300,1,40,'px'],['sp','Tezlik',0,3,0.05,0.5,''],['int','Kuchi',0,3,0.05,0.9,''],['col','Rang',null,null,null,'#ffffff','c']],
+   m:()=>0,build:(V,U)=>[{g:'sweep',A:[V('ang')*D2R,V('wid')*U,V('sp'),V('int')],C:[...hx3(V('col')),1]}]},
+  {id:'stroke',cat:'✨ Nur / Stil',n:'Kontur (Stroke / Outline)',p:[['w','Qalinlik',0.5,40,0.5,5,'px'],['soft','Yumshoqlik',0,1,0.01,0.2,''],['op','Shaffoflik',0,1,0.01,1,''],['col','Rang',null,null,null,'#ffffff','c']],
+   m:V=>V('w')+4,build:(V,U)=>[{g:'stroke',A:[V('w')*U,V('soft'),V('op'),0],C:[...hx3(V('col')),1]}]},
+  {id:'longShadow',cat:'✨ Nur / Stil',n:'Uzun soya (Long shadow)',p:[['ang','Burchak',0,360,1,45,'°'],['len','Uzunlik',0,600,1,140,'px'],['fade','So\'nish',0,1,0.01,0.7,''],['op','Shaffoflik',0,1,0.01,0.35,''],['col','Rang',null,null,null,'#000000','c']],
+   m:V=>V('len'),build:(V,U)=>[{g:'longShadow',A:[V('ang')*D2R,V('len')*U,V('fade'),V('op')],C:[...hx3(V('col')),1]}]},
+  {id:'edges',cat:'✨ Nur / Stil',n:'Neon chekka (Find Edges)',p:[['str','Kuchi',0,6,0.05,2,''],['w','Qalinlik',0.5,6,0.1,1.5,'px'],['only','Faqat chekka',0,1,1,0,''],['col','Rang',null,null,null,'#22d3ee','c']],
+   m:V=>V('w')*2,build:(V,U)=>[{g:'edges',A:[V('str'),V('only'),V('w')*U,0],C:[...hx3(V('col')),1]}]},
+  // 🟩 PIKSEL
+  {id:'pixelate',cat:'🟩 Piksel',n:'Mozaika (Pixelate)',p:[['b','Blok o\'lchami',1,120,0.5,14,'px']],
+   m:()=>0,build:(V,U)=>[{g:'pixelate',A:[Math.max(1,V('b')*U),0,0,0]}]},
+  {id:'pixDiss',cat:'🟩 Piksel',n:'Piksel dissolve',p:[['amt','Yo\'qolish',0,1,0.01,0.3,''],['b','Blok',1,80,0.5,10,'px']],
+   m:()=>0,build:(V,U)=>[{g:'pixDiss',A:[V('amt'),Math.max(1,V('b')*U),0,0]}]},
+  {id:'dither',cat:'🟩 Piksel',n:'8-bit dither (retro)',p:[['lv','Rang darajalari',2,16,1,4,''],['sc','Piksel o\'lchami',1,16,0.5,3,'px'],['mono','Oq-qora',0,1,1,0,'']],
+   m:()=>0,build:(V,U)=>[{g:'dither',A:[V('lv'),Math.max(1,V('sc')*U),V('mono'),0]}]},
+  {id:'pixSort',cat:'🟩 Piksel',n:'Piksel saralash (Pixel sort)',p:[['th','Yorqinlik chegarasi',0,1,0.01,0.55,''],['len','Uzunlik',4,400,1,80,'px'],['dir','Gorizontal',0,1,1,0,'']],
+   m:V=>V('len'),build:(V,U)=>[{g:'pixSort',A:[V('th'),V('len')*U,V('dir'),0]}]},
+  {id:'led',cat:'🟩 Piksel',n:'LED ekran (nuqtali)',p:[['cs','Katak',3,40,0.5,9,'px'],['gap','Oraliq',0,0.8,0.01,0.25,''],['glow','Nur',0,1,0.01,0.35,'']],
+   m:()=>0,build:(V,U)=>[{g:'led',A:[V('cs')*U,V('gap'),V('glow'),0]}]},
+  {id:'halftone',cat:'🟩 Piksel',n:'Halftone (pop-art nuqtalar)',p:[['cs','Katak',3,60,0.5,10,'px'],['ang','Burchak',0,90,1,45,'°'],['mono','Bir rangli siyoh',0,1,1,0,''],['col','Siyoh rangi',null,null,null,'#111111','c']],
+   m:()=>0,build:(V,U)=>[{g:'halftone',A:[V('cs')*U,V('ang')*D2R,V('mono'),0],C:[...hx3(V('col')),1]}]},
+  {id:'posterize',cat:'🟩 Piksel',n:'Posterize',p:[['lv','Darajalar',2,24,1,5,'']],
+   m:()=>0,build:V=>[{g:'posterize',A:[V('lv'),0,0,0]}]},
+  // 📺 GLITCH / RETRO
+  {id:'glitch',cat:'📺 Glitch / Retro',n:'Raqamli glitch',p:[['amt','Kuchi',0,1,0.01,0.45,''],['blk','Blok',2,80,0.5,14,'px'],['fps','Chastota',1,30,1,12,'fps'],['rgb','RGB siljish',0,40,0.5,8,'px']],
+   m:V=>V('blk')*7*V('amt')+V('rgb'),build:(V,U)=>[{g:'glitch',A:[V('amt'),V('blk')*U,V('fps'),V('rgb')*U]}]},
+  {id:'chroma',cat:'📺 Glitch / Retro',n:'RGB ajralish (Chromatic)',p:[['amt','Masofa',0,40,0.25,5,'px'],['ang','Burchak',0,360,1,0,'°']],
+   m:V=>V('amt'),build:(V,U)=>[{g:'chroma',A:[V('amt')*U,V('ang')*D2R,0,0]}]},
+  {id:'vhs',cat:'📺 Glitch / Retro',n:'VHS / CRT',p:[['amt','Kuchi',0,1,0.01,0.6,''],['scan','Skanlayn',0,1,0.01,0.5,''],['noise','Shovqin',0,1,0.01,0.35,''],['jit','Titrash',0,1,0.01,0.4,'']],
+   m:()=>20,build:V=>[{g:'vhs',A:[V('amt'),V('scan'),V('noise'),V('jit')]}]},
+  {id:'grain',cat:'📺 Glitch / Retro',n:'Plyonka donadorligi (Grain)',p:[['amt','Kuchi',0,0.6,0.01,0.12,''],['sz','Don o\'lchami',1,6,0.5,1.5,'px'],['fps','Chastota',1,30,1,24,'fps'],['mono','Oq-qora',0,1,1,1,'']],
+   m:()=>0,build:(V,U)=>[{g:'grain',A:[V('amt'),Math.max(1,V('sz')*U),V('fps'),V('mono')]}]},
+  // 🎨 RANG
+  {id:'grade',cat:'🎨 Rang',n:'Rang tuzatish (Lumetri)',p:[['exp','Ekspozitsiya',-3,3,0.05,0,''],['con','Kontrast',0,2.5,0.01,1,''],['sat','To\'yinganlik',0,3,0.01,1,''],['gam','Gamma',0.2,3,0.01,1,''],['temp','Harorat',-1,1,0.01,0,''],['tint','Tint',-1,1,0.01,0,''],['vib','Vibrance',-1,1,0.01,0,''],['inv','Invert',0,1,1,0,'']],
+   m:()=>0,build:V=>[{g:'grade',A:[V('exp'),V('con'),V('sat'),V('gam')],B:[V('temp'),V('tint'),V('vib'),V('inv')]}]},
+  {id:'duotone',cat:'🎨 Rang',n:'Duotone',p:[['mix','Aralashuv',0,1,0.01,1,''],['c1','Soya rangi',null,null,null,'#1e1b4b','c'],['c2','Yorug\' rang',null,null,null,'#f472b6','c']],
+   m:()=>0,build:V=>[{g:'duotone',A:[V('mix'),0,0,0],C:[...hx3(V('c1')),1],D:[...hx3(V('c2')),1]}]},
+  {id:'vignette',cat:'🎨 Rang',n:'Vinyetka',p:[['amt','Kuchi',0,1,0.01,0.55,''],['size','O\'lcham',0,1.5,0.01,0.6,''],['soft','Yumshoqlik',0.01,1.5,0.01,0.7,''],['rnd','Doiraviylik',0,1,0.01,0.5,'']],
+   m:()=>0,build:V=>[{g:'vignette',A:[V('amt'),V('size'),V('soft'),V('rnd')]}]},
+  {id:'fractal',cat:'🎨 Rang',n:'Fractal Noise',p:[['sc','Masshtab',10,800,1,160,'px'],['con','Kontrast',0.2,4,0.05,1.6,''],['sp','Evolyutsiya',0,3,0.05,0.3,''],['mode','Rejim (0 ustiga,1 almashtir,2 eritish)',0,2,1,0,''],['th','Eritish chegarasi',0,1,0.01,0.5,''],['soft','Eritish yumshoqligi',0,0.5,0.01,0.08,''],['br','Yorqinlik',-0.5,0.5,0.01,0,''],['c1','Rang 1',null,null,null,'#0f172a','c'],['c2','Rang 2',null,null,null,'#a5b4fc','c']],
+   m:()=>0,build:(V,U)=>[{g:'fractal',A:[V('sc')*U,V('con'),V('sp'),V('mode')],B:[V('th'),V('soft'),V('br'),0],C:[...hx3(V('c1')),1],D:[...hx3(V('c2')),1]}]},
+  // ✨ qo'shimcha AE effektlar
+  {id:'flare',cat:'✨ Nur / Stil',n:'Lens flare (linza chaqnashi)',p:[['cx','Markaz X',-200,200,1,-55,'%'],['cy','Markaz Y',-200,200,1,-55,'%'],['int','Kuchi',0,3,0.05,1,''],['size','O\'lcham',20,900,1,240,'px'],['col','Rang',null,null,null,'#ffd9a0','c']],
+   m:V=>V('size')*0.4,build:(V,U,B)=>[{g:'flare',A:[B.cx+V('cx')/100*B.w/2,B.cy+V('cy')/100*B.h/2,V('int'),V('size')*U],C:[...hx3(V('col')),1]}]},
+  {id:'emboss',cat:'✨ Nur / Stil',n:'Emboss (bo\'rtma)',p:[['str','Kuchi',0,12,0.1,3,''],['ang','Yorug\'lik burchagi',0,360,1,135,'°'],['mix','Aralashuv',0,1,0.01,0.6,'']],
+   m:()=>0,build:V=>[{g:'emboss',A:[V('str'),V('ang')*D2R,V('mix'),0]}]},
+  {id:'sphere',cat:'🌀 Buzilish',n:'Sharga o\'rash (CC Sphere / globus)',p:[['rad','Radius',10,150,1,50,'%'],['rot','Burilish',0,360,1,0,'°'],['spin','Aylanish tezligi',-360,360,1,45,'°/s'],['tilt','Qiyalik',-90,90,1,15,'°'],['light','Yorug\'lik/soya',0,1,0.01,0.8,'']],
+   m:()=>0,build:(V,U,B,t)=>[{g:'sphere',A:[Math.min(B.w,B.h)/2*V('rad')/100,(V('rot')+V('spin')*t)*D2R,V('tilt')*D2R,V('light')]}]},
+  {id:'grad4',cat:'🎨 Rang',n:'4 rangli gradient (jonli)',p:[['mix','Aralashuv',0,1,0.01,1,''],['sp','Harakat tezligi',0,3,0.05,0.5,''],['c1','Rang 1',null,null,null,'#f472b6','c'],['c2','Rang 2',null,null,null,'#60a5fa','c'],['c3','Rang 3',null,null,null,'#34d399','c'],['c4','Rang 4',null,null,null,'#facc15','c']],
+   m:()=>0,build:V=>[{g:'grad4',A:[...hx3(V('c4')),V('sp')],B:[...hx3(V('c3')),V('mix')],C:[...hx3(V('c1')),1],D:[...hx3(V('c2')),1]}]},
+  // 🎬 AE O'TISHLARI (Completion ◆ bilan)
+  {id:'wipeT',cat:'🎬 O\'tishlar (AE)',n:'Wipe o\'tishi (Linear/Radial/Iris/Blinds...)',p:[['kind','Turi',0,6,1,0,'',[[0,'Linear Wipe'],[1,'Radial (soat) Wipe'],[2,'Iris (doira)'],[3,'Venetian Blinds'],[4,'Block Dissolve'],[5,'Romb (diamond)'],[6,'Gradient (yorqinlik) Wipe']]],
+     ['comp','Transition Completion (◆)',0,100,0.5,0,'%'],['fea','Yumshoq chekka',0,200,1,24,'px'],['ang','Burchak',0,360,1,0,'°'],['n','Jalyuzi soni',2,40,1,10,'']],
+   m:()=>0,build:(V,U)=>[{g:'wipeT',A:[V('kind'),V('comp')/100,V('fea')*U,V('ang')*D2R],B:[V('n'),0,0,0]}]},
+  // 🫧 GOOEY
+  {id:'goo',cat:'🫧 Gooey / Blob',n:'Gooey (elastik qo\'shilish)',p:[['r','Yopishqoqlik (blur)',2,80,0.5,26,'px'],['th','Chegara',0.1,0.9,0.01,0.42,''],['soft','Chekka yumshoqligi',0.01,0.3,0.01,0.05,''],['keep','Asl tasvir ustida',0,1,1,0,'']],
+   m:V=>V('r')*2.6,build:(V,U)=>{const r=V('r')*U*2.2;return [{g:'blur',A:[1,0,r,-1]},{g:'blur',A:[0,1,r,-1]},{g:'goo',A:[V('th'),V('soft'),V('keep'),0]}];}},
+];
+const PFX_BY={};PFX_DEFS.forEach(d=>PFX_BY[d.id]=d);
+/* Effekt parametrlarini ◆ keyframe tizimiga ro'yxatdan o'tkazamiz */
+(function(){
+  for(const d of PFX_DEFS)for(const q of d.p){
+    if(q[6]==='c')continue;
+    const k='e_'+d.id+'_'+q[0];
+    if(!KF_EXTRA.includes(k)){KF_EXTRA.push(k);KF_PAIRS.push([k,k]);}
+  }
+})();
+function pfxV(L,d){
+  return k=>{const v=L['e_'+d.id+'_'+k];if(v!==undefined&&v!==null&&v!=='')return v;
+    const q=d.p.find(x=>x[0]===k);return q?q[5]:0;};
+}
+function pfxUnit(){return Math.min(state.W,state.H)/1080;}
+/* Qatlamda faol effektlar */
+function pfxList(L){
+  if(!L.pfx||!L.pfx.length)return null;
+  const a=L.pfx.filter(e=>e&&e.on!==false&&PFX_BY[e.id]);
+  return a.length?a:null;
+}
+var __glLiq=false;   // shu qatlam suv/piksel o'tishi GPU'da chizilyapti → 2D klip o'chiriladi
+const LIQ_KIND={rise:0,fall:1,wipe:2,ink:3};
+const PIX_KIND={pixFall:0,pixRise:1,pixWipe:2,pixMosaic:3,pixDiss:4,pixScan:5,pixGlitch:6,pixSort:7};
+/* Freym rejasi: qaysi effektlar va o'tishlar, qancha chekka zaxira kerak */
+function pfxPlan(L,local,t,aFX){
+  const list=pfxList(L);
+  const liq=aFX&&aFX.liq&&(LIQ_KIND[aFX.liq.kind]!==undefined||PIX_KIND[aFX.liq.kind]!==undefined)&&aFX.liq.p<0.999?aFX.liq:null;
+  if(!list&&!liq)return null;
+  if(!PFX.available())return null;
+  const U=pfxUnit();
+  let margin=0;
+  if(list)for(const e of list){const d=PFX_BY[e.id];try{margin+=Math.max(0,d.m(pfxV(L,d),null)||0)*U;}catch(er){}}
+  if(liq&&LIQ_KIND[liq.kind]!==undefined)margin+=160*U;
+  return {L,list,liq,margin:Math.min(Math.round(margin+8),Math.max(state.W,state.H)*0.6),t,local};
+}
+/* Isolatsiya buferiga effektlarni qo'llash (render ichidan) */
+function pfxApply(plan,srcCv,sctx,reg,box){
+  const L=plan.L,U=pfxUnit(),t=plan.t;
+  const B={x0:box.x0,y0:box.y0,x1:box.x1,y1:box.y1,cx:(box.x0+box.x1)/2,cy:(box.y0+box.y1)/2,w:box.x1-box.x0,h:box.y1-box.y0};
+  const chain=[];
+  if(plan.liq){
+    const q=plan.liq,lk=LIQ_KIND[q.kind];
+    if(lk!==undefined){
+      const E=1-clamp((q.p-0.86)/0.14,0,1);
+      chain.push([{g:'liquid',A:[lk,q.p,E,1],B:[lk===1?1:0,0.7,0.8,0],C:[...hx3(L.liqTint||'#7cc8ff'),0.22],D:[1,0.6,1,0]}]);
+    }else{
+      const S=Math.max(4,Math.min(B.w,B.h)/18);
+      chain.push([{g:'pixT',A:[PIX_KIND[q.kind],q.p,S,0]}]);
+    }
+  }
+  if(plan.list)for(const e of plan.list){
+    const d=PFX_BY[e.id];
+    try{const ps=d.build(pfxV(L,d),U,B,t,L);if(ps&&ps.length)chain.push(ps);}catch(er){console.warn('pfx build',e.id,er);}
+  }
+  if(!chain.length)return false;
+  return PFX.applyInPlace(srcCv,sctx,reg,chain,{box:B,t,U,seed:((L.id||1)*7.31)%97,ox:reg.ox||0,oy:reg.oy||0});
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   〰 TRIM PATHS — egri chiziqlarning chizilish animatsiyalari (AE uslubi)
+   ───────────────────────────────────────────────────────────────────────────
+   Har qanday chiziq/strelka/egri yoki shakl konturi poliliniyaga aylantiriladi,
+   uzunligi o'lchanadi va faqat kerakli "oyna" (start..end) chiziladi.
+   • 14 xil kirish, 6 xil chiqish, 9 xil doimiy (loop) uslub
+   • Trim Start / End / Offset — ◆ keyframe bilan (AE bilan bir xil mantiq)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const DRAW_IN=[['start','Boshidan oxiriga'],['end','Oxiridan boshiga'],['center','O\'rtadan ikki tomonga'],
+  ['edges','Ikki chetdan o\'rtaga'],['segments','Bo\'laklab (bir vaqtda)'],['seq','Bo\'laklab (ketma-ket)'],
+  ['random','Tasodifiy bo\'laklar'],['comet','☄ Kometa (porloq bosh)'],['pen','✒ Qalam (siyoh uchi)'],
+  ['soft','Yumshoq eriydigan uch'],['neon','💡 Neon yonishi'],['grow','Qalinlashib chizilish'],
+  ['dotsFirst','Avval nuqtalar, keyin chiziq'],['spring','Elastik (prujina)']];
+const DRAW_OUT=[['start','Boshidan o\'chib borish'],['end','Oxiridan orqaga yig\'ilish'],['center','O\'rtadan uzilish'],
+  ['edges','Chetlardan o\'rtaga'],['fade','So\'nib ketish'],['comet','☄ Kometa bo\'lib uchib ketish']];
+const DRAW_LOOP=[['none','Yo\'q'],['march','Yuruvchi chiziqchalar'],['flow','Oqim (yorug\' impuls)'],
+  ['snake','Ilon (aylanuvchi bo\'lak)'],['pingpong','Borib-qaytish'],['breathe','Nafas olish'],
+  ['dots','Yuruvchi nuqtalar'],['gradient','Rangli oqim'],['electric','⚡ Elektr (titroq)']];
+/* Yangi egri chiziq shakllari */
+const CURVE_SHAPES=['sCurve','spiral','loopArrow','wavePath','arcPath','hops','infinity','heartPath','swoosh','pen'];
+const PEN_DEF=[[-0.5,0.35],[-0.22,-0.4],[0.12,0.35],[0.5,-0.3]];
+
+/* ---------- Yo'lni poliliniyaga aylantiruvchi "soxta kontekst" ---------- */
+const FlatCtx={
+  polys:[],cur:null,lx:0,ly:0,
+  beginPath(){this.polys=[];this.cur=null;},
+  moveTo(x,y){this.cur={pts:[[x,y]],closed:false};this.polys.push(this.cur);this.lx=x;this.ly=y;},
+  lineTo(x,y){if(!this.cur){this.moveTo(x,y);return;}this.cur.pts.push([x,y]);this.lx=x;this.ly=y;},
+  _n(len){return Math.max(4,Math.min(48,Math.ceil(len/5)));},
+  quadraticCurveTo(cx,cy,x,y){
+    const x0=this.lx,y0=this.ly,n=this._n(Math.hypot(cx-x0,cy-y0)+Math.hypot(x-cx,y-cy));
+    for(let i=1;i<=n;i++){const u=i/n,v=1-u;this.lineTo(v*v*x0+2*v*u*cx+u*u*x,v*v*y0+2*v*u*cy+u*u*y);}
+  },
+  bezierCurveTo(c1x,c1y,c2x,c2y,x,y){
+    const x0=this.lx,y0=this.ly,n=this._n(Math.hypot(c1x-x0,c1y-y0)+Math.hypot(c2x-c1x,c2y-c1y)+Math.hypot(x-c2x,y-c2y));
+    for(let i=1;i<=n;i++){const u=i/n,v=1-u;
+      this.lineTo(v*v*v*x0+3*v*v*u*c1x+3*v*u*u*c2x+u*u*u*x,v*v*v*y0+3*v*v*u*c1y+3*v*u*u*c2y+u*u*u*y);}
+  },
+  arc(x,y,r,a0,a1,ccw){this.ellipse(x,y,r,r,0,a0,a1,ccw);},
+  ellipse(x,y,rx,ry,rot,a0,a1,ccw){
+    let sw=a1-a0;
+    if(!ccw){if(sw<0)sw=sw%(Math.PI*2)+Math.PI*2;if(a1-a0>=Math.PI*2)sw=Math.PI*2;}
+    else{if(sw>0)sw=sw%(Math.PI*2)-Math.PI*2;if(a0-a1>=Math.PI*2)sw=-Math.PI*2;}
+    const n=Math.max(6,Math.min(160,Math.ceil(Math.abs(sw)*Math.max(rx,ry)/5)));
+    const cr=Math.cos(rot||0),sr=Math.sin(rot||0);
+    for(let i=0;i<=n;i++){const a=a0+sw*i/n;const ex=Math.cos(a)*rx,ey=Math.sin(a)*ry;
+      const px=x+ex*cr-ey*sr,py=y+ex*sr+ey*cr;(i===0&&!this.cur)?this.moveTo(px,py):this.lineTo(px,py);}
+  },
+  arcTo(x1,y1,x2,y2,r){
+    const x0=this.lx,y0=this.ly;
+    let v1x=x0-x1,v1y=y0-y1,v2x=x2-x1,v2y=y2-y1;
+    const l1=Math.hypot(v1x,v1y),l2=Math.hypot(v2x,v2y);
+    if(r<=0.01||l1<1e-6||l2<1e-6){this.lineTo(x1,y1);return;}
+    v1x/=l1;v1y/=l1;v2x/=l2;v2y/=l2;
+    const cr=v1x*v2y-v1y*v2x;
+    if(Math.abs(cr)<1e-6){this.lineTo(x1,y1);return;}
+    const th=Math.acos(clamp(v1x*v2x+v1y*v2y,-1,1));
+    const d=r/Math.tan(th/2);
+    const t1x=x1+v1x*d,t1y=y1+v1y*d,t2x=x1+v2x*d,t2y=y1+v2y*d;
+    let bx=v1x+v2x,by=v1y+v2y;const bl=Math.hypot(bx,by)||1;bx/=bl;by/=bl;
+    const cd=r/Math.sin(th/2);const cx=x1+bx*cd,cy=y1+by*cd;
+    this.lineTo(t1x,t1y);
+    const a0=Math.atan2(t1y-cy,t1x-cx),a1=Math.atan2(t2y-cy,t2x-cx);
+    let sw=a1-a0;while(sw>Math.PI)sw-=Math.PI*2;while(sw<-Math.PI)sw+=Math.PI*2;
+    const n=Math.max(3,Math.min(48,Math.ceil(Math.abs(sw)*r/4)));
+    for(let i=1;i<=n;i++){const a=a0+sw*i/n;this.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}
+  },
+  roundRect(x,y,w,h,R){
+    const rr=Array.isArray(R)?R:[R,R,R,R];const m=Math.min(w,h)/2;
+    const [a,b,c,d]=rr.map(v=>Math.max(0,Math.min(+v||0,m)));
+    this.moveTo(x+a,y);this.lineTo(x+w-b,y);if(b)this.arc(x+w-b,y+b,b,-Math.PI/2,0);
+    this.lineTo(x+w,y+h-c);if(c)this.arc(x+w-c,y+h-c,c,0,Math.PI/2);
+    this.lineTo(x+d,y+h);if(d)this.arc(x+d,y+h-d,d,Math.PI/2,Math.PI);
+    this.lineTo(x,y+a);if(a)this.arc(x+a,y+a,a,Math.PI,Math.PI*1.5);this.closePath();
+  },
+  rect(x,y,w,h){this.moveTo(x,y);this.lineTo(x+w,y);this.lineTo(x+w,y+h);this.lineTo(x,y+h);this.closePath();},
+  closePath(){if(this.cur){this.cur.closed=true;const p=this.cur.pts[0];this.lx=p[0];this.ly=p[1];this.cur=null;}},
+  fill(){},stroke(){},clip(){},save(){},restore(){},
+};
+/* Istalgan shaklning konturi (shapePath orqali) — kesh bilan */
+const _outlineCache=new Map();
+function shapeOutline(L){
+  const key=[L.shape,Math.round(L.w),Math.round(L.h),Math.round(L.radius||0),L.radMulti?[L.rTL,L.rTR,L.rBR,L.rBL].join():'',L.id].join('|');
+  let r=_outlineCache.get(key);
+  if(r)return r;
+  const prev=ctx;
+  try{ctx=FlatCtx;FlatCtx.beginPath();shapePath(L);r=FlatCtx.polys.filter(p=>p.pts.length>1).map(p=>({pts:p.pts.slice(),closed:p.closed}));}
+  catch(e){r=[];}
+  finally{ctx=prev;}
+  _outlineCache.set(key,r);
+  if(_outlineCache.size>200)_outlineCache.delete(_outlineCache.keys().next().value);
+  return r;
+}
+
+/* ---------- O'lchov (path measure) ---------- */
+function pmMake(polys){
+  const segs=[];let total=0;
+  for(const P of polys){
+    const pts=P.closed?P.pts.concat([P.pts[0]]):P.pts;
+    if(pts.length<2)continue;
+    const cum=[0];let s=0;
+    for(let i=1;i<pts.length;i++){s+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);cum.push(s);}
+    if(s<1e-6)continue;
+    segs.push({pts,cum,len:s,off:total,closed:P.closed});total+=s;
+  }
+  return {segs,total:Math.max(total,1e-6),closed:segs.length===1&&segs[0].closed};
+}
+function _pmAt(seg,d){ // seg ichida d uzunlikdagi nuqta
+  const c=seg.cum;let lo=0,hi=c.length-1;
+  while(hi-lo>1){const m=(lo+hi)>>1;if(c[m]<=d)lo=m;else hi=m;}
+  const f=(d-c[lo])/Math.max(1e-9,c[hi]-c[lo]);const a=seg.pts[lo],b=seg.pts[hi];
+  return {x:a[0]+(b[0]-a[0])*f,y:a[1]+(b[1]-a[1])*f,i:lo,ang:Math.atan2(b[1]-a[1],b[0]-a[0])};
+}
+function pmPoint(M,u){
+  const d=clamp(u,0,1)*M.total;
+  for(const s of M.segs)if(d<=s.off+s.len+1e-6)return _pmAt(s,clamp(d-s.off,0,s.len));
+  const s=M.segs[M.segs.length-1];return s?_pmAt(s,s.len):{x:0,y:0,ang:0};
+}
+/* [a,b] oynasidagi bo'laklar (har poly alohida subpath) */
+function pmSub(M,a,b){
+  const out=[];const A=clamp(a,0,1)*M.total,B=clamp(b,0,1)*M.total;
+  if(B-A<0.05)return out;
+  for(const s of M.segs){
+    const s0=Math.max(A,s.off),s1=Math.min(B,s.off+s.len);
+    if(s1-s0<0.05)continue;
+    const p0=_pmAt(s,s0-s.off),p1=_pmAt(s,s1-s.off);
+    const pts=[[p0.x,p0.y]];
+    for(let i=p0.i+1;i<=p1.i;i++)pts.push(s.pts[i]);
+    pts.push([p1.x,p1.y]);
+    out.push(pts);
+  }
+  return out;
+}
+/* Teng qadamli namunalar (gradient/qalinlik o'zgaradigan uslublar uchun) */
+function pmSamples(M,a,b,stepPx){
+  const res=[];const n=Math.max(2,Math.min(700,Math.ceil((b-a)*M.total/Math.max(1.5,stepPx))));
+  let prevSeg=-1;
+  for(let i=0;i<=n;i++){
+    const u=a+(b-a)*i/n;const d=u*M.total;
+    let si=0;for(;si<M.segs.length-1;si++)if(d<=M.segs[si].off+M.segs[si].len)break;
+    const s=M.segs[si];const p=_pmAt(s,clamp(d-s.off,0,s.len));
+    res.push({x:p.x,y:p.y,u,brk:si!==prevSeg&&prevSeg!==-1});prevSeg=si;
+  }
+  return res;
+}
+function strokePts(pts){ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);ctx.stroke();}
+
+/* ---------- Oynalar (windows) ---------- */
+function wNorm(W){const a=W.map(([x,y])=>[clamp(Math.min(x,y),0,1),clamp(Math.max(x,y),0,1)]).filter(([x,y])=>y-x>0.0005).sort((p,q)=>p[0]-q[0]);
+  const r=[];for(const w of a){const l=r[r.length-1];if(l&&w[0]<=l[1])l[1]=Math.max(l[1],w[1]);else r.push(w.slice());}return r;}
+function wAnd(W,M){const r=[];for(const a of W)for(const b of M){const x=Math.max(a[0],b[0]),y=Math.min(a[1],b[1]);if(y>x)r.push([x,y]);}return wNorm(r);}
+function wTrim(W,S,E,O,closed){ // AE Trim Paths: start/end/offset
+  const lo=Math.min(S,E),hi=Math.max(S,E);
+  let r=W.map(([a,b])=>[lo+(hi-lo)*a,lo+(hi-lo)*b]);
+  if(Math.abs(O)>1e-6){
+    const o=((O%1)+1)%1;const r2=[];
+    for(const [a,b] of r){let x=a+o,y=b+o;
+      if(closed){if(x>=1){x-=1;y-=1;}if(y>1){r2.push([x,1],[0,y-1]);}else r2.push([x,y]);}
+      else r2.push([x,Math.min(1,y)]);}
+    r=r2;
+  }
+  return wNorm(r);
+}
+function rndPerm(n,seed){const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(rnd01(seed*31+i*7.7)*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+/* Kirish/chiqish/loop uslubidan oynalar + qo'shimcha bezaklar */
+function drawPlan(L,fx,t){
+  const inP=clamp(fx.drawIn??((L.animIn==='drawOn')?(fx.draw??1):1),0,1);
+  const outQ=clamp(fx.drawOut??0,0,1);
+  const st=L.drawIn||'start',so=L.drawOut||'start',lp=L.drawLoop||'none';
+  const sp=L.drawLoopSp??1;
+  const P={wins:[[0,1]],alpha:1,wMul:1,glowHead:0,glowTail:0,pen:false,soft:0,dots:null,
+    flow:null,march:null,grad:false,electric:false,dotsFirst:null,neon:0,inP,outQ};
+  const p=inP;
+  if(p<0.9995){
+    switch(st){
+      case 'end':P.wins=[[1-p,1]];break;
+      case 'center':P.wins=[[0.5-p/2,0.5+p/2]];break;
+      case 'edges':P.wins=[[0,p/2],[1-p/2,1]];break;
+      case 'segments':{const n=6;P.wins=[...Array(n)].map((_,i)=>[i/n,i/n+p/n]);break;}
+      case 'seq':{const n=6,fill=clamp((p-0.75)/0.25,0,1);P.wins=[];
+        for(let i=0;i<n;i++){const f=clamp(p/0.75*n-i,0,1);if(f<=0)break;P.wins.push([i/n,i/n+(1/n)*(1-0.4*(1-fill))*f]);}break;}
+      case 'random':{const n=10,perm=rndPerm(n,L.id||1),k=p*n;P.wins=[];
+        for(let i=0;i<n;i++){const ord=perm.indexOf(i);const f=clamp(k-ord,0,1);if(f>0)P.wins.push([i/n,i/n+f/n]);}break;}
+      case 'comet':P.wins=[[0,p]];P.glowHead=Math.pow(Math.sin(p*Math.PI),0.6);P.cometTail=0.3;break;
+      case 'pen':P.wins=[[0,p]];P.pen=true;break;
+      case 'soft':{const s=0.22;P.wins=[[0,p*(1+s)]];P.soft=s;break;}
+      case 'neon':{P.wins=[[0,1]];const k=Math.floor(t*22);const fl=rnd01((L.id||1)*13+k);
+        P.alpha=p<0.25?(fl>0.6?0.85:0.08):(p<0.55?(fl>0.3?0.9:0.25):(p<0.7?(fl>0.15?1:0.4):1));P.neon=1-p;break;}
+      case 'grow':P.wins=[[0,p]];P.wMul=0.15+0.85*ease.outCubic(p);break;
+      case 'dotsFirst':if(p<0.5){P.wins=[[0,p*2]];P.dotsOnly=true;}else{P.wins=[[0,(p-0.5)*2]];P.dotsFirst=1;}break;
+      case 'spring':{const e=ease.elastic(p);P.wins=[[0,Math.min(1,Math.max(0,e))]];P.wMul=1+0.35*Math.max(0,e-1)*4;break;}
+      default:P.wins=[[0,p]];
+    }
+  }
+  if(outQ>0.0005){
+    const q=outQ;
+    if(so==='end')P.wins=wAnd(P.wins,[[0,1-q]]);
+    else if(so==='center')P.wins=wAnd(P.wins,[[0,0.5-q/2],[0.5+q/2,1]]);
+    else if(so==='edges')P.wins=wAnd(P.wins,[[q/2,1-q/2]]);
+    else if(so==='fade')P.alpha*=1-q;
+    else{P.wins=wAnd(P.wins,[[q,1]]);if(so==='comet'){P.glowTail=Math.pow(Math.sin(q*Math.PI),0.6);}}
+  }
+  if(inP>=0.9995&&lp!=='none'){
+    const ph=t*sp;
+    if(lp==='snake'){const u=((ph*0.35)%1+1)%1,len=0.3;P.wins=wAnd(P.wins,u+len<=1?[[u,u+len]]:[[u,1],[0,u+len-1]]);}
+    else if(lp==='pingpong'){P.wins=wAnd(P.wins,[[0,0.06+0.94*(0.5+0.5*Math.cos(ph*Math.PI))]]);}
+    else if(lp==='breathe'){const b=0.5+0.5*Math.sin(ph*Math.PI*1.2);P.wMul*=0.8+0.4*b;P.alpha*=0.75+0.25*b;}
+    else if(lp==='march')P.march=ph;
+    else if(lp==='flow')P.flow=((ph*0.45)%1.25+1.25)%1.25;
+    else if(lp==='dots')P.dots=ph;
+    else if(lp==='gradient')P.grad=ph;
+    else if(lp==='electric')P.electric=true;
+  }
+  P.wins=wNorm(P.wins);
+  const S=(L.trimS??0)/100,E=(L.trimE??100)/100,O=(L.trimO??0)/360;
+  if(S!==0||E!==1||O!==0)P.trim=[S,E,O];
+  return P;
+}
+function trimActive(L){
+  return !!(L.trimOn||L.animIn==='drawOn'||L.animOut==='drawOff'||(L.drawLoop&&L.drawLoop!=='none')||
+    (L.trimS??0)!==0||(L.trimE??100)!==100||(L.trimO??0)!==0);
+}
+
+/* ---------- Egri chiziq geometriyasi ---------- */
+function catmull(pts,n){
+  const out=[];const P=pts;
+  for(let i=0;i<P.length-1;i++){
+    const p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(P.length-1,i+2)];
+    for(let k=0;k<n;k++){const u=k/n,u2=u*u,u3=u2*u;
+      out.push([0.5*((2*p1[0])+(-p0[0]+p2[0])*u+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*u2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*u3),
+                0.5*((2*p1[1])+(-p0[1]+p2[1])*u+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*u2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*u3)]);}
+  }
+  out.push(P[P.length-1].slice());return out;
+}
+function annGeom(L,t){
+  const w=L.w,h=L.h,bx=(L.bendX||0)/100,by=(L.bendY||0)/100,sd=L.id||1;
+  const quad=(p0,p1,p2,N)=>{const r=[];for(let k=0;k<=N;k++){const u=k/N,v=1-u;r.push([v*v*p0[0]+2*v*u*p1[0]+u*u*p2[0],v*v*p0[1]+2*v*u*p1[1]+u*u*p2[1]]);}return r;};
+  const fn=(N,f)=>{const r=[];for(let k=0;k<=N;k++)r.push(f(k/N));return r;};
+  const one=(pts,head,o)=>Object.assign({polys:[{pts,closed:false}],head},o||{});
+  switch(L.shape){
+    case 'arrow':return one(quad([-w/2,0],[w*bx,h*by],[w/2,0],64),'end');
+    case 'arrowDouble':return one(quad([-w/2,0],[w*bx,h*by],[w/2,0],64),'both');
+    case 'line':return one(quad([-w/2,0],[w*bx,h*by],[w/2,0],64),null);
+    case 'marker':return one(quad([-w/2,0],[w*bx,h*by+h*0.12],[w/2,0],64),null,{lwMul:Math.max(2.6,h*0.5/Math.max(2,L.borderW||8)),alpha:0.78,cap:'round'});
+    case 'curve':{const cx=(bx||by)?w*bx:-w*0.1,cy=(bx||by)?h*by:-h*0.7;return one(quad([-w/2,h/2],[cx,cy],[w/2,-h/2],64),'end');}
+    case 'arrowSketch':{const amp=Math.max(1.5,Math.min(w,h)*0.012);
+      return one(fn(60,u=>{const x=-w/2+w*u,y=(4*u*(1-u))*(h*by)+Math.sin(u*9.3+sd)*amp+Math.sin(u*21+sd*2)*amp*0.45;return [x+Math.sin(u*14+sd)*amp*0.5,y];}),'end');}
+    case 'arrowElbow':{const vF=Math.abs(by)>Math.abs(bx);const P0=[-w/2,-h/2],P2=[w/2,h/2];const K=vF?[P0[0],P2[1]]:[P2[0],P0[1]];return one([P0,K,P2],'end',{join:'round'});}
+    case 'arrowZig':{const zn=Math.max(2,Math.round(3+Math.abs(bx)*6));const pts=[];
+      for(let i=0;i<=zn;i++)pts.push([-w/2+w*i/zn,(i%2?1:-1)*h*0.3*(by?Math.abs(by)*2:0.6)]);pts[0][1]=0;pts[zn][1]=0;return one(pts,'end');}
+    case 'snake':{const amp=Math.max(4,Math.abs(L.bendY||60)/100*h/2),wav=1+Math.abs(L.bendX||40)/30,ph=(t||0)*3.2;
+      return one(fn(110,u=>[-w/2+w*u,Math.sin(u*Math.PI*2*wav-ph)*amp]),'dot');}
+    case 'hilite':{const rr=Math.min(L.radius||0,w/2,h/2);return {polys:[{pts:fn(160,u=>{const q=roundRectPoint(w,h,rr,u);return [q.x,q.y];}),closed:false}],head:null};}
+    case 'circleMark':{const tot=Math.PI*2.25;return one(fn(90,u=>{const a=-Math.PI/2+tot*u,wob=1+0.04*Math.sin(a*3+1.7);return [Math.cos(a)*(w/2)*wob,Math.sin(a)*(h/2)*wob];}),null);}
+    case 'sCurve':{const k=0.55+by*0.4;const r=[];FlatCtx.beginPath();FlatCtx.moveTo(-w/2,h/2);
+      FlatCtx.bezierCurveTo(-w/2+w*k,h/2,w/2-w*k,-h/2,w/2,-h/2);return one(FlatCtx.polys[0].pts,'end');}
+    case 'spiral':{const turns=2+Math.abs(bx)*4+1;return one(fn(220,u=>{const a=u*turns*Math.PI*2;const r=u;return [Math.cos(a)*r*w/2,Math.sin(a)*r*h/2];}),'end');}
+    case 'loopArrow':{const A=Math.min(w,h)*0.32*(1+by);return one(fn(140,u=>{const th=Math.PI*2*clamp((u-0.32)/0.36,0,1);const s=th<=0?0:th;
+      return [-w/2+w*u+A*Math.sin(s)*1.0,-A*(1-Math.cos(s))*0.9];}),'end');}
+    case 'wavePath':{const n=1.5+Math.abs(bx)*4+1,amp=h*0.4*(by?Math.abs(by):1);return one(fn(160,u=>[-w/2+w*u,Math.sin(u*Math.PI*2*n)*amp*(0.4+0.6*Math.sin(u*Math.PI))]),'end');}
+    case 'arcPath':{const sw=Math.PI*(1+bx*0.8);return one(fn(90,u=>{const a=Math.PI+(Math.PI-sw)/2+sw*u;return [Math.cos(a)*w/2,Math.sin(a)*h*(by?0.5+by:1)+h/2*0.8];}),'end');}
+    case 'hops':{const n=Math.max(2,Math.round(3+bx*4));return one(fn(180,u=>{const k=u*n,f=k-Math.floor(k);const hh=h*0.9*Math.pow(0.78,Math.floor(Math.min(k,n-1e-6)));
+      return [-w/2+w*u,h/2-4*f*(1-f)*hh];}),'end');}
+    case 'infinity':return {polys:[{pts:fn(200,u=>{const a=u*Math.PI*2,d=1+Math.sin(a)*Math.sin(a);return [Math.cos(a)*w/2/d,Math.sin(a)*Math.cos(a)*h/d];}),closed:true}],head:null};
+    case 'heartPath':return {polys:[{pts:fn(200,u=>{const a=u*Math.PI*2;const x=16*Math.pow(Math.sin(a),3),y=13*Math.cos(a)-5*Math.cos(2*a)-2*Math.cos(3*a)-Math.cos(4*a);return [x/34*w,-y/34*h-h*0.04];}),closed:true}],head:null};
+    case 'swoosh':return one(fn(90,u=>[-w/2+w*u,h*0.25*Math.sin(u*Math.PI*0.9+0.2)-h*0.25*u+(by*h*0.3)*Math.sin(u*Math.PI)]),null,{taper:true});
+    case 'pen':{const P=(Array.isArray(L.pts)&&L.pts.length>=2?L.pts:PEN_DEF).map(q=>[q[0]*w,q[1]*h]);
+      const pts=L.penSmooth===false?P:catmull(P,22);return {polys:[{pts,closed:!!L.penClosed}],head:L.penClosed?null:'end'};}
+  }
+  return null;
+}
+function annHasPath(L){return ['arrow','arrowDouble','line','marker','curve','arrowSketch','arrowElbow','arrowZig','snake','hilite','circleMark',...CURVE_SHAPES].includes(L.shape);}
+
+/* ---------- Asosiy chizuvchi ---------- */
+function headDraw(L,x,y,ang,lw,col,w,h){
+  const hType=L.headType||'line';if(hType==='none')return;
+  const hs=Math.max(lw*2.4,Math.min(w,h)*0.18)*Math.max(0.2,(L.headSize??100)/100);const sp=0.48;
+  ctx.save();ctx.setLineDash([]);ctx.fillStyle=col;ctx.strokeStyle=col;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();
+  if(hType==='solid'){ctx.moveTo(x,y);ctx.lineTo(x-hs*Math.cos(ang-sp),y-hs*Math.sin(ang-sp));ctx.lineTo(x-hs*0.62*Math.cos(ang),y-hs*0.62*Math.sin(ang));
+    ctx.lineTo(x-hs*Math.cos(ang+sp),y-hs*Math.sin(ang+sp));ctx.closePath();ctx.fill();}
+  else if(hType==='dot'){ctx.arc(x,y,hs*0.42,0,7);ctx.fill();}
+  else if(hType==='bar'){ctx.moveTo(x-hs*0.55*Math.cos(ang-1.5708),y-hs*0.55*Math.sin(ang-1.5708));ctx.lineTo(x-hs*0.55*Math.cos(ang+1.5708),y-hs*0.55*Math.sin(ang+1.5708));ctx.stroke();}
+  else{ctx.moveTo(x,y);ctx.lineTo(x-hs*Math.cos(ang-sp),y-hs*Math.sin(ang-sp));ctx.moveTo(x,y);ctx.lineTo(x-hs*Math.cos(ang+sp),y-hs*Math.sin(ang+sp));ctx.stroke();}
+  ctx.restore();
+}
+function glowDot(x,y,r,col,a){
+  if(a<=0.01)return;
+  ctx.save();ctx.globalAlpha*=clamp(a,0,1);
+  const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(0.28,hexA(col,0.85));g.addColorStop(1,hexA(col,0));
+  ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);ctx.restore();
+}
+/* Yo'lni oynalar bo'yicha chizish. G — geometriya, P — reja */
+function strokePlanned(L,G,P,col,lw,t,opt){
+  opt=opt||{};
+  let polys=G.polys;
+  if(P.electric){
+    const fr=Math.floor(t*24),amp=lw*1.3;
+    polys=polys.map(pl=>({closed:pl.closed,pts:pl.pts.map((q,i)=>{const n=rnd01(fr*91+i*13.7+(L.id||1))-0.5;
+      const a=pl.pts[Math.min(pl.pts.length-1,i+1)],b=pl.pts[Math.max(0,i-1)];const tx=a[0]-b[0],ty=a[1]-b[1],tl=Math.hypot(tx,ty)||1;
+      return [q[0]-ty/tl*n*amp*2,q[1]+tx/tl*n*amp*2];})}));
+  }
+  const M=pmMake(polys);
+  let wins=P.wins;
+  if(P.trim)wins=wTrim(wins,P.trim[0],P.trim[1],P.trim[2],M.closed);
+  const W=lw*P.wMul;
+  ctx.save();
+  ctx.globalAlpha*=P.alpha*(G.alpha??1);
+  ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=W;
+  ctx.lineCap=opt.cap||G.cap||'round';ctx.lineJoin=G.join||'round';
+  const glowAmt=Math.max((L.drawGlow??0)/100,P.neon*1.2,P.electric?0.8:0);
+  if(glowAmt>0.01){ctx.shadowColor=col;ctx.shadowBlur=W*(1.5+3*glowAmt);}
+  // chiziq uslubi (uzuq/nuqta) + yuruvchi chiziqchalar
+  let dash=opt.dash||[];
+  if(P.dotsOnly||P.dotsFirst)dash=[0.1,W*2.2];
+  if(P.march!=null&&!dash.length)dash=[W*2.6,W*1.9];
+  if(dash.length){ctx.setLineDash(dash);ctx.lineDashOffset=P.march!=null?-P.march*W*10:0;if(dash[0]<1)ctx.lineCap='round';}
+  const taper=G.taper||P.pen||P.soft>0||P.grad!==false||P.cometTail;
+  if(P.dotsFirst){ // nuqtalar butun yo'lda + ustidan yaxlit chiziq o'sadi
+    for(const sp of pmSub(M,0,1))strokePts(sp);
+    ctx.setLineDash([]);ctx.lineCap='round';
+  }
+  if(!taper){
+    for(const [a,b] of wins)for(const sp of pmSub(M,a,b))if(sp.length>1)strokePts(sp);
+  }else{
+    ctx.setLineDash([]);
+    const c2=L.drawC2||'#22d3ee';
+    for(const [a,b] of wins){
+      const S=pmSamples(M,a,b,3);
+      for(let i=1;i<S.length;i++){
+        const p0=S[i-1],p1=S[i];if(p1.brk)continue;
+        const u=(p0.u+p1.u)/2;let wm=1,am=1,cc=null;
+        if(G.taper)wm*=0.25+0.75*Math.sin(clamp(u,0,1)*Math.PI);
+        if(P.pen){const k=clamp((b-u)/0.06,0,1);wm*=0.45+0.55*k;}
+        if(P.soft>0){am*=clamp((b-u)/P.soft,0,1);}
+        if(P.cometTail&&P.glowHead>0.01){const k=clamp(1-(b-u)/P.cometTail,0,1);cc=k;}
+        if(P.grad!==false){const f=0.5+0.5*Math.sin((u*2-P.grad*0.6)*Math.PI*2);ctx.strokeStyle=tMix(col,c2,f);}
+        ctx.lineWidth=W*wm;
+        ctx.globalAlpha=clamp(P.alpha*(G.alpha??1)*am,0,1)*(opt.baseA??1);
+        ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.stroke();
+        if(cc!=null&&cc>0.02){ctx.save();ctx.globalAlpha*=cc*P.glowHead*0.85;ctx.strokeStyle='#ffffff';ctx.lineWidth=W*0.55*wm;
+          ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.stroke();ctx.restore();}
+      }
+    }
+    ctx.globalAlpha=clamp(P.alpha*(G.alpha??1),0,1)*(opt.baseA??1);ctx.strokeStyle=col;
+  }
+  ctx.shadowBlur=0;ctx.setLineDash([]);
+  // oqim impulsi
+  if(P.flow!=null){
+    const u1=P.flow,u0=u1-0.16;
+    const S=pmSamples(M,Math.max(0,u0),Math.min(1,u1),3);
+    ctx.save();ctx.lineCap='round';ctx.shadowColor=col;ctx.shadowBlur=W*3;
+    for(let i=1;i<S.length;i++){const k=clamp((S[i].u-u0)/0.16,0,1);ctx.globalAlpha=clamp(k,0,1)*0.95;
+      ctx.strokeStyle=tMix(col,'#ffffff',0.65*k);ctx.lineWidth=W*(0.6+0.7*k);
+      ctx.beginPath();ctx.moveTo(S[i-1].x,S[i-1].y);ctx.lineTo(S[i].x,S[i].y);ctx.stroke();}
+    ctx.restore();
+    if(u1<=1)glowDot(pmPoint(M,u1).x,pmPoint(M,u1).y,W*3.2,col,0.9);
+  }
+  // yuruvchi nuqtalar
+  if(P.dots!=null){
+    const N=Math.max(3,Math.round(M.total/(W*7)));
+    ctx.save();ctx.shadowColor=col;ctx.shadowBlur=W*1.5;ctx.fillStyle=tMix(col,'#ffffff',0.35);
+    for(let k=0;k<N;k++){const u=((k/N+P.dots*0.12)%1+1)%1;let inW=false;for(const [a,b] of wins)if(u>=a&&u<=b)inW=true;if(!inW)continue;
+      const q=pmPoint(M,u);ctx.beginPath();ctx.arc(q.x,q.y,W*0.85,0,7);ctx.fill();}
+    ctx.restore();
+  }
+  // uchlar va bezaklar
+  if(wins.length){
+    const last=wins[wins.length-1],first=wins[0];
+    const b=last[1],a=first[0];
+    const hp=pmPoint(M,b),hq=pmPoint(M,Math.max(0,b-Math.min(0.04,8/M.total)));
+    const ang=Math.atan2(hp.y-hq.y,hp.x-hq.x);
+    if(G.head==='end'||G.head==='both'){if(b-a>0.06||P.inP>=0.999)headDraw(L,hp.x,hp.y,ang,W,col,L.w,L.h);}
+    if(G.head==='both'){const sp=pmPoint(M,a),sq=pmPoint(M,Math.min(1,a+0.04));if(b-a>0.06)headDraw(L,sp.x,sp.y,Math.atan2(sp.y-sq.y,sp.x-sq.x),W,col,L.w,L.h);}
+    if(G.head==='dot'&&b-a>0.08){ctx.beginPath();ctx.arc(hp.x,hp.y,W*0.9,0,7);ctx.fill();}
+    if(P.glowHead>0.01)glowDot(hp.x,hp.y,W*4.5,col,P.glowHead);
+    if(P.glowTail>0.01){const tp=pmPoint(M,a);glowDot(tp.x,tp.y,W*4.5,col,P.glowTail);}
+    if(P.pen&&P.inP<0.999){
+      ctx.save();ctx.translate(hp.x,hp.y);ctx.beginPath();ctx.arc(0,0,W*0.7,0,7);ctx.fill();
+      ctx.rotate(-0.8);ctx.fillStyle='#1f2937';ctx.globalAlpha*=0.9;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W*1.6,-W*1.0);ctx.lineTo(W*7.5,-W*1.0);ctx.lineTo(W*7.5,W*1.0);ctx.lineTo(W*1.6,W*1.0);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#e5e7eb';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W*1.6,-W*1.0);ctx.lineTo(W*1.6,W*1.0);ctx.closePath();ctx.fill();
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+  return M;
+}
+/* Annotatsiya shakllari uchun yangi yo'l: true qaytarsa — eski kod ishlamaydi */
+function drawAnnPath(L,fx,t){
+  if(!annHasPath(L))return false;
+  const G=annGeom(L,t);if(!G)return false;
+  const lw=Math.max(2,L.borderW||8)*(G.lwMul||1);
+  const col=L.fillColor||'#ffffff';
+  const DS=({dash:[lw*2.6,lw*1.9],dot:[0.1,lw*2.1],dashdot:[lw*3,lw*1.6,0.1,lw*1.6],long:[lw*5.5,lw*2.4]})[L.annDash||'solid']||[];
+  const P=drawPlan(L,fx,t);
+  if(!P.wins.length&&P.flow==null)return true;
+  strokePlanned(L,G,P,col,lw,t,{dash:DS,cap:DS.length&&L.annDash!=='dot'?'butt':undefined});
+  return true;
+}
+/* Oddiy shakllarning konturi (chegara) uchun Trim Paths */
+function drawShapeTrimStroke(L,fx,t,col,lw){
+  const polys=shapeOutline(L);if(!polys.length)return;
+  const P=drawPlan(L,fx,t);
+  const DS=L.borderStyle==='dashed'?[14,10]:(L.borderStyle==='dotted'?[2,8]:[]);
+  strokePlanned(L,{polys,head:null,cap:'round',join:'round'},P,col,lw,t,{dash:DS});
+}
+/* "Chizilib paydo bo'lish" — oddiy shaklda avval kontur, keyin ichki rang */
+function shapeFillMul(L,fx){
+  if(L.animIn!=='drawOn')return 1;
+  const p=clamp(fx.drawIn??fx.draw??1,0,1);
+  return clamp((p-0.55)/0.45,0,1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🫧 GOOEY / METABALL — elastik "suyuq" qo'shilish (SDF + marching squares)
+   ───────────────────────────────────────────────────────────────────────────
+   Shakllar masofa maydoni (SDF) sifatida yoziladi va "smooth-min" bilan
+   birlashtiriladi — ikki shakl yaqinlashganda ular orasida silliq "bo'yin"
+   paydo bo'ladi (gifdagi tabbar kabi). Kontur marching squares bilan aniq
+   vektor yo'lga aylanadi → chekkalar tiniq, GPU shart emas, juda yengil.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const sdCircle=(x,y,cx,cy,r)=>Math.sqrt((x-cx)*(x-cx)+(y-cy)*(y-cy))-r;
+function sdSeg(x,y,ax,ay,bx,by,r){const pax=x-ax,pay=y-ay,bax=bx-ax,bay=by-ay;const h=Math.max(0,Math.min(1,(pax*bax+pay*bay)/((bax*bax+bay*bay)||1e-6)));const dx=pax-bax*h,dy=pay-bay*h;return Math.sqrt(dx*dx+dy*dy)-r;}
+function sdRBox(x,y,cx,cy,hw,hh,r){
+  r=Math.min(r,hw,hh);const qx=Math.abs(x-cx)-(hw-r),qy=Math.abs(y-cy)-(hh-r);
+  const mx=Math.max(qx,0),my=Math.max(qy,0);return Math.sqrt(mx*mx+my*my)+Math.min(Math.max(qx,qy),0)-r;
+}
+function smin(a,b,k){if(k<=0.001)return Math.min(a,b);const h=Math.max(k-Math.abs(a-b),0)/k;return Math.min(a,b)-h*h*k*0.25;}
+function smax(a,b,k){return -smin(-a,-b,k);}
+/* Marching squares: f(x,y)<0 = ichkarida. Natija — yopiq konturlar ro'yxati */
+function msContours(f,x0,y0,x1,y1,cs){
+  const nx=Math.max(2,Math.ceil((x1-x0)/cs)),ny=Math.max(2,Math.ceil((y1-y0)/cs));
+  const csx=(x1-x0)/nx,csy=(y1-y0)/ny;
+  const V=new Float32Array((nx+1)*(ny+1));
+  for(let j=0;j<=ny;j++){const y=y0+j*csy;const eb=(j===0||j===ny);
+    for(let i=0;i<=nx;i++){let q=f(x0+i*csx,y);if(eb||i===0||i===nx)q=Math.max(q,0.001);else if(q===0)q=-1e-6;V[j*(nx+1)+i]=q;}}
+  const v=(i,j)=>V[j*(nx+1)+i];
+  const H=(ny+1)*nx;
+  const pt=new Map();
+  const ptOf=(id)=>{let p=pt.get(id);if(p)return p;
+    if(id<H){const j=Math.floor(id/nx),i=id%nx;const a=v(i,j),b=v(i+1,j);const f2=a/(a-b);p=[x0+(i+f2)*csx,y0+j*csy];}
+    else{const k=id-H;const j=Math.floor(k/(nx+1)),i=k%(nx+1);const a=v(i,j),b=v(i,j+1);const f2=a/(a-b);p=[x0+i*csx,y0+(j+f2)*csy];}
+    pt.set(id,p);return p;};
+  const adj=new Map();
+  const link=(a,b)=>{let A=adj.get(a);if(!A){A=[];adj.set(a,A);}A.push(b);let B=adj.get(b);if(!B){B=[];adj.set(b,B);}B.push(a);};
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
+    const a=v(i,j),b=v(i+1,j),c=v(i+1,j+1),d=v(i,j+1);
+    const cs2=(a<0?8:0)|(b<0?4:0)|(c<0?2:0)|(d<0?1:0);
+    if(cs2===0||cs2===15)continue;
+    const T=j*nx+i,B2=(j+1)*nx+i,Lf=H+j*(nx+1)+i,R=H+j*(nx+1)+i+1;
+    switch(cs2){
+      case 1:case 14:link(Lf,B2);break;
+      case 2:case 13:link(B2,R);break;
+      case 3:case 12:link(Lf,R);break;
+      case 4:case 11:link(T,R);break;
+      case 6:case 9:link(T,B2);break;
+      case 7:case 8:link(Lf,T);break;
+      case 5:{const m=(a+b+c+d)/4;if(m<0){link(Lf,T);link(R,B2);}else{link(T,R);link(Lf,B2);}break;}
+      case 10:{const m=(a+b+c+d)/4;if(m<0){link(T,R);link(Lf,B2);}else{link(Lf,T);link(R,B2);}break;}
+    }
+  }
+  const seen=new Set(),loops=[];
+  for(const [id] of adj){
+    if(seen.has(id))continue;
+    const loop=[];let prev=-1,cur=id;
+    for(let g=0;g<100000;g++){
+      seen.add(cur);loop.push(ptOf(cur));
+      const nb=adj.get(cur);if(!nb)break;
+      let nxt=nb[0]===prev?nb[1]:nb[0];
+      if(nxt===undefined||nxt===id||seen.has(nxt)){break;}
+      prev=cur;cur=nxt;
+    }
+    if(loop.length>2)loops.push(loop);
+  }
+  return loops;
+}
+function msPath(loops){
+  const p=new Path2D();
+  for(const l of loops){p.moveTo(l[0][0],l[0][1]);for(let i=1;i<l.length;i++)p.lineTo(l[i][0],l[i][1]);p.closePath();}
+  return p;
+}
+const _gooCache=new Map();
+function gooPath(key,f,x0,y0,x1,y1,cs){
+  let p=_gooCache.get(key);if(p)return p;
+  p=msPath(msContours(f,x0,y0,x1,y1,cs));
+  _gooCache.set(key,p);if(_gooCache.size>60)_gooCache.delete(_gooCache.keys().next().value);
+  return p;
+}
+/* Prujina (spring) easing — elastik yetib kelish */
+function springE(x,bounce){
+  x=clamp(x,0,1);const b=bounce??0.35;
+  if(x>=1)return 1;
+  const w=Math.PI*2*(1.1+b*1.6),z=0.32+(1-b)*0.45;
+  return 1-Math.exp(-z*w*x)*Math.cos(w*Math.sqrt(1-z*z)*x)*(1-x*x*x);
+}
+
+/* ═══ 🧲 GOOEY TABBAR (gifdagi kabi) — 8 dizayn ═══ */
+const GT_STYLES=[['bubble','Pufak (gif kabi)'],['notch','O\'yiq + suzuvchi doira'],['drop','Pastga tomchi'],
+  ['liquid','Suyuq yuza (to\'lqinlanadi)'],['inner','Ichki gooey kapsula'],['worm','Cho\'ziluvchi chiziq'],
+  ['dot','Gooey nuqta'],['neon','Qorong\'u neon']];
+/* Faol tab holati (sequence, hold, move) → {from,to,tau} */
+function gooTabState(L,local){
+  const n=clamp(Math.round(L.gtN||4),2,6);
+  if(L.gtMode==='kf'){const pos=clamp(L.gtPos??0,0,n-1);const f=Math.floor(pos),c=Math.min(n-1,f+1);
+    return {from:f,to:c,tau:pos-f,raw:true,n};}
+  let seq=String(L.gtSeq??'0,1,2,3').split(/[,\s]+/).map(s=>parseInt(s,10)).filter(v=>!isNaN(v)).map(v=>clamp(v,0,n-1));
+  if(!seq.length)seq=[0];
+  const hold=Math.max(0.1,L.gtHold??1.1),mv=Math.max(0.15,L.gtMove??0.75),d0=Math.max(0,L.gtDelay??0.5);
+  let tt=local-d0;
+  if(tt<0)return {from:seq[0],to:seq[0],tau:1,n};
+  const per=hold+mv;
+  let k=Math.floor(tt/per);
+  const loop=L.gtLoop!==false;
+  if(k>=seq.length-1&&!loop)return {from:seq[seq.length-1],to:seq[seq.length-1],tau:1,n};
+  const N=loop?seq.length:seq.length;
+  const r=tt-k*per;
+  const a=seq[k%N],b=seq[(k+1)%N];
+  if(r<hold)return {from:a,to:a,tau:1,n};
+  return {from:a,to:b,tau:(r-hold)/mv,n};
+}
+function drawGooTab(L,local,alpha,t){
+  const w=L.w,h=L.h,st=L.gtStyle||'bubble';
+  const S=gooTabState(L,local),n=S.n;
+  const cx=i=>-w/2+(i+0.5)*w/n;
+  const bounce=(L.gtBounce??40)/100;
+  const e1=S.raw?S.tau:springE(S.tau,bounce),e2=S.raw?S.tau:springE(clamp((S.tau-0.16)/0.84,0,1),bounce*0.6);
+  const xh=cx(S.from)+(cx(S.to)-cx(S.from))*e1, xt=cx(S.from)+(cx(S.to)-cx(S.from))*e2;
+  const moving=S.from!==S.to&&S.tau<1;
+  const dark=st==='neon';
+  const barC=L.gtBar||(dark?'#111827':'#ffffff'), bubC=L.gtBub||barC, acc=L.fillColor||'#3b82f6',idle=L.gtIdle||(dark?'#4b5563':'#c3c8d0');
+  const lblOn=L.gtShowLbl!==false;
+  const icons=String(L.gtIcons||'home,search,heart,user').split(',').map(s=>s.trim());
+  const labels=String(L.gtLabels||'Home,Search,Likes,Profile').split(',').map(s=>s.trim());
+  const top=(st==='bubble'||st==='notch'||st==='liquid')?-h/2+h*0.36:-h/2;
+  const bot=(st==='drop')?h/2-h*0.34:h/2;
+  const barH=bot-top, rad=Math.min(barH/2,(L.radius??28));
+  const R=Math.min(w/n*(st==='notch'?0.3:0.36),(st==='bubble'||st==='notch'||st==='liquid'||st==='drop')?h*(st==='notch'?0.25:0.3):barH*0.32);
+  const tauS=S.raw?0:clamp(S.tau,0,1);
+  const dip=moving?Math.sin(Math.PI*Math.min(1,tauS*1.1))*R*0.55:0;
+  const pop=moving?-Math.sin(clamp((tauS-0.72)/0.28,0,1)*Math.PI)*R*0.16:0;
+  const k=(L.gtGoo??100)/100*R*0.5;
+  const U=1;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  // ── SDF ──
+  let f,by=0,bubOn=true,indF=null;
+  const bx0=-w/2,by0=top,bh=barH;
+  const box=(x,y)=>sdRBox(x,y,0,(top+bot)/2,w/2,barH/2,rad);
+  if(st==='bubble'||st==='liquid'){
+    by=top-R*0.08+dip+pop;
+    const wav=st==='liquid'?(x,y)=>{const d=Math.abs(x-xh);const amp=R*0.12*(moving?1:0.35)*Math.exp(-d/(w*0.18));return amp*Math.sin(d*0.09/Math.max(0.3,R/40)-t*9);}:null;
+    f=(x,y)=>{let b=box(x,y);if(wav&&y<top+R)b-=wav(x,y)*clamp(1-(y-top)/R,0,1);
+      return smin(b,smin(sdCircle(x,y,xh,by,R),sdCircle(x,y,xt,by,R*0.94),R*0.7),k);};
+  }else if(st==='notch'){
+    by=top-R*0.3+dip*0.6+pop;const gap=R*0.22;
+    f=(x,y)=>smax(box(x,y),-smin(sdCircle(x,y,xh,top-R*0.3,R+gap),sdCircle(x,y,xt,top-R*0.3,R+gap),R),k*0.9);
+    indF=(x,y)=>smin(sdCircle(x,y,xh,by,R),sdCircle(x,y,xt,by,R*0.94),R*0.9);
+    bubOn=false;
+  }else if(st==='drop'){
+    by=bot+R*0.08-dip-pop;
+    f=(x,y)=>smin(box(x,y),smin(sdCircle(x,y,xh,by,R),sdCircle(x,y,xt,by,R*0.94),R*0.7),k);
+  }else{
+    f=box;bubOn=false;
+    const yc=(top+bot)/2,r2=st==='dot'?barH*0.045:(st==='worm'?barH*0.03:(st==='neon'?barH*0.25:barH*0.36));
+    const yy=st==='dot'?bot-barH*0.12:(st==='worm'?bot-barH*0.06:(st==='neon'?yc-(lblOn?barH*0.12:0):yc));
+    const xa=Math.min(xh,xt),xb=Math.max(xh,xt);
+    if(st==='worm'){const hw=w/n*0.22;indF=(x,y)=>sdRBox(x,y,(xa+xb)/2,yy,(xb-xa)/2+hw,r2,r2);}
+    else if(st==='dot')indF=(x,y)=>smin(sdCircle(x,y,xh,yy,r2*(1+0.25*Math.sin(tauS*Math.PI))),sdCircle(x,y,xt,yy,r2*0.85),r2*3);
+    else{const rw=w/n*(st==='neon'?0.3:0.42);indF=(x,y)=>smin(sdRBox(x,y,xh,yy,rw,r2,r2),sdRBox(x,y,xt,yy,rw*0.9,r2*0.92,r2*0.92),r2*1.2);}
+  }
+  const cs=Math.max(1.5,Math.min(w,h)/90);
+  const qk=v=>Math.round(v*4)/4;
+  const key=['gt',st,qk(w),qk(h),n,qk(xh),qk(xt),qk(by),qk(k),rad,st==='liquid'?Math.round(t*30):0].join('|');
+  const pth=gooPath(key,f,-w/2-R*1.5,-h/2-R*1.5,w/2+R*1.5,h/2+R*1.5,cs);
+  // soya + yuza
+  ctx.save();
+  if(L.gtShadow!==false){ctx.shadowColor=dark?'rgba(0,0,0,.55)':'rgba(15,23,42,.16)';ctx.shadowBlur=Math.max(8,h*0.18);ctx.shadowOffsetY=h*0.05;}
+  ctx.fillStyle=barC;ctx.fill(pth,'evenodd');
+  ctx.restore();
+  if(dark){ctx.save();ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1.2;ctx.stroke(pth);ctx.restore();}
+  if(indF){
+    const key2=['gi',st,qk(w),qk(h),n,qk(xh),qk(xt),qk(by),qk(tauS)].join('|');
+    const ip=gooPath(key2,indF,-w/2-R*1.5,-h/2-R*1.5,w/2+R*1.5,h/2+R*1.5,cs*0.8);
+    ctx.save();
+    if(dark||st==='inner'){ctx.shadowColor=hexA(acc,dark?0.9:0.35);ctx.shadowBlur=R*(dark?1.1:0.5);}
+    ctx.fillStyle=st==='notch'?bubC:(st==='inner'?hexA(acc,dark?0.95:0.14):acc);
+    if(st==='notch'){ctx.shadowColor='rgba(15,23,42,.18)';ctx.shadowBlur=R*0.5;ctx.shadowOffsetY=R*0.12;ctx.fillStyle=acc;}
+    ctx.fill(ip,'evenodd');ctx.restore();
+  }
+  // ikonka va yozuvlar
+  const isz=Math.min(R*1.05,w/n*0.42);
+  const ic=(i)=>icons[i]||ICONS[i%ICONS.length][0];
+  for(let i=0;i<n;i++){
+    const x=cx(i);
+    const near=clamp(1-Math.abs(xh-x)/(w/n*0.75),0,1);
+    const act=near>0.5;
+    let iy=(top+bot)/2-(lblOn?barH*0.12:0),col=tMix(idle.length===7?idle:'#c3c8d0',acc,(st==='inner'&&!dark)?near:(bubOn?0:near));
+    let sc=1;
+    if(bubOn&&near>0.001){
+      const sel=near;
+      iy=iy+(by-iy)*sel;
+      sc=1+0.12*sel+(S.to===i&&S.tau>0.6&&S.tau<1?0.18*Math.sin((S.tau-0.6)/0.4*Math.PI):0);
+      col=tMix(idle.length===7?idle:'#c3c8d0',acc,sel);
+    }
+    if(st==='notch'&&near>0.001){iy=iy+(by-iy)*near;col=tMix(idle.length===7?idle:'#c3c8d0','#ffffff',near);sc=1+0.1*near;}
+    if((dark||st==='inner')&&near>0.5&&st!=='notch')col=dark?'#ffffff':acc;
+    ctx.save();ctx.translate(x,iy);ctx.scale(sc,sc);
+    drawIconAt(ctx,ic(i),isz,col,L.gtIconW||28);
+    ctx.restore();
+    if(lblOn){
+      const fs=Math.max(9,Math.min(barH*0.14,w/n*0.12,h*0.1));
+      ctx.save();
+      ctx.font=`${act?600:500} ${fs}px Inter, system-ui, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      const ly=bot-barH*((st==='dot'||st==='worm')?0.3:0.2);
+      ctx.globalAlpha=alpha*(st==='drop'?(1-near):(bubOn||st==='notch'?(0.55+0.45*near):1));
+      ctx.fillStyle=tMix(idle.length===7?idle:'#c3c8d0',st==='notch'?acc:acc,near);
+      ctx.fillText(labels[i]||'',x,ly);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
+/* ═══ 🫧 BLOB / LAVA — elastik suyuq blob shakllar (6 dizayn) ═══ */
+const LV_STYLES=[['lava','Lava lampa (suzuvchi)'],['orbit','Orbita (aylanadi)'],['split','Bo\'linish (mitoz)'],
+  ['drip','Tomchilash'],['bounce','Sakrovchi jelly'],['pulse','Yurak urishi (puls)']];
+function drawLava(L,local,alpha,t){
+  const w=L.w,h=L.h,st=L.lvStyle||'lava';
+  const n=clamp(Math.round(L.lvN||5),1,10),sp=L.lvSpeed??1,size=(L.lvSize??100)/100;
+  const k=Math.min(w,h)*0.16*((L.lvGoo??100)/100);
+  const T=local*sp,R0=Math.min(w,h)*0.15*size;
+  const C=[];   // {c:[x,y,r]} | {e:[x,y,r,sx,sy]} | {b:[cx,cy,hw,hh,r]} | {s:[ax,ay,bx,by,r]}
+  const rn=i=>rnd01((L.id||1)*17+i*7.3);
+  if(st==='lava'){for(let i=0;i<n;i++){const a=rn(i)*6.28,b=rn(i+20)*6.28,s1=0.35+rn(i+40)*0.5,s2=0.3+rn(i+60)*0.5;const r=R0*(0.6+rn(i+80)*0.6);
+    C.push({c:[Math.sin(T*s1+a)*(w/2-r*1.1),Math.sin(T*s2*0.8+b)*(h/2-r*1.1),r]});}}
+  else if(st==='orbit'){C.push({c:[0,0,R0*1.3]});for(let i=0;i<n-1;i++){const a=T*(0.8+i*0.15)+i*6.28/(n-1);const rr=Math.min(w,h)*0.3*(0.8+0.25*Math.sin(T*1.3+i));
+    C.push({c:[Math.cos(a)*rr,Math.sin(a)*rr,R0*(0.55+0.2*rn(i))]});}}
+  else if(st==='split'){const ph=(Math.sin(T*1.2)+1)/2;const dx=ph*w*0.28;C.push({c:[-dx,0,R0*(1.4-0.3*ph)]},{c:[dx,0,R0*(1.4-0.3*ph)]});
+    if(n>2)C.push({c:[0,Math.sin(T*2.4)*h*0.12,R0*0.55*(1-ph)]});}
+  else if(st==='drip'){const top=-h/2+h*0.08;C.push({b:[0,top-h*0.04,w/2-4,h*0.1,h*0.06]});
+    for(let i=0;i<n;i++){const x=(-0.4+0.8*(n>1?i/(n-1):0.5))*w*0.9+(rn(i)-0.5)*w*0.06;const life=((T*0.32+rn(i+5))%1);
+      const r=R0*(0.42+0.18*rn(i+9));const yd=top+h*0.06+Math.pow(life,1.7)*h*0.95;
+      if(yd-r<h/2)C.push({c:[x,yd,r*(1-0.15*life)]});
+      if(life<0.55)C.push({s:[x,top,x,yd,r*0.32*(1-life/0.55)+1]});}}
+  else if(st==='bounce'){const ph=(T*1.3)%1;const gy=h/2-h*0.08;const R=R0*1.25;const up=Math.sin(ph*Math.PI);
+    const sq=Math.exp(-Math.pow((ph<0.5?ph:1-ph)*10,2));
+    C.push({e:[0,gy-R*(1-0.3*sq)-up*h*0.5,R,1+0.35*sq,1-0.3*sq]});C.push({b:[0,gy+h*0.05,w*0.42,h*0.05,h*0.05]});}
+  else{const p=Math.pow(Math.abs(Math.sin(T*2.2)),6);for(let i=0;i<n;i++){const a=i/n*6.28+T*0.3;const rr=R0*(0.9+0.9*p);
+    C.push({c:[Math.cos(a)*rr,Math.sin(a)*rr,R0*0.6]});}C.push({c:[0,0,R0*(0.95+0.25*p)]});}
+  const f=(x,y)=>{let d=1e9;for(const q of C){let dd;
+      if(q.c)dd=sdCircle(x,y,q.c[0],q.c[1],q.c[2]);
+      else if(q.e){const e=q.e;const ux=(x-e[0])/e[3],uy=(y-e[1])/e[4];dd=Math.sqrt(ux*ux+uy*uy)*Math.min(e[3],e[4])-e[2];}
+      else if(q.b)dd=sdRBox(x,y,q.b[0],q.b[1],q.b[2],q.b[3],q.b[4]);
+      else dd=sdSeg(x,y,q.s[0],q.s[1],q.s[2],q.s[3],q.s[4]);
+      d=smin(d,dd,k);}return d;};
+  const cs=Math.max(2,Math.min(w,h)/80);
+  const key=['lv',st,Math.round(w),Math.round(h),n,Math.round(T*60),Math.round(k),size].join('|');
+  const pth=gooPath(key,f,-w/2-2,-h/2-2,w/2+2,h/2+2,cs);
+  ctx.save();ctx.globalAlpha=alpha;
+  const g=ctx.createLinearGradient(-w/2,-h/2,w/2,h/2);g.addColorStop(0,L.fillColor||'#8b5cf6');g.addColorStop(1,L.grad2||'#0ea5e9');
+  ctx.save();
+  if(L.lvShadow!==false){ctx.shadowColor=hexA(L.fillColor||'#8b5cf6',0.45);ctx.shadowBlur=Math.min(w,h)*0.08;}
+  ctx.fillStyle=g;ctx.fill(pth,'evenodd');
+  ctx.restore();
+  const gl=(L.lvGloss??60)/100;
+  if(gl>0.01){
+    ctx.save();ctx.clip(pth,'evenodd');
+    for(const q of C){const c=q.c||q.e;if(!c)continue;const r=c[2];const hx=c[0]-r*0.35,hy=c[1]-r*0.4;
+      const rg=ctx.createRadialGradient(hx,hy,0,hx,hy,r*0.9);
+      rg.addColorStop(0,`rgba(255,255,255,${0.5*gl})`);rg.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=rg;ctx.fillRect(c[0]-r*1.5,c[1]-r*1.5,r*3,r*3);}
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ✨ ZARRACHALAR (Particular / CC Particle World uslubi) — 12 dizayn
+   To'liq DETERMINISTIK: har zarracha o'z tug'ilish vaqti va raqamidan hisoblanadi
+   → orqaga surish, eksport, preview — hammasi bir xil. Holat saqlanmaydi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const PT_STYLES=[['snow','❄ Qor'],['rain','🌧 Yomg\'ir'],['sparks','✨ Uchqun favvorasi'],['bokeh','🔵 Bokeh (xira doiralar)'],
+  ['confetti','🎉 Konfetti yomg\'iri'],['bubbles','🫧 Pufakchalar'],['fireflies','🪲 Yaltiroq qo\'ng\'izlar'],['stars','⭐ Yulduzli osmon'],
+  ['dust','🌫 Chang zarralari'],['embers','🔥 Cho\'g\' (ko\'tariluvchi)'],['hearts','💗 Yuraklar'],['warp','🚀 Warp (yulduz tunneli)']];
+const _ptSprites=new Map();
+function ptSprite(col,soft){
+  const k=col+'|'+soft;let c=_ptSprites.get(k);if(c)return c;
+  c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');
+  const rg=g.createRadialGradient(32,32,0,32,32,32);
+  if(soft){rg.addColorStop(0,hexA(col,1));rg.addColorStop(0.25,hexA(col,0.7));rg.addColorStop(1,hexA(col,0));}
+  else{rg.addColorStop(0,'rgba(255,255,255,1)');rg.addColorStop(0.2,hexA(col,1));rg.addColorStop(0.55,hexA(col,0.35));rg.addColorStop(1,hexA(col,0));}
+  g.fillStyle=rg;g.fillRect(0,0,64,64);
+  _ptSprites.set(k,c);if(_ptSprites.size>40)_ptSprites.delete(_ptSprites.keys().next().value);
+  return c;
+}
+function drawParticles(L,local,alpha,t){
+  const w=L.w,h=L.h,st=L.ptStyle||'snow';
+  const U=pfxUnit();
+  const life=Math.max(0.2,L.ptLife??({rain:1.2,sparks:1.6,confetti:3.5,embers:3,warp:1.4}[st]||4));
+  let rate=Math.max(0.5,L.ptRate??({rain:120,stars:40,warp:90,sparks:70,bokeh:6,fireflies:10,dust:30}[st]||35));
+  const maxN=600;if(rate*life>maxN)rate=maxN/life;
+  const sz=(L.ptSize??100)/100*U,spd=(L.ptSpeed??100)/100,grav=(L.ptGrav??100)/100,wind=(L.ptWind??0)*U,turb=(L.ptTurb??40)/100;
+  const c1=L.fillColor||'#ffffff',c2=L.grad2||'#93c5fd',seed=(L.id||1)*7.77;
+  const clip=L.ptClip!==false;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  if(clip){ctx.beginPath();ctx.rect(-w/2,-h/2,w,h);ctx.clip();}
+  const i1=Math.floor(local*rate),i0=Math.max(0,Math.floor((local-life)*rate)-1);
+  // "oldindan to'lgan" holat — boshidan ekran bo'sh bo'lmasin (qor, chang, yulduz uchun)
+  const pre=(st==='snow'||st==='dust'||st==='stars'||st==='bokeh'||st==='fireflies'||st==='rain'||st==='bubbles')?Math.ceil(life*rate):0;
+  const glow=(L.ptGlow??(st==='sparks'||st==='fireflies'||st==='embers'||st==='warp'?100:0))/100;
+  if(glow>0.01)ctx.globalCompositeOperation='lighter';
+  for(let i=i0-pre;i<=i1;i++){
+    const tb=i/rate,age=local-tb;if(age<0||age>life)continue;
+    const r1=rnd01(seed+i*1.13),r2=rnd01(seed+i*2.71),r3=rnd01(seed+i*3.97),r4=rnd01(seed+i*5.31);
+    const u=age/life;
+    const col=r3<0.5?c1:c2;
+    let x,y,s,a=1,rot=0;
+    switch(st){
+      case 'snow':{x=-w/2+r1*w+Math.sin(age*(0.8+r2)+r3*6)*24*U*turb*2+wind*age;y=-h/2-10+age*(30+r2*50)*U*spd*grav*1.6;s=(2+r2*5)*sz;a=0.55+0.45*r4;
+        a*=Math.min(1,u*8)*Math.min(1,(1-u)*6);break;}
+      case 'rain':{x=-w/2+r1*w*1.2+wind*age*2;y=-h/2-20+age*(700+r2*400)*U*spd*grav;s=(0.8+r2*1.2)*sz;a=0.35+0.4*r4;break;}
+      case 'sparks':{const ang=(-90+(r1-0.5)*(L.ptSpread??70))*Math.PI/180;const v=(260+r2*420)*U*spd;
+        x=Math.cos(ang)*v*age+wind*age;y=h/2-4+Math.sin(ang)*v*age+0.5*620*U*grav*age*age;s=(1.5+r3*2.5)*sz*(1-u*0.6);a=(1-u)*(0.6+0.4*Math.sin(age*40+r4*9));break;}
+      case 'bokeh':{x=-w/2+r1*w+Math.sin(age*0.3+r2*6)*40*U*turb;y=-h/2+r2*h+Math.cos(age*0.25+r3*6)*30*U*turb-age*8*U*spd;s=(18+r3*46)*sz;a=0.22*Math.sin(u*Math.PI);break;}
+      case 'confetti':{x=-w/2+r1*w+Math.sin(age*2+r2*6)*30*U*turb+wind*age;y=-h/2-20+age*(120+r2*120)*U*spd*grav;s=(5+r3*6)*sz;rot=age*(3+r4*6)+r1*6;break;}
+      case 'bubbles':{x=-w/2+r1*w+Math.sin(age*(1.5+r2)+r3*6)*18*U*(0.3+turb);y=h/2+10-age*(60+r2*80)*U*spd;s=(4+r3*12)*sz;a=Math.min(1,u*6)*(1-Math.pow(u,6));break;}
+      case 'fireflies':{const ph=r2*6.28;x=-w/2+r1*w+Math.sin(age*0.7+ph)*60*U*turb+Math.sin(age*1.9+ph*2)*20*U;y=-h/2+r3*h+Math.cos(age*0.6+ph)*50*U*turb;
+        s=(3+r4*3)*sz;a=Math.pow(0.5+0.5*Math.sin(age*3+r4*9),3)*Math.sin(u*Math.PI);break;}
+      case 'stars':{x=-w/2+r1*w;y=-h/2+r2*h;s=(1+r3*2.6)*sz;a=(0.35+0.65*Math.pow(0.5+0.5*Math.sin(age*(2+r4*4)+r1*20),2))*Math.sin(u*Math.PI);break;}
+      case 'dust':{x=-w/2+r1*w+age*(10+r2*20)*U*spd+Math.sin(age*0.5+r3*6)*30*U*turb+wind*age;y=-h/2+r2*h+Math.sin(age*0.4+r4*6)*25*U*turb-age*4*U;s=(1+r3*2.5)*sz;a=0.5*Math.sin(u*Math.PI);break;}
+      case 'embers':{x=(r1-0.5)*w*0.8+Math.sin(age*2+r2*6)*20*U*turb+wind*age;y=h/2-age*(80+r2*120)*U*spd;s=(1.5+r3*3)*sz*(1-u*0.5);a=(1-u)*(0.6+0.4*Math.sin(age*25+r4*9));break;}
+      case 'hearts':{x=-w/2+r1*w+Math.sin(age*1.5+r2*6)*26*U*turb;y=h/2+10-age*(70+r2*60)*U*spd;s=(7+r3*10)*sz;a=Math.min(1,u*5)*(1-u);rot=Math.sin(age*2+r4*6)*0.4;break;}
+      case 'warp':{const ang=r1*6.28,d0=10*U+r2*30*U;const dist=d0*Math.exp(age*2.6*spd);x=Math.cos(ang)*dist;y=Math.sin(ang)*dist;
+        s=(0.8+r3*1.6)*sz*(1+age*2);a=Math.min(1,age*3)*(1-u*0.3);rot=ang;break;}
+      default:x=0;y=0;s=2;
+    }
+    if(a<=0.01)continue;
+    ctx.globalAlpha=alpha*clamp(a,0,1);
+    if(st==='rain'){ctx.strokeStyle=col;ctx.lineWidth=s;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-wind*0.02,y-26*U*spd);ctx.stroke();continue;}
+    if(st==='warp'){ctx.strokeStyle=col;ctx.lineWidth=s;ctx.beginPath();ctx.moveTo(x,y);const k2=0.82;ctx.lineTo(x*k2,y*k2);ctx.stroke();continue;}
+    if(st==='confetti'){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(1,Math.max(0.15,Math.abs(Math.cos(rot*1.7))));ctx.fillStyle=[c1,c2,'#f43f5e','#facc15','#22d3ee','#a78bfa'][Math.floor(r3*6)];
+      ctx.fillRect(-s*0.4,-s*0.7,s*0.8,s*1.4);ctx.restore();continue;}
+    if(st==='hearts'){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.fillStyle=col;const R=s*0.55;ctx.beginPath();ctx.moveTo(0,R*0.75);
+      ctx.bezierCurveTo(-R*1.5,-R*0.3,-R*0.5,-R*1.25,0,-R*0.45);ctx.bezierCurveTo(R*0.5,-R*1.25,R*1.5,-R*0.3,0,R*0.75);ctx.fill();ctx.restore();continue;}
+    if(st==='bubbles'){ctx.strokeStyle=hexA(col,0.9);ctx.lineWidth=Math.max(0.8,s*0.12);ctx.beginPath();ctx.arc(x,y,s,0,7);ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.arc(x-s*0.35,y-s*0.35,s*0.22,0,7);ctx.fill();continue;}
+    if(st==='stars'&&r4>0.85){ctx.fillStyle=col;const R=s*2.4;ctx.beginPath();ctx.moveTo(x,y-R);ctx.quadraticCurveTo(x,y,x+R,y);ctx.quadraticCurveTo(x,y,x,y+R);ctx.quadraticCurveTo(x,y,x-R,y);ctx.quadraticCurveTo(x,y,x,y-R);ctx.fill();continue;}
+    if(st==='bokeh'){ctx.fillStyle=hexA(col,0.55);ctx.beginPath();ctx.arc(x,y,s,0,7);ctx.fill();
+      ctx.strokeStyle=hexA(col,0.75);ctx.lineWidth=Math.max(1,s*0.06);ctx.stroke();continue;}
+    const soft=st==='snow'||st==='dust';
+    const spr=ptSprite(col,soft);
+    const S=s*(soft?2.4:(glow>0.01?4:2.2));
+    ctx.drawImage(spr,x-S,y-S,S*2,S*2);
+  }
+  ctx.restore();
+}
+function ptBlock(L){
+  const st=L.ptStyle||'snow';
+  return `${aeSelect(L,'ptStyle','Dizayn',PT_STYLES,'snow',true)}
+    <div class="row2">${aeSlider(L,'ptRate','Soni (sekundiga)',1,300,1,{rain:120,stars:40,warp:90,sparks:70,bokeh:6,fireflies:10,dust:30}[st]||35,'')}${aeSlider(L,'ptLife','Umri',0.2,10,0.1,{rain:1.2,sparks:1.6,confetti:3.5,embers:3,warp:1.4}[st]||4,'s')}</div>
+    <div class="row2">${aeSlider(L,'ptSize','O\'lcham',10,400,1,100,'%')}${aeSlider(L,'ptSpeed','Tezlik',5,400,1,100,'%')}</div>
+    <div class="row2">${aeSlider(L,'ptGrav','Gravitatsiya',0,300,1,100,'%')}${aeSlider(L,'ptWind','Shamol',-400,400,1,0,'')}</div>
+    <div class="row2">${aeSlider(L,'ptTurb','Turbulentlik',0,300,1,40,'%')}${aeSlider(L,'ptGlow','Nur (additive)',0,100,1,(st==='sparks'||st==='fireflies'||st==='embers'||st==='warp')?100:0,'%')}</div>
+    ${st==='sparks'?aeSlider(L,'ptSpread','Tarqalish burchagi',0,360,1,70,'°'):''}
+    <label class="chk"><input type="checkbox" data-ak="ptClip" ${L.ptClip===false?'':'checked'}> Element ramkasi ichida qolsin</label>
+    <div class="hintline">Ranglar — "Rang 1" va "Rang 2". Zarrachalar har kadrda formula bilan hisoblanadi: eksport va preview bir xil, juda yengil.</div>`;
+}
+
+/* ═══ 👻 ECHO (AE Echo effekti) — o'tgan kadrlarning izi ═══ */
+function drawEcho(L,t,_CAML,sceneCtx){
+  const E=L.echo;if(!E||!E.on)return;
+  const n=clamp(Math.round(E.n??6),1,24),dt=E.dt??0.06,dec=clamp(E.decay??0.7,0,1),a0=clamp(E.a0??0.7,0,1);
+  const cvS=sceneCtx.canvas,M=sceneCtx.getTransform();
+  if(mbTmp.width!==cvS.width||mbTmp.height!==cvS.height){mbTmp.width=mbAcc.width=cvS.width;mbTmp.height=mbAcc.height=cvS.height;}
+  for(let k=n;k>=1;k--){
+    const tt=t-k*dt;if(tt<L.start||tt>L.start+L.dur)continue;
+    const al=a0*Math.pow(dec,k-1);if(al<0.01)continue;
+    mbTctx.setTransform(1,0,0,1,0,0);mbTctx.globalAlpha=1;mbTctx.globalCompositeOperation='source-over';mbTctx.filter='none';
+    mbTctx.clearRect(0,0,cvS.width,cvS.height);
+    mbTctx.setTransform(M.a,M.b,M.c,M.d,M.e,M.f);
+    drawTop(L,tt,_CAML,mbTctx);
+    sceneCtx.save();sceneCtx.setTransform(1,0,0,1,0,0);sceneCtx.globalAlpha=al;
+    sceneCtx.globalCompositeOperation=E.add?'lighter':'source-over';
+    if(E.tint){sceneCtx.filter=`hue-rotate(${(E.hue??40)*k}deg)`;}
+    sceneCtx.drawImage(mbTmp,0,0);
+    sceneCtx.restore();
+  }
+  ctx=sceneCtx;
+}
+
+/* ═══ 〰 SHAKL MODIFIKATORLARI (AE shape layer: Wiggle Paths, Zig Zag, Pucker & Bloat,
+   Twist, Round Corners, Wave) — har qanday shaklga, to'ldirish/chegara/shishaga ham ═══ */
+const PM_TYPES=[['wiggle','〰 Wiggle Paths (tirik tebranish)'],['zigzag','⚡ Zig Zag'],['pucker','✳ Pucker & Bloat'],
+  ['twist','🌀 Twist (burama)'],['round','◯ Round corners (silliqlash)'],['wave','🌊 To\'lqinli chekka']];
+var __pmBusy=false;
+function pmPathDraw(L){
+  const P=L.pm;
+  __pmBusy=true;let polys;
+  try{polys=shapeOutline(L);}finally{__pmBusy=false;}
+  if(!polys||!polys.length)return false;
+  const T=state.time,amt=(P.amt??20)*pfxUnit(),det=Math.max(2,P.det??12),sp=P.sp??1,sd=(L.id||1)*3.7;
+  ctx.beginPath();
+  for(const pl of polys){
+    let pts=pl.pts;if(pts.length<3)continue;
+    // teng qadam bilan qayta namunalash
+    const M=pmMake([pl]);const per=M.total;
+    const N=clamp(Math.round(per/3),48,900);
+    let Q=[];for(let i=0;i<N;i++){const q=pmPoint(M,i/N);Q.push([q.x,q.y]);}
+    let cx=0,cy=0;for(const q of Q){cx+=q[0];cy+=q[1];}cx/=Q.length;cy/=Q.length;
+    let dmax=0,dsum=0;for(const q of Q){const d=Math.hypot(q[0]-cx,q[1]-cy);dmax=Math.max(dmax,d);dsum+=d;}const dmean=dsum/Q.length;
+    const nrm=i=>{const a=Q[(i+N-1)%N],b=Q[(i+1)%N];const tx=b[0]-a[0],ty=b[1]-a[1],l=Math.hypot(tx,ty)||1;return [ty/l,-tx/l];};
+    if(P.type==='round'){Q=pl.pts.slice();if(Q.length>2&&Math.hypot(Q[0][0]-Q[Q.length-1][0],Q[0][1]-Q[Q.length-1][1])<0.5)Q.pop();
+      for(let it=0;it<clamp(Math.round(P.amt??3),1,6);it++){const R=[];for(let i=0;i<Q.length;i++){const a=Q[i],b=Q[(i+1)%Q.length];
+      R.push([a[0]*0.75+b[0]*0.25,a[1]*0.75+b[1]*0.25],[a[0]*0.25+b[0]*0.75,a[1]*0.25+b[1]*0.75]);}Q=R;}}
+    else{
+      const out=[];
+      for(let i=0;i<N;i++){
+        const [x,y]=Q[i],s=i/N*per;let [nx,ny]=nrm(i);
+        // tashqi normal (markazdan tashqariga)
+        if(nx*(x-cx)+ny*(y-cy)<0){nx=-nx;ny=-ny;}
+        let ox=0;
+        const th=s/per*Math.PI*2,c1=Math.max(1,Math.round(det)),c2=Math.round(det*2.3)+1,c3=Math.round(det*4.1)+2;
+        if(P.type==='wiggle'){ox=amt*(0.6*Math.sin(th*c1+sd+T*sp*2.3)+0.4*Math.sin(th*c2+sd*2-T*sp*3.1)+0.25*Math.sin(th*c3+T*sp*1.7))/1.25;}
+        else if(P.type==='zigzag'){const ridges=Math.max(2,Math.round(det*2));const f=(s/per*ridges+T*sp*0.5)%1;ox=amt*(P.smooth?Math.sin(f*Math.PI*2):(f<0.5?4*f-1:3-4*f));}
+        else if(P.type==='wave'){ox=amt*Math.sin(th*c1-T*sp*4);}
+        let px=x+nx*ox,py=y+ny*ox;
+        if(P.type==='pucker'){const d=Math.hypot(x-cx,y-cy)||1;const k=(P.amt??20)/100;const f=1+k*(dmean/d-1);px=cx+(x-cx)*f;py=cy+(y-cy)*f;}
+        if(P.type==='twist'){const d=Math.hypot(x-cx,y-cy);const a=((P.amt??20)*Math.PI/180)*(d/(dmax||1))+T*sp*0;const c=Math.cos(a),sn=Math.sin(a);
+          px=cx+(x-cx)*c-(y-cy)*sn;py=cy+(x-cx)*sn+(y-cy)*c;}
+        out.push([px,py]);
+      }
+      Q=out;
+    }
+    ctx.moveTo(Q[0][0],Q[0][1]);for(let i=1;i<Q.length;i++)ctx.lineTo(Q[i][0],Q[i][1]);ctx.closePath();
+  }
+  return true;
+}
+function pmBlock(L){
+  const P=L.pm||{};
+  return `<label class="chk"><input type="checkbox" data-ak="pm.on" data-rr="1" ${P.on?'checked':''}> Shakl modifikatorini yoqish</label>
+    ${P.on?`<div class="field"><label>Turi</label><select data-ak="pm.type" data-rr="1">${PM_TYPES.map(([v,n])=>`<option value="${v}" ${(P.type||'wiggle')===v?'selected':''}>${n}</option>`).join('')}</select></div>
+    ${aeSliderN(P,'pm.amt',P.type==='round'?'Silliqlash darajasi':(P.type==='pucker'?'Pucker(-) / Bloat(+)':(P.type==='twist'?'Burilish burchagi':'Kuchi')),P.type==='round'?1:-100,P.type==='round'?6:(P.type==='twist'?720:100),P.type==='round'?1:0.5,P.type==='round'?3:20,P.type==='twist'?'°':'')}
+    ${(P.type==='wiggle'||P.type==='zigzag'||P.type==='wave'||!P.type)?aeSliderN(P,'pm.det','Batafsillik / tishlar',1,60,1,12,''):''}
+    ${(P.type==='wiggle'||P.type==='zigzag'||P.type==='wave'||!P.type)?aeSliderN(P,'pm.sp','Animatsiya tezligi',0,5,0.05,1,'×'):''}
+    ${P.type==='zigzag'?`<label class="chk"><input type="checkbox" data-ak="pm.smooth" ${P.smooth?'checked':''}> Silliq to'lqin (o'tkir burchak emas)</label>`:''}`:''}
+    <div class="hintline">Modifikator shaklning o'zini o'zgartiradi — to'ldirish, chegara, shisha, neomorphism va Trim Paths hammasi yangi shakl bo'yicha chiziladi.</div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎛 AE PRO — motion blur, inertial bounce (elastik), repeater, expressions,
+   track matte, adjustment layer, blend — va ularning paneli
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ---------- ƒ EXPRESSIONS (xavfsiz: faqat ruxsat etilgan so'zlar) ---------- */
+const EX_NAMES=['time','ltime','value','index','frame','W','H','layerW','layerH','PI',
+  'wiggle','sin','cos','tan','asin','acos','atan','atan2','abs','min','max','floor','ceil','round','sqrt','pow','exp','log',
+  'sign','clamp','linear','ease','easeIn','easeOut','random','noise','loop','pingpong','inertia','degrees','radians','mod','hold'];
+const _exCache=new Map();
+function exCompile(src){
+  src=String(src||'').trim();
+  if(!src)return null;
+  let c=_exCache.get(src);
+  if(c!==undefined)return c;
+  c=null;
+  try{
+    if(/[\[\]{};`'"\\$@#]/.test(src))throw new Error('ruxsat etilmagan belgi');
+    if(/(^|[^<>=!])=(?!=)/.test(src))throw new Error('"=" ishlatib bo\'lmaydi');
+    const ids=src.match(/[A-Za-z_][A-Za-z0-9_]*/g)||[];
+    for(const id of ids){
+      if(/^\d/.test(id))continue;
+      if(!EX_NAMES.includes(id)&&!/^e\d*$/.test(id))throw new Error('noma\'lum: '+id);
+    }
+    if(/[A-Za-z_]\s*\./.test(src.replace(/\d+\.\d*/g,'0')))throw new Error('"." ishlatib bo\'lmaydi');
+    // eslint-disable-next-line no-new-func
+    const f=new Function(...EX_NAMES,'"use strict";return ('+src+');');
+    c={f};
+  }catch(e){c={err:e.message||String(e)};}
+  _exCache.set(src,c);
+  return c;
+}
+function exNoise1(x,seed){const i=Math.floor(x),f=x-i,u=f*f*(3-2*f);const a=rnd01(i*12.9898+seed*78.233),b=rnd01((i+1)*12.9898+seed*78.233);return (a+(b-a)*u)*2-1;}
+function exEnv(L,local,prop,val){
+  const sd=(L.id||1)*13.7+({x:1,y:2,rot:3,scale:4,op:5}[prop]||0)*31.1;
+  const tm=state.time;
+  const lin=(t,a,b,v1,v2)=>{if(v1===undefined){v1=a;v2=b;a=0;b=1;}const u=clamp((t-a)/((b-a)||1e-6),0,1);return v1+(v2-v1)*u;};
+  const es=(t,a,b,v1,v2,fn)=>{if(v1===undefined){v1=a;v2=b;a=0;b=1;}const u=fn(clamp((t-a)/((b-a)||1e-6),0,1));return v1+(v2-v1)*u;};
+  return {
+    time:tm,ltime:local,value:val,index:state.layers.indexOf(L)+1,frame:Math.floor(tm*30),W:state.W,H:state.H,
+    layerW:L.w||0,layerH:L.h||0,PI:Math.PI,
+    wiggle:(fr,amp,oct)=>{fr=fr||1;amp=amp??10;let s=0,a=1,f=1,n=0;for(let i=0;i<(oct||2);i++){s+=exNoise1(tm*fr*f,sd+i*17)*a;n+=a;a*=0.5;f*=2;}return val+s/n*amp;},
+    sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:Math.atan,atan2:Math.atan2,abs:Math.abs,
+    min:Math.min,max:Math.max,floor:Math.floor,ceil:Math.ceil,round:Math.round,sqrt:Math.sqrt,pow:Math.pow,exp:Math.exp,log:Math.log,
+    sign:Math.sign,clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),
+    linear:lin,ease:(t,a,b,v1,v2)=>es(t,a,b,v1,v2,ease.inOut),easeIn:(t,a,b,v1,v2)=>es(t,a,b,v1,v2,ease.inCubic),easeOut:(t,a,b,v1,v2)=>es(t,a,b,v1,v2,ease.outCubic),
+    random:(a,b)=>{const r=rnd01(sd+Math.floor(tm*30)*1.37);if(a===undefined)return r;if(b===undefined)return r*a;return a+(b-a)*r;},
+    noise:(x)=>exNoise1(x,sd),
+    loop:(p)=>((tm%(p||1))+(p||1))%(p||1),
+    pingpong:(p)=>{p=p||1;const q=((tm%(2*p))+2*p)%(2*p);return q<p?q/p:2-q/p;},
+    hold:(step)=>Math.floor(tm/(step||1))*(step||1),
+    mod:(a,b)=>((a%b)+b)%b,degrees:r=>r*180/Math.PI,radians:d=>d*Math.PI/180,
+    inertia:(amp,freq,dec)=>val+inertiaOffset(L,local,prop,amp??0.05,freq??2,dec??5),
+  };
+}
+function inertiaOffset(L,local,prop,amp,freq,dec){
+  const K=L.kfs;if(!K||K.length<2)return 0;
+  let k=-1;for(let i=0;i<K.length;i++)if(K[i].t<=local)k=i;
+  if(k<1)return 0;
+  const tk=K[k].t,dt=local-tk;if(dt>4)return 0;
+  const h=1/60,a=kfValueRaw(L,tk-0.0005),b=kfValueRaw(L,tk-0.0005-h);
+  const pk={x:'x',y:'y',rot:'rotDeg',scale:'scale',op:'alpha'}[prop]||prop;
+  let v=((a[pk]||0)-(b[pk]||0))/h;if(prop==='scale')v*=100;if(prop==='op')v*=100;
+  return v*amp*Math.sin(freq*dt*Math.PI*2)/Math.exp(dec*dt);
+}
+function exApply(L,local,r){
+  const E=L.ex;if(!E)return;
+  const map=[['x','x',1],['y','y',1],['rot','rotDeg',1],['scale','scale',100],['op','alpha',100]];
+  let err=null;
+  for(const [k,pk,mul] of map){
+    const src=E[k];if(!src)continue;
+    const c=exCompile(src);if(!c||!c.f){if(c&&c.err)err=k+': '+c.err;continue;}
+    try{
+      const env=exEnv(L,local,k,(r[pk]??(pk==='scale'?1:pk==='alpha'?1:0))*mul);
+      const v=c.f(...EX_NAMES.map(n=>env[n]));
+      if(typeof v==='number'&&isFinite(v)){r[pk]=v/mul;if(pk==='alpha')r[pk]=clamp(r[pk],0,1);if(pk==='scale')r[pk]=Math.max(0.001,r[pk]);}
+    }catch(e){err=k+': '+(e.message||e);}
+  }
+  L._exErr=err;
+}
+
+/* ---------- 🧲 ELASTIK: inertial bounce + squash & stretch ---------- */
+function elasticT(L,local,T){
+  const E=L.elast;if(!E||!E.on)return {T,st:null};
+  const K=L.kfs;if(!K||K.length<2)return {T,st:null};
+  const amp=E.amp??0.06,fr=E.freq??2.2,dec=E.decay??5,sq=E.squash??1;
+  const h=1/60;
+  let k=-1;for(let i=0;i<K.length;i++)if(K[i].t<=local+1e-6)k=i;
+  const T2={...T};let st=null;
+  // harakat paytida — tezlik bo'yicha cho'zilish
+  const a=kfValueRaw(L,local),b=kfValueRaw(L,Math.max(0,local-h));
+  let vx=(a.x-b.x)/h,vy=(a.y-b.y)/h;let sp=Math.hypot(vx,vy);
+  let stretch=clamp(sp*sq/9000,0,0.42),ang=Math.atan2(vy,vx);
+  if(k>=1){
+    const tk=K[k].t,dt=local-tk;
+    if(dt>=0&&dt<5){
+      const tp=K[k-1].t,dd=Math.max(0.05,tk-tp);
+      const p1=kfValueRaw(L,tk),p0=kfValueRaw(L,tp);
+      const ux=(p1.x-p0.x)/dd,uy=(p1.y-p0.y)/dd,ur=((p1.rotDeg||0)-(p0.rotDeg||0))/dd,us=((p1.scale||1)-(p0.scale||1))/dd;
+      const osc=Math.sin(fr*dt*Math.PI*2)/Math.exp(dec*dt);
+      T2.x+=ux*amp*osc;T2.y+=uy*amp*osc;T2.rotDeg=(T2.rotDeg||0)+ur*amp*osc;T2.scale=Math.max(0.01,(T2.scale||1)+us*amp*osc);
+      const v0=Math.hypot(ux,uy);
+      if(v0>1&&sp<v0*0.15){const wob=Math.cos(fr*dt*Math.PI*2)/Math.exp(dec*dt);stretch=clamp(v0*sq/9000,0,0.42)*wob;ang=Math.atan2(uy,ux);}
+    }
+  }
+  if(Math.abs(stretch)>0.002)st={a:ang,k:stretch};
+  return {T:T2,st};
+}
+function applyStretch(c,st){if(!st)return;c.rotate(st.a);c.scale(1+st.k,1/(1+st.k));c.rotate(-st.a);}
+
+/* ---------- 🎞 MOTION BLUR (AE uslubi: shutter angle + namunalar) ---------- */
+const mbTmp=document.createElement('canvas'),mbTctx=mbTmp.getContext('2d');
+const mbAcc=document.createElement('canvas'),mbActx=mbAcc.getContext('2d');
+function layerPoseAt(L,tt){
+  const lc=clamp(tt-L.start,0,L.dur);let T=kfValue(L,lc),F=null;try{F=objectFX(L,lc,tt);}catch(e){}
+  return {x:T.x+(F?F.dx||0:0),y:T.y+(F?F.dy||0:0),r:(T.rotDeg||0)+(F?(F.rot||0)*57.3:0),s:(T.scale||1)*(F?F.scale||1:1)};
+}
+function drawMBlur(L,t,_CAML,sceneCtx){
+  if(state.mbOn===false)return false;
+  const shut=clamp((state.mbShutter??180)/360,0.05,2),span=shut/30;
+  const a=layerPoseAt(L,t-span/2),b=layerPoseAt(L,t+span/2);
+  const B=layerBounds(L);
+  const moveAmt=Math.hypot(a.x-b.x,a.y-b.y)+Math.abs(a.r-b.r)*Math.PI/180*Math.max(B.w,B.h)*0.5*a.s+Math.abs(a.s-b.s)*Math.max(B.w,B.h);
+  if(moveAmt<0.8)return false;
+  const N=clamp(Math.round(exporting?Math.max(state.mbSamples??12,Math.ceil(moveAmt/2.5)):Math.min(Math.max(state.mbSamples??12,6),Math.max(3,Math.ceil(moveAmt/4)),12)),2,48);
+  const cvS=sceneCtx.canvas,M=sceneCtx.getTransform();
+  if(mbTmp.width!==cvS.width||mbTmp.height!==cvS.height){mbTmp.width=mbAcc.width=cvS.width;mbTmp.height=mbAcc.height=cvS.height;}
+  let R;
+  if(isGroupHolder(L)||(L.rep&&L.rep.on)||L.adjust)R={x0:0,y0:0,x1:cvS.width,y1:cvS.height};
+  else{
+    const ra=isoRegion(L,a.x,a.y,a.s,false),rb=isoRegion(L,b.x,b.y,b.s,false);
+    const ex=Math.max(B.w,B.h)*0.15+20;
+    R={x0:Math.max(0,Math.floor(Math.min(ra.x0,rb.x0)-ex+M.e)),y0:Math.max(0,Math.floor(Math.min(ra.y0,rb.y0)-ex+M.f)),
+       x1:Math.min(cvS.width,Math.ceil(Math.max(ra.x1,rb.x1)+ex+M.e)),y1:Math.min(cvS.height,Math.ceil(Math.max(ra.y1,rb.y1)+ex+M.f))};
+  }
+  const w=R.x1-R.x0,h=R.y1-R.y0;if(w<2||h<2)return true;
+  mbActx.setTransform(1,0,0,1,0,0);mbActx.globalAlpha=1;mbActx.globalCompositeOperation='source-over';mbActx.clearRect(R.x0,R.y0,w,h);
+  for(let i=0;i<N;i++){
+    const ti=t+span*(i/(N-1)-0.5);
+    if(ti<L.start||ti>L.start+L.dur)continue;
+    mbTctx.setTransform(1,0,0,1,0,0);mbTctx.globalAlpha=1;mbTctx.globalCompositeOperation='source-over';mbTctx.filter='none';
+    mbTctx.clearRect(R.x0,R.y0,w,h);
+    mbTctx.setTransform(M.a,M.b,M.c,M.d,M.e,M.f);
+    drawTop(L,ti,_CAML,mbTctx);
+    mbActx.globalCompositeOperation='lighter';mbActx.globalAlpha=1/N;
+    mbActx.drawImage(mbTmp,R.x0,R.y0,w,h,R.x0,R.y0,w,h);
+  }
+  ctx=sceneCtx;
+  sceneCtx.save();sceneCtx.setTransform(1,0,0,1,0,0);sceneCtx.globalAlpha=1;
+  sceneCtx.globalCompositeOperation=(L.blend&&L.blend!=='normal')?L.blend:'source-over';
+  sceneCtx.drawImage(mbAcc,R.x0,R.y0,w,h,R.x0,R.y0,w,h);
+  sceneCtx.restore();
+  return true;
+}
+
+/* ---------- 🎭 TRACK MATTE ---------- */
+const matteCv=document.createElement('canvas'),matteCtx=matteCv.getContext('2d');
+const matteReg=document.createElement('canvas'),matteRctx=matteReg.getContext('2d');
+let __inMatte=false;
+function matteSources(){const s=new Set();for(const L of state.layers)if(L.matteSrc&&L.matteMode!=='none')s.add(L.matteSrc);return s;}
+function renderMatte(L,t,_CAML,sceneCtx){
+  const M=state.layers.find(x=>x.id===L.matteSrc);
+  if(!M||M===L||__inMatte)return null;
+  const cvS=sceneCtx.canvas,Tm=sceneCtx.getTransform();
+  if(matteCv.width!==cvS.width||matteCv.height!==cvS.height){matteCv.width=cvS.width;matteCv.height=cvS.height;}
+  matteCtx.setTransform(1,0,0,1,0,0);matteCtx.globalAlpha=1;matteCtx.globalCompositeOperation='source-over';
+  matteCtx.clearRect(0,0,matteCv.width,matteCv.height);
+  if(t>=M.start&&t<=M.start+M.dur){
+    __inMatte=true;
+    try{matteCtx.setTransform(Tm.a,Tm.b,Tm.c,Tm.d,Tm.e,Tm.f);drawTop(M,t,_CAML,matteCtx);}finally{__inMatte=false;}
+  }
+  ctx=sceneCtx;
+  return {base:Tm.e,mode:L.matteMode||'alpha'};
+}
+function applyMatte(info,RG,P){
+  const w=RG.x1-RG.x0,h=RG.y1-RG.y0;if(w<1||h<1)return;
+  if(matteReg.width<w||matteReg.height<h){matteReg.width=Math.max(matteReg.width,w);matteReg.height=Math.max(matteReg.height,h);}
+  matteRctx.setTransform(1,0,0,1,0,0);matteRctx.clearRect(0,0,w,h);
+  matteRctx.drawImage(matteCv,RG.x0-P+info.base,RG.y0-P+info.base,w,h,0,0,w,h);
+  let src=matteReg;
+  const luma=info.mode==='luma'||info.mode==='lumaInv';
+  if(luma){const out=PFX.process(matteReg,{x0:0,y0:0,x1:w,y1:h},[[{g:'lumaToAlpha'}]],{box:{x0:0,y0:0,x1:w,y1:h},t:0,U:1,seed:0,ox:0,oy:0});if(out)src=out;}
+  fctx.save();fctx.setTransform(1,0,0,1,0,0);fctx.globalAlpha=1;
+  fctx.globalCompositeOperation=(info.mode==='alphaInv'||info.mode==='lumaInv')?'destination-out':'destination-in';
+  if(fctx.globalCompositeOperation==='destination-in'){
+    // hudud tashqarisi baribir ko'chirilmaydi — faqat hudud ichida ishlaymiz
+    fctx.beginPath();fctx.rect(RG.x0,RG.y0,w,h);fctx.clip();
+  }
+  fctx.drawImage(src,0,0,w,h,RG.x0,RG.y0,w,h);
+  fctx.restore();
+}
+
+/* ---------- 🎛 ADJUSTMENT LAYER (ostidagi hamma narsaga effekt) ---------- */
+function drawAdjust(L,local,t,T,sceneCtx){
+  const list=pfxList(L);if(!list||!PFX.available())return;
+  let F=null;try{F=objectFX(L,local,t);}catch(e){}
+  const a=clamp((T.alpha??1)*(F?F.alpha??1:1),0,1);if(a<0.003)return;
+  const M=sceneCtx.getTransform(),cvS=sceneCtx.canvas;
+  const s=(T.scale||1)*(F?F.scale||1:1),rot=(T.rotDeg||0)*Math.PI/180+(F?F.rot||0:0);
+  const cx=T.x+(F?F.dx||0:0),cy=T.y+(F?F.dy||0:0);
+  const w2=L.w/2*s,h2=L.h/2*s,c=Math.abs(Math.cos(rot)),sn=Math.abs(Math.sin(rot));
+  const ex=w2*c+h2*sn,ey=w2*sn+h2*c;
+  const R={x0:Math.max(0,Math.floor(cx-ex+M.e)),y0:Math.max(0,Math.floor(cy-ey+M.f)),x1:Math.min(cvS.width,Math.ceil(cx+ex+M.e)),y1:Math.min(cvS.height,Math.ceil(cy+ey+M.f))};
+  const w=R.x1-R.x0,h=R.y1-R.y0;if(w<2||h<2)return;
+  const U=pfxUnit();
+  const B={x0:cx-w2+M.e-R.x0,y0:cy-h2+M.f-R.y0,x1:cx+w2+M.e-R.x0,y1:cy+h2+M.f-R.y0};B.cx=(B.x0+B.x1)/2;B.cy=(B.y0+B.y1)/2;B.w=B.x1-B.x0;B.h=B.y1-B.y0;
+  const chain=[];for(const e of list){const d=PFX_BY[e.id];try{const ps=d.build(pfxV(L,d),U,B,t,L);if(ps&&ps.length)chain.push(ps);}catch(er){}}
+  if(!chain.length)return;
+  const out=PFX.process(cvS,R,chain,{box:B,t,U,seed:((L.id||1)*7.31)%97,ox:R.x0-M.e,oy:R.y0-M.f});
+  if(!out)return;
+  sceneCtx.save();
+  sceneCtx.setTransform(M.a,M.b,M.c,M.d,M.e,M.f);
+  sceneCtx.translate(cx,cy);sceneCtx.rotate(rot);sceneCtx.scale(s,s);
+  const prev=ctx;ctx=sceneCtx;try{shapePath(L);}finally{ctx=prev;}
+  sceneCtx.clip();
+  sceneCtx.setTransform(1,0,0,1,0,0);
+  sceneCtx.globalCompositeOperation='source-over';
+  if(a>=0.999){sceneCtx.clearRect(R.x0,R.y0,w,h);sceneCtx.globalAlpha=1;}else sceneCtx.globalAlpha=a;
+  sceneCtx.drawImage(out,0,0,w,h,R.x0,R.y0,w,h);
+  sceneCtx.restore();
+}
+
+/* ---------- 🔁 REPEATER ---------- */
+function drawRepeated(L,fn,bA){
+  const R=L.rep;
+  if(!R||!R.on||(R.n||1)<2){fn(bA);return;}
+  const n=clamp(Math.round(R.n),2,60),dx=R.dx??60,dy=R.dy??0,rot=(R.rot??0)*Math.PI/180,sc=(R.sc??100)/100,op=(R.op??100)/100;
+  for(let i=n-1;i>=0;i--){
+    ctx.save();
+    ctx.translate(dx*i,dy*i);ctx.rotate(rot*i);const s=Math.pow(sc,i);ctx.scale(s,s);
+    fn(bA*(1+(op-1)*(i/(n-1))));
+    ctx.restore();
+  }
+}
+
+/* ═══════════════════════════ PANEL ═══════════════════════════ */
+const BLEND_ALL=[['normal','Normal'],['multiply','Multiply'],['screen','Screen'],['overlay','Overlay'],['darken','Darken'],['lighten','Lighten'],
+  ['color-dodge','Color dodge'],['color-burn','Color burn'],['hard-light','Hard light'],['soft-light','Soft light'],['difference','Difference'],
+  ['exclusion','Exclusion'],['hue','Hue'],['saturation','Saturation'],['color','Color'],['luminosity','Luminosity'],['lighter','Add (qo\'shish)']];
+const PFX_PRESETS={
+  '🌊 Suv osti':[['underwater',{}],['ripple',{amp:6,wl:60,dec:600}]],
+  '🌧 Yomg\'irli oyna':[['rainGlass',{}],['grade',{temp:-0.35,sat:0.85}]],
+  '📼 Retro VHS':[['vhs',{}],['grain',{amt:0.15}],['chroma',{amt:3}]],
+  '⚡ Kiber glitch':[['glitch',{}],['chroma',{amt:6}]],
+  '🎬 Kino ko\'rinishi':[['grade',{con:1.15,sat:0.9,temp:0.15}],['grain',{amt:0.08}],['vignette',{}]],
+  '💡 Neon porlash':[['glow',{th:0.2,r:30,int:2}]],
+  '🎨 Pop-art':[['halftone',{}],['posterize',{lv:4}]],
+  '👾 8-bit':[['pixelate',{b:8}],['dither',{lv:4}]],
+  '☁ Orzu (dreamy)':[['glow',{th:0.55,r:40,int:1}],['grade',{con:0.9,exp:0.15}]],
+  '🫧 Gooey':[['goo',{}]],
+};
+function aeSlider(L,key,label,min,max,step,def,unit){
+  const v=L[key]??def;
+  const sv=step<1?(+v).toFixed(step<0.1?2:(step<1?1:0)):Math.round(v);
+  return `<div class="field"><label>${label}: <b data-av="${key}">${sv}</b>${unit||''}</label>
+    <input type="range" data-ak="${key}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
+}
+function aeSliderN(obj,path,label,min,max,step,def,unit){
+  const k=path.split('.')[1];const v=(obj&&obj[k]!=null)?obj[k]:def;
+  const sv=step<1?(+v).toFixed(step<0.1?2:1):Math.round(v);
+  return `<div class="field"><label>${label}: <b data-av="${path}">${sv}</b>${unit||''}</label>
+    <input type="range" data-ak="${path}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
+}
+function aeSelect(L,key,label,opts,def,rr){
+  const v=L[key]??def;
+  return `<div class="field"><label>${label}</label><select data-ak="${key}" ${rr?'data-rr="1"':''}>${opts.map(([a,b])=>`<option value="${a}" ${v===a?'selected':''}>${b}</option>`).join('')}</select></div>`;
+}
+function pfxBlock(L){
+  const list=L.pfx||[];
+  const cats=[];for(const d of PFX_DEFS)if(!cats.includes(d.cat))cats.push(d.cat);
+  const add=`<div class="field"><select id="aeAdd"><option value="">＋ Effekt qo'shish… (${PFX_DEFS.length} xil)</option>
+    ${cats.map(c=>`<optgroup label="${c}">${PFX_DEFS.filter(d=>d.cat===c).map(d=>`<option value="${d.id}" ${list.some(e=>e.id===d.id)?'disabled':''}>${d.n}</option>`).join('')}</optgroup>`).join('')}</select></div>`;
+  const pre=`<div style="display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px">${Object.keys(PFX_PRESETS).map(n=>`<button data-aepre="${escapeHtml(n)}" style="padding:3px 8px;font-size:11px">${n}</button>`).join('')}</div>`;
+  const items=list.map((e,i)=>{
+    const d=PFX_BY[e.id];if(!d)return '';
+    const ps=d.p.map(q=>{const k='e_'+d.id+'_'+q[0];
+      if(q[6]==='c')return `<div class="field"><label>${q[1]}</label><input type="color" data-ak="${k}" value="${L[k]??q[5]}"></div>`;
+      if(Array.isArray(q[7]))return `<div class="field"><label>${q[1]}</label><select data-ak="${k}" data-num="1">${q[7].map(([v,n])=>`<option value="${v}" ${(+(L[k]??q[5]))===v?'selected':''}>${n}</option>`).join('')}</select></div>`;
+      if(q[2]===0&&q[3]===1&&q[4]===1)return `<label class="chk"><input type="checkbox" data-ak="${k}" data-num="1" ${(+(L[k]??q[5]))?'checked':''}> ${q[1]}</label>`;
+      return aeSlider(L,k,q[1],q[2],q[3],q[4],q[5],q[6]&&q[6]!=='c'?q[6]:'');}).join('');
+    return `<details class="aefx" ${e._c?'':'open'} style="border:1px solid var(--border);border-radius:9px;padding:4px 8px;margin:6px 0;background:var(--panel2)">
+      <summary style="display:flex;gap:6px;align-items:center;cursor:pointer;list-style:none">
+        <input type="checkbox" data-aeon="${i}" ${e.on!==false?'checked':''} title="Yoqish/o'chirish">
+        <b style="flex:1;font-size:12px">${d.n}</b>
+        <button data-aeup="${i}" title="Yuqoriga" style="padding:1px 6px">↑</button>
+        <button data-aedn="${i}" title="Pastga" style="padding:1px 6px">↓</button>
+        <button data-aerst="${i}" title="Standart qiymatlar" style="padding:1px 6px">↺</button>
+        <button data-aerm="${i}" title="O'chirish" style="padding:1px 6px">✕</button></summary>
+      <div style="padding-top:6px">${ps}</div></details>`;}).join('');
+  return `${add}${pre}${items||'<div class="hintline">Effektlar GPU (WebGL) da ishlaydi — faqat element hududi ishlanadi, shuning uchun yengil. Har bir slayder ◆ keyframe bilan animatsiya qilinadi. Tartib muhim: yuqoridagi effekt birinchi qo\'llanadi.</div>'}`;
+}
+function trimBlock(L){
+  const isAnn=typeof ANNOT!=='undefined'&&ANNOT.includes(L.shape);
+  return `${!isAnn?`<label class="chk"><input type="checkbox" data-ak="trimOn" data-rr="1" ${L.trimOn?'checked':''}> Konturni Trim Paths bilan chizish (chegara kerak)</label>`:''}
+    <div class="row2">${aeSelect(L,'drawIn','✏ Kirish uslubi',DRAW_IN,'start')}${aeSelect(L,'drawOut','Chiqish uslubi',DRAW_OUT,'start')}</div>
+    ${aeSelect(L,'drawLoop','🔁 Doimiy (loop) animatsiya',DRAW_LOOP,'none',true)}
+    ${(L.drawLoop&&L.drawLoop!=='none')?aeSlider(L,'drawLoopSp','Loop tezligi',0.05,4,0.05,1,'×'):''}
+    ${L.drawLoop==='gradient'?`<div class="field"><label>Ikkinchi rang</label><input type="color" data-ak="drawC2" value="${L.drawC2||'#22d3ee'}"></div>`:''}
+    ${aeSlider(L,'drawGlow','Nur (glow)',0,100,1,0,'%')}
+    <div class="row2">${aeSlider(L,'trimS','Trim Start',0,100,0.5,0,'%')}${aeSlider(L,'trimE','Trim End',0,100,0.5,100,'%')}</div>
+    ${aeSlider(L,'trimO','Trim Offset',-360,360,1,0,'°')}
+    <div class="row2"><button id="aeDrawOn" style="justify-content:center">✏ Chizilib paydo bo'lish</button><button id="aeDrawOff" style="justify-content:center">⌫ Chizilib yo'qolish</button></div>
+    <div class="hintline">AE Trim Paths: Start/End/Offset ◆ keyframe bilan animatsiya qilinadi. Kirish/chiqish uslubi "⚡ Chizilib paydo bo'lish / yo'qolish" animatsiyasi bilan ishlaydi.</div>`;
+}
+function penBlock(L){
+  const P=(Array.isArray(L.pts)&&L.pts.length>=2?L.pts:PEN_DEF);
+  return `<div class="field"><label>✒ Nuqtalar (x y, % — har qatorda bitta)</label>
+    <textarea id="aePenPts" rows="${Math.min(8,P.length+1)}" style="width:100%;font-family:monospace;font-size:11px">${P.map(q=>`${Math.round(q[0]*100)} ${Math.round(q[1]*100)}`).join('\n')}</textarea></div>
+    <div class="row2"><label class="chk"><input type="checkbox" data-ak="penSmooth" data-rr="1" ${L.penSmooth===false?'':'checked'}> Silliq egri</label>
+    <label class="chk"><input type="checkbox" data-ak="penClosed" data-rr="1" ${L.penClosed?'checked':''}> Yopiq kontur</label></div>
+    <div class="row2"><button id="aePenAdd" style="justify-content:center">＋ Nuqta</button><button id="aePenRnd" style="justify-content:center">🎲 Tasodifiy egri</button></div>
+    <div class="hintline">Sahnada element tanlanganda nuqtalarni <b>sichqoncha bilan surish</b> mumkin (oq doirachalar). Qiymatlar -50..50% oralig'ida.</div>`;
+}
+function proBlock(L){
+  const isMedia=L.type==='video'||L.type==='image';
+  const E=L.elast||{},R=L.rep||{},X=L.ex||{};
+  const others=state.layers.filter(x=>x!==L&&x.type!=='audio');
+  return `
+    <label class="chk"><input type="checkbox" data-ak="mblur" data-rr="1" ${L.mblur?'checked':''}> 🎞 Motion blur (harakat xiraligi)</label>
+    ${L.mblur?`<div class="row2">
+      <div class="field"><label>Shutter: <b data-sv="mbShutter">${state.mbShutter??180}</b>°</label><input type="range" data-sk="mbShutter" min="20" max="720" step="10" value="${state.mbShutter??180}"></div>
+      <div class="field"><label>Namunalar: <b data-sv="mbSamples">${state.mbSamples??12}</b></label><input type="range" data-sk="mbSamples" min="3" max="32" step="1" value="${state.mbSamples??12}"></div></div>
+      <div class="hintline">Faqat element HARAKATLANAYOTGANDA ishlaydi. Preview'da namunalar avtomatik kamaytiriladi, eksportda to'liq sifat.</div>`:''}
+    <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
+    <label class="chk"><input type="checkbox" data-ak="elast.on" data-rr="1" ${E.on?'checked':''}> 🧲 Elastik harakat (inertial bounce + squash)</label>
+    ${E.on?`${aeSliderN(E,'elast.amp','Sakrash kuchi',0,0.25,0.005,0.06,'')}${aeSliderN(E,'elast.freq','Chastota',0.5,8,0.1,2.2,'Hz')}
+      ${aeSliderN(E,'elast.decay','So\'nish',0.5,15,0.1,5,'')}${aeSliderN(E,'elast.squash','Cho\'zilish (squash & stretch)',0,4,0.05,1,'')}
+      <div class="hintline">◆ keyframe bilan harakatlanganda element jelly kabi cho'ziladi va manzilda prujinadek tebranib to'xtaydi.</div>`:''}
+    <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
+    <label class="chk"><input type="checkbox" data-ak="echo.on" data-rr="1" ${(L.echo&&L.echo.on)?'checked':''}> 👻 Echo (harakat izi — AE Echo)</label>
+    ${(L.echo&&L.echo.on)?`<div class="row2">${aeSliderN(L.echo,'echo.n','Izlar soni',1,24,1,6,'')}${aeSliderN(L.echo,'echo.dt','Vaqt qadami',0.01,0.5,0.005,0.06,'s')}</div>
+      <div class="row2">${aeSliderN(L.echo,'echo.a0','Boshlang\'ich shaffoflik',0,1,0.01,0.7,'')}${aeSliderN(L.echo,'echo.decay','So\'nish',0,1,0.01,0.7,'')}</div>
+      <div class="row2"><label class="chk"><input type="checkbox" data-ak="echo.add" ${L.echo.add?'checked':''}> Qo'shib yoritish (add)</label>
+      <label class="chk"><input type="checkbox" data-ak="echo.tint" data-rr="1" ${L.echo.tint?'checked':''}> Rangli izlar</label></div>
+      ${L.echo.tint?aeSliderN(L.echo,'echo.hue','Rang siljishi',-180,180,1,40,'°'):''}`:''}
+    <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
+    <label class="chk"><input type="checkbox" data-ak="rep.on" data-rr="1" ${R.on?'checked':''}> 🔁 Repeater (nusxalar)</label>
+    ${R.on?`${aeSliderN(R,'rep.n','Nusxalar soni',2,40,1,5,'')}
+      <div class="row2">${aeSliderN(R,'rep.dx','Siljish X',-600,600,1,60,'px')}${aeSliderN(R,'rep.dy','Siljish Y',-600,600,1,0,'px')}</div>
+      <div class="row2">${aeSliderN(R,'rep.rot','Burilish',-180,180,1,0,'°')}${aeSliderN(R,'rep.sc','Masshtab',50,150,1,100,'%')}</div>
+      ${aeSliderN(R,'rep.op','Oxirgi nusxa shaffofligi',0,100,1,100,'%')}`:''}
+    <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
+    <details ${L.ex&&Object.values(L.ex).some(Boolean)?'open':''}><summary style="cursor:pointer"><b>ƒ Expressions</b> (AE ifodalari)</summary>
+      ${[['x','Position X'],['y','Position Y'],['rot','Rotation (°)'],['scale','Scale (%)'],['op','Opacity (%)']].map(([k,n])=>`<div class="field"><label>${n}</label>
+        <input type="text" data-ak="ex.${k}" data-lazy="1" placeholder="${k==='x'?'wiggle(2,30)':k==='rot'?'time*90':k==='scale'?'value+sin(time*4)*10':k==='op'?'pingpong(1)*100':'value'}" value="${escapeHtml(X[k]||'')}" style="font-family:monospace"></div>`).join('')}
+      ${L._exErr?`<div class="hintline" style="color:#f87171">⚠ ${escapeHtml(L._exErr)}</div>`:''}
+      <div class="hintline">Funksiyalar: <code>value time ltime wiggle(freq,amp) sin cos abs min max clamp linear(t,t0,t1,v0,v1) ease(...) random(a,b) noise(x) loop(p) pingpong(p) hold(step) inertia(amp,freq,decay) W H</code></div>
+    </details>
+    <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
+    ${isMedia?'':aeSelect(L,'blend','🎇 Blend rejimi',BLEND_ALL,'normal')}
+    <div class="row2">
+      <div class="field"><label>🎭 Track matte manbasi</label><select data-ak="matteSrc" data-num="1" data-rr="1"><option value="0">— yo'q —</option>
+        ${others.map(o=>`<option value="${o.id}" ${L.matteSrc===o.id?'selected':''}>${escapeHtml(layerName(o))}</option>`).join('')}</select></div>
+      ${aeSelect(L,'matteMode','Matte turi',[['alpha','Alpha matte'],['alphaInv','Alpha inverted'],['luma','Luma matte'],['lumaInv','Luma inverted']],'alpha')}
+    </div>
+    ${L.matteSrc?`<div class="hintline">Manba qatlam avtomatik yashiriladi (AE kabi) — u faqat shu element uchun "niqob" bo'ladi.</div>`:''}
+    ${L.type==='shape'?`<label class="chk"><input type="checkbox" data-ak="adjust" data-rr="1" ${L.adjust?'checked':''}> 🎛 Adjustment layer (ostidagi HAMMA narsaga effekt)</label>
+      ${L.adjust?'<div class="hintline">Shakl o\'zi chizilmaydi — uning hududidagi barcha pastki qatlamlarga yuqoridagi ✨ effektlar qo\'llanadi. Shaffoflik = effekt kuchi.</div>':''}`:''}`;
+}
+function gooTabBlock(L){
+  return `${aeSelect(L,'gtStyle','Dizayn',GT_STYLES,'bubble',true)}
+    <div class="row2">${aeSlider(L,'gtN','Tablar soni',2,6,1,4,'')}${aeSlider(L,'gtGoo','Yopishqoqlik (gooey)',0,200,1,100,'%')}</div>
+    <div class="field"><label>Ikonkalar (vergul bilan)</label><input type="text" data-ak="gtIcons" value="${escapeHtml(L.gtIcons||'home,search,heart,user')}"></div>
+    <div class="field"><label>Yozuvlar (vergul bilan)</label><input type="text" data-ak="gtLabels" value="${escapeHtml(L.gtLabels||'Home,Search,Likes,Profile')}"></div>
+    <label class="chk"><input type="checkbox" data-ak="gtShowLbl" ${L.gtShowLbl===false?'':'checked'}> Yozuvlarni ko'rsatish</label>
+    ${aeSelect(L,'gtMode','Boshqaruv',[['auto','Avtomatik ketma-ketlik'],['kf','◆ Keyframe (pozitsiya)']],'auto',true)}
+    ${L.gtMode==='kf'?aeSlider(L,'gtPos','Faol tab pozitsiyasi (◆)',0,5,0.01,0,''):`
+    <div class="field"><label>Ketma-ketlik (tab raqamlari 0 dan)</label><input type="text" data-ak="gtSeq" value="${escapeHtml(String(L.gtSeq??'0,1,2,3'))}"></div>
+    <div class="row2">${aeSlider(L,'gtHold','Turish',0.1,5,0.05,1.1,'s')}${aeSlider(L,'gtMove','O\'tish',0.15,3,0.05,0.75,'s')}</div>
+    <div class="row2">${aeSlider(L,'gtDelay','Boshlanish',0,5,0.05,0.5,'s')}<label class="chk"><input type="checkbox" data-ak="gtLoop" ${L.gtLoop===false?'':'checked'}> Takrorlansin</label></div>`}
+    ${aeSlider(L,'gtBounce','Elastiklik (bounce)',0,100,1,40,'%')}
+    <div class="row2"><div class="field"><label>Panel rangi</label><input type="color" data-ak="gtBar" value="${L.gtBar||(L.gtStyle==='neon'?'#111827':'#ffffff')}"></div>
+      <div class="field"><label>Faol bo'lmagan ikonka</label><input type="color" data-ak="gtIdle" value="${L.gtIdle||'#c3c8d0'}"></div></div>
+    <label class="chk"><input type="checkbox" data-ak="gtShadow" ${L.gtShadow===false?'':'checked'}> Soya</label>
+    <div class="hintline">Faol rang — pastdagi "Rang 1". Ikonka nomlari: ${ICONS.slice(0,18).map(i=>i[0]).join(', ')}…</div>`;
+}
+function lavaBlock(L){
+  return `${aeSelect(L,'lvStyle','Dizayn',LV_STYLES,'lava')}
+    <div class="row2">${aeSlider(L,'lvN','Blob soni',1,10,1,5,'')}${aeSlider(L,'lvSpeed','Tezlik',0,4,0.05,1,'×')}</div>
+    <div class="row2">${aeSlider(L,'lvSize','O\'lcham',30,250,1,100,'%')}${aeSlider(L,'lvGoo','Yopishqoqlik',0,250,1,100,'%')}</div>
+    ${aeSlider(L,'lvGloss','Yaltirash',0,100,1,60,'%')}
+    <label class="chk"><input type="checkbox" data-ak="lvShadow" ${L.lvShadow===false?'':'checked'}> Nur-soya</label>
+    <div class="hintline">Ranglar — pastdagi "Rang 1" va "Rang 2 (gradient)".</div>`;
+}
+function aeBlock(L){
+  if(!L||L.type==='audio')return '';
+  let h='';
+  const hasPath=L.type==='shape'&&typeof annHasPath==='function'&&(annHasPath(L)||!(ANNOT.includes(L.shape)||UI_SHAPES.includes(L.shape)));
+  if(L.type==='shape'&&L.shape==='pen')h+=sec('✒ Pen yo\'l nuqtalari',penBlock(L),true);
+  if(hasPath)h+=sec('〰 Chizilish / Trim Paths',trimBlock(L),!!(L.drawLoop&&L.drawLoop!=='none')||ANNOT.includes(L.shape));
+  if(L.type==='shape'&&!ANNOT.includes(L.shape)&&!UI_SHAPES.includes(L.shape))h+=sec('〰 Shakl modifikatori (Wiggle/ZigZag/Pucker)',pmBlock(L),!!(L.pm&&L.pm.on));
+  h+=sec(`✨ Effektlar (AE)${L.pfx&&L.pfx.length?' · '+L.pfx.length:''}`,pfxBlock(L),!!(L.pfx&&L.pfx.length));
+  h+=sec('🎛 Harakat Pro (AE)',proBlock(L),!!(L.mblur||(L.elast&&L.elast.on)||(L.rep&&L.rep.on)||L.matteSrc||L.adjust));
+  return h;
+}
+function aeBind(L,box){
+  const rr=()=>renderProps();
+  const setPath=(path,v)=>{if(path.includes('.')){const [a,b]=path.split('.');L[a]=L[a]||{};L[a][b]=v;}else L[path]=v;};
+  box.querySelectorAll('[data-ak]').forEach(el=>{
+    const key=el.dataset.ak;
+    const h=()=>{
+      historyMaybe();
+      let v;
+      if(el.type==='checkbox')v=el.dataset.num?(el.checked?1:0):el.checked;
+      else if(el.type==='range'||el.dataset.num)v=+el.value;
+      else v=el.value;
+      if(el.type==='range'&&!key.includes('.'))setAnimProp(L,key,v);else setPath(key,v);
+      if(key==='matteSrc'&&!v)L.matteSrc=0;
+      const lb=box.querySelector(`[data-av="${key}"]`);
+      if(lb&&el.type==='range'){const st=+el.step;lb.textContent=st<1?(+v).toFixed(st<0.1?2:1):Math.round(v);}
+      if(key==='gtStyle'&&L.gtStyle==='neon'&&!L.gtBar)L.gtBar='#111827';
+      if(el.dataset.rr)rr();
+      seekDirty=true;
+    };
+    if(el.dataset.lazy){el.onchange=()=>{h();rr();};}
+    else if(el.tagName==='SELECT'||el.type==='checkbox')el.onchange=h;
+    else el.oninput=h;
+  });
+  box.querySelectorAll('[data-sk]').forEach(el=>{el.oninput=()=>{state[el.dataset.sk]=+el.value;const lb=box.querySelector(`[data-sv="${el.dataset.sk}"]`);if(lb)lb.textContent=el.value;seekDirty=true;};});
+  const add=box.querySelector('#aeAdd');
+  if(add)add.onchange=()=>{const id=add.value;if(!id)return;historyMaybe();L.pfx=L.pfx||[];if(!L.pfx.some(e=>e.id===id))L.pfx.push({id,on:true});
+    if(!PFX.available())toast('⚠ Brauzerda WebGL o\'chiq — effektlar ko\'rinmaydi');rr();seekDirty=true;};
+  box.querySelectorAll('[data-aepre]').forEach(b=>b.onclick=()=>{historyMaybe();const P=PFX_PRESETS[b.dataset.aepre];L.pfx=L.pfx||[];
+    for(const [id,vals] of P){if(!L.pfx.some(e=>e.id===id))L.pfx.push({id,on:true});for(const k in vals)L['e_'+id+'_'+k]=vals[k];}
+    rr();seekDirty=true;});
+  const idx=(b,a)=>+b.dataset[a];
+  box.querySelectorAll('[data-aeon]').forEach(b=>{b.onclick=e=>e.stopPropagation();b.onchange=()=>{historyMaybe();const e=L.pfx[idx(b,'aeon')];if(e)e.on=b.checked;seekDirty=true;};});
+  box.querySelectorAll('[data-aerm]').forEach(b=>b.onclick=e=>{e.preventDefault();historyMaybe();L.pfx.splice(idx(b,'aerm'),1);rr();seekDirty=true;});
+  box.querySelectorAll('[data-aeup]').forEach(b=>b.onclick=e=>{e.preventDefault();const i=idx(b,'aeup');if(i>0){historyMaybe();[L.pfx[i-1],L.pfx[i]]=[L.pfx[i],L.pfx[i-1]];rr();seekDirty=true;}});
+  box.querySelectorAll('[data-aedn]').forEach(b=>b.onclick=e=>{e.preventDefault();const i=idx(b,'aedn');if(i<L.pfx.length-1){historyMaybe();[L.pfx[i+1],L.pfx[i]]=[L.pfx[i],L.pfx[i+1]];rr();seekDirty=true;}});
+  box.querySelectorAll('[data-aerst]').forEach(b=>b.onclick=e=>{e.preventDefault();historyMaybe();const d=PFX_BY[L.pfx[idx(b,'aerst')].id];for(const q of d.p)delete L['e_'+d.id+'_'+q[0]];rr();seekDirty=true;});
+  box.querySelectorAll('details.aefx').forEach((d,i)=>d.ontoggle=()=>{if(L.pfx[i])L.pfx[i]._c=!d.open;});
+  const dOn=box.querySelector('#aeDrawOn');if(dOn)dOn.onclick=()=>{historyMaybe();L.animIn='drawOn';L.inTime=Math.max(L.inTime||0,1.2);if(L.type==='shape'&&!ANNOT.includes(L.shape)){L.trimOn=true;if(!L.border){L.border=true;L.borderW=Math.max(L.borderW||2,3);}}rr();renderTimeline();seekDirty=true;};
+  const dOff=box.querySelector('#aeDrawOff');if(dOff)dOff.onclick=()=>{historyMaybe();L.animOut='drawOff';L.outTime=Math.max(L.outTime||0,1);rr();renderTimeline();seekDirty=true;};
+  const pp=box.querySelector('#aePenPts');
+  if(pp)pp.onchange=()=>{historyMaybe();const pts=pp.value.split('\n').map(l=>l.trim().split(/[\s,;]+/).map(Number)).filter(a=>a.length>=2&&isFinite(a[0])&&isFinite(a[1])).map(a=>[clamp(a[0],-100,100)/100,clamp(a[1],-100,100)/100]);
+    if(pts.length>=2){L.pts=pts;seekDirty=true;}rr();};
+  const pa=box.querySelector('#aePenAdd');
+  if(pa)pa.onclick=()=>{historyMaybe();const P=(L.pts&&L.pts.length>=2?L.pts:PEN_DEF).map(q=>q.slice());const a=P[P.length-2],b=P[P.length-1];P.splice(P.length-1,0,[(a[0]+b[0])/2,(a[1]+b[1])/2-0.15]);L.pts=P;rr();seekDirty=true;};
+  const pr=box.querySelector('#aePenRnd');
+  if(pr)pr.onclick=()=>{historyMaybe();const n=4+Math.floor(Math.random()*3);L.pts=[...Array(n)].map((_,i)=>[-0.5+i/(n-1),(Math.random()-0.5)*0.9]);rr();seekDirty=true;};
+}
+
+/* ---------- ✒ Pen yo'l nuqtalarini sahnada surish ---------- */
+function penScreenPts(L){
+  const B=getSelBox(L);const a=(B.T.rotDeg||0)*Math.PI/180,s=B.T.scale||1,c=Math.cos(a),sn=Math.sin(a);
+  const P=(Array.isArray(L.pts)&&L.pts.length>=2?L.pts:PEN_DEF);
+  return P.map(q=>{const x=q[0]*L.w*s,y=q[1]*L.h*s;return {x:B.T.x+x*c-y*sn,y:B.T.y+x*sn+y*c};});
+}
+function drawPenHandles(L){
+  const S=penScreenPts(L);
+  ctx.save();ctx.setLineDash([5,5]);ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(1,state.W/1500);
+  ctx.beginPath();S.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();ctx.setLineDash([]);
+  const r=Math.max(5,state.W*0.0055);
+  for(const p of S){ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#8b5cf6';ctx.lineWidth=Math.max(1.5,state.W/1100);ctx.stroke();}
+  ctx.restore();
+}
+function penHit(L,p,hr){const S=penScreenPts(L);for(let i=0;i<S.length;i++)if(Math.hypot(S[i].x-p.x,S[i].y-p.y)<hr)return i;return -1;}
+function penDragStart(L,i,toCanvas){
+  if(!Array.isArray(L.pts)||L.pts.length<2)L.pts=PEN_DEF.map(q=>q.slice());
+  const move=e=>{const p=toCanvas(e);const B=getSelBox(L);const a=-(B.T.rotDeg||0)*Math.PI/180,s=B.T.scale||1;
+    const dx=p.x-B.T.x,dy=p.y-B.T.y;const x=(dx*Math.cos(a)-dy*Math.sin(a))/s,y=(dx*Math.sin(a)+dy*Math.cos(a))/s;
+    L.pts[i]=[clamp(x/L.w,-1,1),clamp(y/L.h,-1,1)];seekDirty=true;};
+  const up=()=>{removeEventListener('mousemove',move);removeEventListener('mouseup',up);renderProps();};
+  addEventListener('mousemove',move);addEventListener('mouseup',up);
+}
+/* ---------- Ro'yxatlarga qo'shish ---------- */
+(function(){
+  ANNOT.push(...CURVE_SHAPES);
+  ARROWS.push('sCurve','spiral','loopArrow','wavePath','arcPath','hops','pen');
+  const at=SHAPES.findIndex(s=>s.v==='marker');
+  SHAPES.splice(at+1,0,
+    {v:'sCurve',n:'〰 S-egri strelka'},{v:'spiral',n:'🌀 Spiral'},{v:'loopArrow',n:'➰ Halqali strelka'},
+    {v:'wavePath',n:'〜 To\'lqin yo\'l'},{v:'arcPath',n:'⌒ Kamon (yoy)'},{v:'hops',n:'⤻ Sakrovchi yo\'l'},
+    {v:'infinity',n:'∞ Cheksizlik (yopiq)'},{v:'heartPath',n:'♡ Yurak konturi'},{v:'swoosh',n:'✍ Swoosh (uchlari ingichka)'},
+    {v:'pen',n:'✒ Pen yo\'l (o\'z nuqtalaringiz)'});
+  UI_SHAPES.push('gooTab','lava','particles');
+  SHAPES.push({v:'gooTab',n:'🫧 Gooey tabbar (elastik, 8 dizayn)'},{v:'lava',n:'🫧 Blob / Lava (elastik, 6 dizayn)'},{v:'particles',n:'✨ Zarrachalar (qor, yomg\'ir, uchqun... 12 xil)'});
+  for(const k of ['trimS','trimE','trimO','gtPos','drawGlow','lvSize','lvGoo','drawLoopSp','ptRate','ptSize','ptSpeed','ptGrav','ptWind','ptTurb','ptGlow'])
+    if(!KF_EXTRA.includes(k)){KF_EXTRA.push(k);KF_PAIRS.push([k,k]);}
+})();
+/* ---------- 🧰 Tayyor elementlar (kutubxona) ---------- */
+function kitGooTab(){const S=kitS();const T=kitShape({shape:'gooTab',w:Math.round(S*0.78),h:Math.round(S*0.28),x:state.W/2,y:state.H/2,animIn:'springPop',inTime:0.5,customName:'Gooey tabbar'});
+  T.gtStyle='bubble';T.gtLabels='Book,Shelf,Find,Mine';T.gtIcons='file,chart,search,user';
+  kitPlace([T],'',{noGroup:true,dur:6,toast:'🫧 Gooey tabbar — dizayn, ikonka va ketma-ketlikni o\'ng paneldan o\'zgartiring'});}
+function kitLava(){const S=kitS();const T=kitShape({shape:'lava',w:Math.round(S*0.6),h:Math.round(S*0.6),x:state.W/2,y:state.H/2,animIn:'zoom',inTime:0.6,customName:'Blob'});
+  kitPlace([T],'',{noGroup:true,dur:6,toast:'🫧 Elastik blob qo\'shildi — 6 dizayn'});}
+function kitParticles(){const T=kitShape({shape:'particles',animIn:'fade',inTime:0.6,customName:'Zarrachalar'});T.w=state.W;T.h=state.H;T.x=state.W/2;T.y=state.H/2;
+  kitPlace([T],'',{noGroup:true,dur:8,toast:'✨ Zarrachalar — 12 dizayn (qor, yomg\'ir, uchqun, bokeh...)'});}
+function kitCurveDraw(){const S=kitS();const T=kitShape({shape:'sCurve',w:Math.round(S*0.7),h:Math.round(S*0.4),x:state.W/2,y:state.H/2,fillColor:'#38bdf8',borderW:Math.max(4,Math.round(S*0.012)),
+  headType:'solid',animIn:'drawOn',inTime:1.6,drawIn:'comet',drawLoop:'flow',drawGlow:30,customName:'Egri chiziq'});
+  kitPlace([T],'',{noGroup:true,dur:6,toast:'〰 Egri chiziq — Trim Paths bo\'limida 14 xil chizilish uslubi'});}
+function kitWaterFill(){const S=kitS();const T=kitShape({shape:'circle',w:Math.round(S*0.5),h:Math.round(S*0.5),x:state.W/2,y:state.H/2,fill:'gradient',fillColor:'#38bdf8',grad2:'#1e3a8a',animIn:'liquidRise',inTime:1.6,customName:'Suv'});
+  T.pfx=[{id:'water',on:true}];kitPlace([T],'',{noGroup:true,dur:6,toast:'💧 Suv sathi — "Sath" slayderini ◆ keyframe bilan animatsiya qiling'});}
+function kitFilmLook(){const T=kitShape({shape:'rect',w:state.W,h:state.H,x:state.W/2,y:state.H/2,fillColor:'#ffffff',animIn:'none',animOut:'none',customName:'Adjustment: kino'});
+  T.adjust=true;T.pfx=[{id:'grade',on:true},{id:'grain',on:true},{id:'vignette',on:true}];T.e_grade_con=1.12;T.e_grade_sat=0.9;T.e_grade_temp=0.12;T.e_grain_amt=0.07;
+  kitPlace([T],'',{noGroup:true,dur:Math.max(1,state.duration-kitT0()),toast:'🎛 Adjustment layer — ostidagi hamma narsaga kino rang tusi'});}
+(function(){
+  if(typeof KIT_ITEMS==='undefined')return;
+  KIT_ITEMS.push(
+    {cat:'ui',ico:'🫧',n:'Gooey tabbar (elastik)',d:'Suyuq pufak tabdan tabga elastik o\'tadi — 8 dizayn',run:kitGooTab,s:['Qo\'shing','O\'ng panelda dizayn, ikonka, yozuv va ketma-ketlikni sozlang']},
+    {cat:'ui',ico:'🟣',n:'Elastik blob / lava',d:'Bir-biriga yopishib-ajraladigan suyuq shakllar',run:kitLava,s:['Qo\'shing — dizayn va ranglarni tanlang']},
+    {cat:'ui',ico:'💧',n:'Suv to\'ldirilgan shakl',d:'Haqiqiy suv: to\'lqin, kaustika, pufakchalar',run:kitWaterFill,s:['Qo\'shing','✨ Effektlar → Suv sathi → Sath ◆']},
+    {cat:'txt',ico:'〰',n:'Chizilib chiqadigan egri chiziq',d:'Kometa bilan chiziladi, so\'ng yorug\' oqim yuradi',run:kitCurveDraw,s:['Qo\'shing','〰 Trim Paths bo\'limida uslubni tanlang']},
+    {cat:'scene',ico:'✨',n:'Zarrachalar (12 xil)',d:'Qor, yomg\'ir, uchqun, bokeh, konfetti, warp...',run:kitParticles,s:['Qo\'shing — dizaynni o\'ng paneldan tanlang']},
+    {cat:'scene',ico:'🎬',n:'Kino ko\'rinishi (Adjustment)',d:'Butun sahnaga rang tusi + donadorlik + vinyetka',run:kitFilmLook,s:['Qo\'shing — ostidagi barcha qatlamlarga ta\'sir qiladi']});
+})();
+
 function drawShape(L,local,t,baseAlpha){
   const fx=objectFX(L,local,t);
   applyWalls(L,fx,L.w,L.h,local);
@@ -6646,6 +8761,7 @@ function drawShape(L,local,t,baseAlpha){
       ctx.restore();
     }
   }
+  const _fm=shapeFillMul(L,fx);if(_fm<1)ctx.globalAlpha=alpha*_fm;
   shapePath(L);
   if(L.fill==='glass'||L.fill==='liquid'||L.fill==='liquid2'){
     const pro=L.fill==='liquid2';
@@ -6763,7 +8879,14 @@ function drawShape(L,local,t,baseAlpha){
   }
   // 🎨 STYLE: ichki soya (default 0 — ko'rinmaydi)
   styleShadowInner(L);
-  if(L.border){
+  if(_fm<1)ctx.globalAlpha=alpha;
+  if((L.border||_fm<1)&&trimActive(L)){
+    // 〰 Trim Paths — kontur chizilib boradi
+    if(!L.border)ctx.globalAlpha=alpha*(1-_fm);
+    drawShapeTrimStroke(L,fx,t,L.border?(L.borderColor||'#ffffff'):(L.fillColor||'#ffffff'),L.border?L.borderW:Math.max(2,L.borderW||3));
+    ctx.globalAlpha=alpha;
+    if(L.border)borderGlowFx(L,L.w,L.h,t);
+  }else if(L.border){
     shapePath(L);
     applyBorderStyle(L);
     ctx.strokeStyle=borderStroke(L,L.w,L.h,t,1);
@@ -7894,75 +10017,16 @@ function v3PickLayer(px,py){
   return null;
 }
 
-function render(){
-  _lbCache=new Map();   // ⚡ har freymda bir marta hisoblanadi
-  // 🧊 3D sahna ko'rinishi — eksportda hech qachon ishlatilmaydi
-  if(view3D&&!exporting){ try{renderScene3D();}catch(e){view3D=false;console.error('3D sahna:',e);} return; }
-  // 🛡 HIMOYA: oldingi freymda biror elementda xato bo'lgan bo'lsa, kanvas
-  // holati (clip, transform, boshqa kanvasga yozish) shu yerda TIKLANADI —
-  // aks holda ekran butunlay bo'sh qolib ketardi
-  ctx=mainCtx;
-  __isoPad=0;__isoReg=null;
-  for(let i=0;i<12;i++)ctx.restore();   // bo'sh stekda restore xavfsiz (no-op)
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.globalAlpha=1;
-  ctx.globalCompositeOperation='source-over';
-  ctx.filter='none';
-  _linkMemo=new Map();
-  timerSync();
-  _frameSeq++;             // ⚡ video proksi keshi uchun freym raqami
-  _n3Dprev=Math.max(1,_n3D); _n3D=0;
-  drawBG();
-  const t=state.time;
-  // 🎥 Sahna kamerasi — butun freym uchun bir marta
-  const _CAM=camActive()?camAt(t):null;
-  /* ═══ 🚀 YAXLIT KAMERA REJIMI ═══
-     Kamera burilganda har bir qatlam alohida GPU proyeksiyasidan o'tardi, va har
-     biri uchun WebGL kanvasidan 2D kanvasga NUSXA olinardi — o'lchov shuni
-     ko'rsatdiki, butun vaqtning ~78% aynan shu nusxalarga ketardi.
-     Agar qatlamlarning hech biri o'zi burilmagan, chuqurligi yo'q va hammasi BIR
-     XIL masofada bo'lsa, ularning proyeksiyasi ham bir xil bo'ladi — demak
-     hammasini bitta buferga chizib, BIR MARTA proyeksiya qilish kifoya.
-     Natija matematik jihatdan aynan bir xil, nusxa esa 8 tadan 1 taga tushadi. */
-  let _camWhole=false,_camWholeDist=0,_camWholePersp=100;
-  if(_CAM&&(Math.abs(_CAM.raw.sw)>0.01||Math.abs(_CAM.raw.ti)>0.01||Math.abs(_CAM.raw.roll)>0.01)){
-    let ok=true,d0=null,p0=null,cnt=0;
-    for(const L of state.layers){
-      if(L.type==='audio')continue;
-      if(t<L.start||t>L.start+L.dur)continue;
-      let T2;try{T2=kfValue(L,clamp(t-L.start,0,L.dur));}catch(e){ok=false;break;}
-      const dp=Math.max(0,(T2.depth3!==undefined?T2.depth3:(L.depth3||0)));
-      const dz=(T2.dist3!==undefined?T2.dist3:(L.dist3||0));
-      const ps=(T2.persp3!==undefined?T2.persp3:(L.persp3??100));
-      if(Math.abs(T2.rx||0)+Math.abs(T2.ry||0)>0.05||dp>0.5){ok=false;break;}
-      if(d0===null){d0=dz;p0=ps;}
-      else if(Math.abs(dz-d0)>0.5||Math.abs(ps-p0)>0.5){ok=false;break;}
-      cnt++;
-    }
-    if(ok&&d0!==null&&cnt>1&&!window.__noWhole){_camWhole=true;_camWholeDist=d0;_camWholePersp=p0;}
-  }
-  const _CAML=_camWhole?null:_CAM;   // qatlam darajasidagi qarorlar uchun
-  let sceneCtx=mainCtx;
-  _scenePad=0;
-  if(_camWhole){
-    _scenePad=Math.round(Math.max(cv.width,cv.height)*0.07);
-    const _cw=cv.width+_scenePad*2, _ch=cv.height+_scenePad*2;
-    if(camCv.width!==_cw||camCv.height!==_ch){camCv.width=_cw;camCv.height=_ch;}
-    cctx.setTransform(1,0,0,1,0,0);
-    cctx.clearRect(0,0,_cw,_ch);
-    cctx.globalAlpha=1;cctx.globalCompositeOperation='source-over';cctx.filter='none';
-    cctx.setTransform(1,0,0,1,_scenePad,_scenePad);
-    sceneCtx=cctx;
-  }
+/* ═══ Bitta yuqori darajali qatlamni chizish (render, motion blur, track matte uchun) ═══ */
+function drawTop(L,t,_CAML,sceneCtx){
   ctx=sceneCtx;
-  for(const L of state.layers){
-    if(L.type==='audio')continue;
-    if(t<L.start||t>L.start+L.dur)continue;
-    // 🧩 Guruh a'zosi — u guruh egasi bilan BIRGA chiziladi, alohida emas
-    if(inFlatGroup(L))continue;
     try{
     const local=t-L.start;
-    const T=kfValue(L,local);
+    let T=kfValue(L,local);
+    // 🎛 Adjustment layer — ostidagi sahnaga effekt
+    if(L.adjust&&L.type==='shape'){drawAdjust(L,local,t,T,sceneCtx);return;}
+    // 🧲 Elastik (inertial bounce + squash & stretch)
+    let _st=null;if(L.elast&&L.elast.on){const _el=elasticT(L,local,T);T=_el.T;_st=_el.st;}
     // 🔗 LINK: boshqa elementga bog'langan bo'lsa — uning aylanish/3D/masshtab
     // o'zgarishini (deltasini) meros oladi. O'z pozitsiyasi atrofida qo'llanadi.
     let linkT=null;
@@ -7992,8 +10056,9 @@ function render(){
     let saved=null;
     if(L.kfs&&L.kfs.length){
       saved={};
-      for(const [kk,prop] of KF_PAIRS)
-        if(T[kk]!==undefined&&L[prop]!==undefined){saved[prop]=L[prop];L[prop]=T[kk];}
+      const _M=kfPM();
+      for(const kk in T){const prop=_M[kk];
+        if(prop!==undefined&&T[kk]!==undefined&&L[prop]!==undefined){saved[prop]=L[prop];L[prop]=T[kk];}}
     }
     const _fOn=L.featherOn&&((L.featherT||0)+(L.featherB||0)+(L.featherL||0)+(L.featherR||0)>0);
     // 🎬 Haqiqiy 3D: burilish sezilarli bo'lsa element avval tekis chiziladi,
@@ -8018,7 +10083,10 @@ function render(){
     const _flat3=!window.__force3D&&_has3D&&!_rot3&&_dep3<=0.5&&!_camRot;
     const _use3D=_has3D&&!_flat3;
     if(_use3D)_n3D++;
-    const _useF=_fOn||L.mkOn||_use3D;
+    const _mtI=(L.matteSrc&&!__inMatte)?renderMatte(L,t,_CAML,sceneCtx):null;
+    const _pfx=pfxPlan(L,local,t,_aFX);
+    const _blend=(L.blend&&L.blend!=='normal')?L.blend:null;
+    const _useF=_fOn||L.mkOn||_use3D||!!_pfx||!!_mtI||(!!_blend&&L.type!=='video'&&L.type!=='image');
     if(_useF){
       // Element ALOHIDA kanvasga chiziladi — chekkasi/maskasi haqiqiy shaffoflikka eriydi.
       // Kanvas har tomonga ZAXIRA maydon bilan katta — 3D perspektivada yaqin taraf
@@ -8107,6 +10175,11 @@ function render(){
       // bilan birga buriladigan katta rangli to'rtburchak hosil bo'ladi.
       if(_fOn&&L.featherMode!=='alpha'&&!_use3D&&!_flat3)
         __isoReg={x0:0,y0:0,x1:featherCv.width,y1:featherCv.height};
+      // ✨ Effektlar chekkadan chiqishi mumkin (glow, ripple...) — hudud kengayadi
+      if(__isoReg&&((_pfx&&_pfx.margin>0)||(L.rep&&L.rep.on))){
+        const _m=(L.rep&&L.rep.on)?1e6:_pfx.margin,_mx=cv.width+__isoPad*2,_my=cv.height+__isoPad*2;
+        __isoReg={x0:Math.max(0,__isoReg.x0-_m),y0:Math.max(0,__isoReg.y0-_m),x1:Math.min(_mx,__isoReg.x1+_m),y1:Math.min(_my,__isoReg.y1+_m)};
+      }
       fctx.setTransform(1,0,0,1,0,0);
       fctx.clearRect(__isoReg.x0,__isoReg.y0,__isoReg.x1-__isoReg.x0,__isoReg.y1-__isoReg.y0);
       fctx.setTransform(1,0,0,1,__isoPad,__isoPad);
@@ -8145,6 +10218,7 @@ function render(){
       if((linkT.sx||1)!==1||(linkT.sy||1)!==1)ctx.scale(linkT.sx||1,linkT.sy||1);
       ctx.translate(T.x-linkT.x,T.y-linkT.y);
     }else ctx.translate(T.x,T.y);
+    if(_st)applyStretch(ctx,_st);
     // ⚓ Anchor point (AE uslubi): element JOYIDAN QO'ZG'ALMAYDI — faqat aylanish va
     // masshtabning O'QI (pivot) tanlangan nuqtaga ko'chadi. Masalan pastki-markaz:
     // masshtab kichrayganda past chekka joyida turadi, tepasi pastga "o'sib" tushadi.
@@ -8168,11 +10242,16 @@ function render(){
     ctx.scale(Math.max(0.01,T.scale),Math.max(0.01,T.scale));
     if(_axo||_ayo)ctx.translate(-_axo,-_ayo);
     const _bA=T.alpha*(linkT&&linkT.alpha!=null?linkT.alpha:1);
-    if(L.type==='shape')drawShape(L,local,t,_bA);
-    else if(L.type==='progress')drawProgress(L,local,t,_bA);
-    else if(L.type==='timer')drawTimer(L,local,t,_bA);
-    else if(L.type==='video'||L.type==='image')drawMedia(L,local,t,_bA);
-    else drawText(L,local,t,_bA);
+    if(_pfx&&_pfx.liq)__glLiq=true;
+    try{
+      drawRepeated(L,(_a)=>{
+        if(L.type==='shape')drawShape(L,local,t,_a);
+        else if(L.type==='progress')drawProgress(L,local,t,_a);
+        else if(L.type==='timer')drawTimer(L,local,t,_a);
+        else if(L.type==='video'||L.type==='image')drawMedia(L,local,t,_a);
+        else drawText(L,local,t,_a);
+      },_bA);
+    }finally{__glLiq=false;}
     // ✨ Specular Highlight — yengil rejimda element ustiga to'g'ridan-to'g'ri
     if(L.spec3&&!_use3D&&(Math.abs(_rxD)+Math.abs(_ryD)>0.05)){
       const sb=layerBounds(L);
@@ -8227,8 +10306,9 @@ function render(){
           let ksaved=null;
           if(K.kfs&&K.kfs.length){
             ksaved={};
-            for(const [kk,prop] of KF_PAIRS)
-              if(KT[kk]!==undefined&&K[prop]!==undefined){ksaved[prop]=K[prop];K[prop]=KT[kk];}
+            const _M=kfPM();
+            for(const kk in KT){const prop=_M[kk];
+              if(prop!==undefined&&KT[kk]!==undefined&&K[prop]!==undefined){ksaved[prop]=K[prop];K[prop]=KT[kk];}}
           }
           ctx.save();
           applyGroupM(ctx,_GM);
@@ -8261,6 +10341,22 @@ function render(){
       const P=__isoPad;
       const RG=__isoReg||{x0:0,y0:0,x1:featherCv.width,y1:featherCv.height};
       const rw=Math.max(1,RG.x1-RG.x0), rh=Math.max(1,RG.y1-RG.y0);
+      // ✨ GPU effektlar (AE effects) — 3D proyeksiyadan OLDIN (AE tartibi)
+      if(_pfx){try{
+        const _bb=layerBounds(L);const _s2=(T.scale||1)*(_aFX?(_aFX.scale||1):1)*(linkT?(linkT.scale||1):1);
+        let _ex=T.x,_ey=T.y;
+        if(linkT){const _a=(linkT.rotDeg||0)*Math.PI/180,_ps=(linkT.scale||1),_ox=T.x-linkT.x,_oy=T.y-linkT.y;
+          _ex=linkT.x+(_ox*Math.cos(_a)-_oy*Math.sin(_a))*_ps;_ey=linkT.y+(_ox*Math.sin(_a)+_oy*Math.cos(_a))*_ps;}
+        _ex+=(_aFX?_aFX.dx||0:0);_ey+=(_aFX?_aFX.dy||0:0);
+        const _k3=_flatCam?_flatCam.k:1;
+        if(_flatCam){_ex=_flatCam.fx+(_ex-_flatCam.fx-_flatCam.cx)*_k3;_ey=_flatCam.fy+(_ey-_flatCam.fy-_flatCam.cy)*_k3;}
+        const _hw=_bb.w*_s2*_k3/2,_hh=_bb.h*_s2*_k3/2;
+        pfxApply(_pfx,featherCv,fctx,{x0:RG.x0,y0:RG.y0,x1:RG.x1,y1:RG.y1,ox:RG.x0-P,oy:RG.y0-P},
+          {x0:_ex-_hw+P-RG.x0,y0:_ey-_hh+P-RG.y0,x1:_ex+_hw+P-RG.x0,y1:_ey+_hh+P-RG.y0});
+      }catch(e){console.warn('pfx',e);}}
+      // 🎭 Track matte
+      if(_mtI)applyMatte(_mtI,RG,P);
+      if(_blend){ctx.save();ctx.globalCompositeOperation=_blend;}
       if(_use3D){
         let ecx=T.x, ecy=T.y;
         if(linkT){
@@ -8340,6 +10436,7 @@ function render(){
         // ⚡ Faqat element hududi ko'chiriladi (butun kanvas emas)
         ctx.drawImage(featherCv,RG.x0,RG.y0,rw,rh,RG.x0-P,RG.y0-P,rw,rh);
       }
+      if(_blend)ctx.restore();
       __isoPad=0;__isoReg=null;
     }
     if(saved)for(const k in saved)L[k]=saved[k];
@@ -8357,6 +10454,80 @@ function render(){
         toast('⚠️ "'+layerName(L)+'" elementini chizishda xato — boshqa qatlamlar normal ishlayapti');
       }
     }
+}
+function render(){
+  _lbCache=new Map();   // ⚡ har freymda bir marta hisoblanadi
+  // 🧊 3D sahna ko'rinishi — eksportda hech qachon ishlatilmaydi
+  if(view3D&&!exporting){ try{renderScene3D();}catch(e){view3D=false;console.error('3D sahna:',e);} return; }
+  // 🛡 HIMOYA: oldingi freymda biror elementda xato bo'lgan bo'lsa, kanvas
+  // holati (clip, transform, boshqa kanvasga yozish) shu yerda TIKLANADI —
+  // aks holda ekran butunlay bo'sh qolib ketardi
+  ctx=mainCtx;
+  __isoPad=0;__isoReg=null;
+  for(let i=0;i<12;i++)ctx.restore();   // bo'sh stekda restore xavfsiz (no-op)
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.globalAlpha=1;
+  ctx.globalCompositeOperation='source-over';
+  ctx.filter='none';
+  _linkMemo=new Map();
+  timerSync();
+  _frameSeq++;             // ⚡ video proksi keshi uchun freym raqami
+  _n3Dprev=Math.max(1,_n3D); _n3D=0;
+  drawBG();
+  const t=state.time;
+  // 🎥 Sahna kamerasi — butun freym uchun bir marta
+  const _CAM=camActive()?camAt(t):null;
+  /* ═══ 🚀 YAXLIT KAMERA REJIMI ═══
+     Kamera burilganda har bir qatlam alohida GPU proyeksiyasidan o'tardi, va har
+     biri uchun WebGL kanvasidan 2D kanvasga NUSXA olinardi — o'lchov shuni
+     ko'rsatdiki, butun vaqtning ~78% aynan shu nusxalarga ketardi.
+     Agar qatlamlarning hech biri o'zi burilmagan, chuqurligi yo'q va hammasi BIR
+     XIL masofada bo'lsa, ularning proyeksiyasi ham bir xil bo'ladi — demak
+     hammasini bitta buferga chizib, BIR MARTA proyeksiya qilish kifoya.
+     Natija matematik jihatdan aynan bir xil, nusxa esa 8 tadan 1 taga tushadi. */
+  let _camWhole=false,_camWholeDist=0,_camWholePersp=100;
+  if(_CAM&&(Math.abs(_CAM.raw.sw)>0.01||Math.abs(_CAM.raw.ti)>0.01||Math.abs(_CAM.raw.roll)>0.01)){
+    let ok=true,d0=null,p0=null,cnt=0;
+    for(const L of state.layers){
+      if(L.type==='audio')continue;
+      if(t<L.start||t>L.start+L.dur)continue;
+      let T2;try{T2=kfValue(L,clamp(t-L.start,0,L.dur));}catch(e){ok=false;break;}
+      const dp=Math.max(0,(T2.depth3!==undefined?T2.depth3:(L.depth3||0)));
+      const dz=(T2.dist3!==undefined?T2.dist3:(L.dist3||0));
+      const ps=(T2.persp3!==undefined?T2.persp3:(L.persp3??100));
+      if(Math.abs(T2.rx||0)+Math.abs(T2.ry||0)>0.05||dp>0.5){ok=false;break;}
+      if(d0===null){d0=dz;p0=ps;}
+      else if(Math.abs(dz-d0)>0.5||Math.abs(ps-p0)>0.5){ok=false;break;}
+      cnt++;
+    }
+    if(ok&&d0!==null&&cnt>1&&!window.__noWhole){_camWhole=true;_camWholeDist=d0;_camWholePersp=p0;}
+  }
+  const _CAML=_camWhole?null:_CAM;   // qatlam darajasidagi qarorlar uchun
+  let sceneCtx=mainCtx;
+  _scenePad=0;
+  if(_camWhole){
+    _scenePad=Math.round(Math.max(cv.width,cv.height)*0.07);
+    const _cw=cv.width+_scenePad*2, _ch=cv.height+_scenePad*2;
+    if(camCv.width!==_cw||camCv.height!==_ch){camCv.width=_cw;camCv.height=_ch;}
+    cctx.setTransform(1,0,0,1,0,0);
+    cctx.clearRect(0,0,_cw,_ch);
+    cctx.globalAlpha=1;cctx.globalCompositeOperation='source-over';cctx.filter='none';
+    cctx.setTransform(1,0,0,1,_scenePad,_scenePad);
+    sceneCtx=cctx;
+  }
+  ctx=sceneCtx;
+  const _mSrc=matteSources();
+  for(const L of state.layers){
+    if(L.type==='audio')continue;
+    if(t<L.start||t>L.start+L.dur)continue;
+    // 🧩 Guruh a'zosi — u guruh egasi bilan BIRGA chiziladi, alohida emas
+    if(inFlatGroup(L))continue;
+    // 🎭 Track matte manbasi — o'zi ko'rinmaydi (AE kabi)
+    if(_mSrc.has(L.id)&&!L.matteShow)continue;
+    // 🎞 Motion blur — harakatlanayotgan bo'lsa bir nechta namuna yig'iladi
+    if(L.echo&&L.echo.on){try{drawEcho(L,t,_CAML,sceneCtx);}catch(e){console.warn('echo',e);}ctx=sceneCtx;}
+    if(L.mblur){let _done=false;try{_done=drawMBlur(L,t,_CAML,sceneCtx);}catch(e){console.warn('mblur',e);}ctx=sceneCtx;if(_done)continue;}
+    drawTop(L,t,_CAML,sceneCtx);
   }
   /* 🚀 YAXLIT KAMERA: butun sahna BIR MARTA proyeksiya qilinadi */
   if(_camWhole){
@@ -8419,6 +10590,7 @@ function render(){
       ctx.strokeStyle='#8b5cf6';ctx.stroke();
       ctx.restore();
       void pts;
+      if(L.type==='shape'&&L.shape==='pen')drawPenHandles(L);
       // ⚓ Anchor point belgisi (agar markazda bo'lmasa) — sariq ⊕
       if(L.anchorX||L.anchorY){
         const _ab=layerBounds(L);
@@ -9066,6 +11238,7 @@ function copyLayer(silent){
   delete c.el;
   for(const k in c)if(k[0]==='_')delete c[k];
   c.kfs=(L.kfs||[]).map(k=>({...k}));
+  for(const k in c)if(k!=='el'&&k!=='kfs'&&c[k]&&typeof c[k]==='object')c[k]=JSON.parse(JSON.stringify(c[k]));
   if(L.loops)c.loops=L.loops.map(x=>({...x}));
   if(L.crop)c.crop={...L.crop};
   state.clipboard=c;
@@ -9077,6 +11250,7 @@ function pasteLayer(dup){
   saveHistory();
   const L={...c,id:uid++};
   L.kfs=(c.kfs||[]).map(k=>({...k}));
+  for(const k in L)if(k!=='el'&&k!=='kfs'&&L[k]&&typeof L[k]==='object')L[k]=JSON.parse(JSON.stringify(L[k]));
   if(c.loops)L.loops=c.loops.map(x=>({...x}));
   if(c.crop)L.crop={...c.crop};
   L.start=dup?c.start:clamp(state.time,0,state.duration-0.3);
@@ -11931,6 +14105,7 @@ function renderProps(){
       transformBlock(L)+maskBlock(L)+featherBlock(L)+timingBlock(L);
   }
 
+  try{if(L.type!=='audio')html+=aeBlock(L);}catch(e){console.warn('aeBlock',e);}
   box.innerHTML=bgBlock+html;
   box.dataset.forId=String(_pKey);
   box.scrollTop=Math.min(_pTop,Math.max(0,box.scrollHeight-box.clientHeight));
@@ -11938,6 +14113,7 @@ function renderProps(){
 
   const $=id=>document.getElementById(id);
   const on=(id,ev,fn)=>{const el=$(id);if(el)el[ev]=e=>{historyMaybe();fn(e);};};
+  try{aeBind(L,box);}catch(e){console.warn('aeBind',e);}
 
   on('pText','oninput',e=>{L.text=e.target.value;renderLayers();});
   box.querySelectorAll('.anim-grid .ag').forEach(b=>b.onclick=()=>{
@@ -12017,6 +14193,8 @@ function renderProps(){
   on('pShape','onchange',e=>{
     L.shape=e.target.value;
     if(UI_SHAPES.includes(L.shape)){uiShapeDefaults(L);renderProps();}
+    if(CURVE_SHAPES.includes(L.shape)){L.fill='color';L.shadow=false;L.border=false;if((L.borderW||0)<4)L.borderW=8;
+      if(!L.fillColor||L.fillColor==='#8b5cf6')L.fillColor='#ffffff';if(L.shape==='pen'&&!L.pts)L.pts=PEN_DEF.map(q=>q.slice());renderProps();}
     if(L.shape==='select'){
       // Belgilash ramkasi uchun qulay boshlang'ich sozlamalar
       if(L.animIn!=='drawOn'){L.animIn='drawOn';L.inTime=Math.max(L.inTime,1.2);}
@@ -13607,6 +15785,11 @@ document.getElementById('inDuration').onchange=e=>{
       }
       e.preventDefault();
       return;
+    }
+    // ✒ Pen yo'l nuqtasini surish
+    if(sel&&sel.type==='shape'&&sel.shape==='pen'&&!state.playing&&state.time>=sel.start&&state.time<=sel.start+sel.dur){
+      const pi=penHit(sel,p,hitRadius());
+      if(pi>=0){saveHistory();penDragStart(sel,pi,toCanvas);e.preventDefault();return;}
     }
     // 1) Resize dastagi?
     if(sel&&!state.playing&&state.time>=sel.start&&state.time<=sel.start+sel.dur){
