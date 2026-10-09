@@ -130,9 +130,9 @@
   .stage-hint{position:absolute; bottom:6px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:11px; pointer-events:none; white-space:nowrap;}
   .props{flex:1; overflow-y:auto; padding:0 12px 14px;}
   details.sec{border:1px solid var(--border); border-radius:10px; margin-bottom:9px; background:rgba(255,255,255,.015); overflow:hidden;}
-  details.sec summary{padding:9px 11px; cursor:pointer; font-size:11.5px; color:var(--accent2); text-transform:uppercase; letter-spacing:.8px; list-style:none; display:flex; align-items:center;}
-  details.sec summary::after{content:'▸'; margin-left:auto; transition:.15s; color:var(--muted);}
-  details.sec[open] summary::after{transform:rotate(90deg);}
+  details.sec>summary{padding:9px 11px; cursor:pointer; font-size:11.5px; color:var(--accent2); text-transform:uppercase; letter-spacing:.8px; list-style:none; display:flex; align-items:center;}
+  details.sec>summary::after{content:'▸'; margin-left:auto; transition:.15s; color:var(--muted);}
+  details.sec[open]>summary::after{transform:rotate(90deg);}
   details.sec .inner{padding:4px 11px 8px;}
   .field{margin-bottom:10px;}
   .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:4px;}
@@ -478,12 +478,48 @@
   ::-webkit-scrollbar{width:8px; height:9px;}
   ::-webkit-scrollbar-thumb{background:#33333f; border-radius:4px;}
   .toast{position:fixed; top:60px; left:50%; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--accent); color:#fff; padding:10px 18px; border-radius:10px; z-index:99; font-size:13px; display:none; max-width:90vw; text-align:center;}
+
+  /* ═══ 7.3 — O'NG PANEL: hech narsa chekkadan chiqmaydi, kesilmaydi ═══
+     CSS grid'da 1fr = minmax(auto,1fr): uzun so'z yoki select varianti ustunni
+     konteynerdan kengaytirib yuborardi → o'ng chekka kesilardi. Endi har bir
+     ustun 0 gacha qisqarishi mumkin, matn esa qatorga o'raladi. */
+  .props{overflow-x:hidden;}
+  .props .row2{grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:end;}
+  .props .row3{grid-template-columns:repeat(3,minmax(0,1fr)); align-items:end;}
+  .props .row2>*,.props .row3>*,.props .field,.props [style*="grid-template-columns"]>*{min-width:0;}
+  .props .row2>.chk,.props .row3>.chk{align-self:center;}
+  .props .row2>button,.props .row3>button{align-self:stretch; font-size:12.5px; padding:7px 6px; line-height:1.25; justify-content:center;}
+  .anim-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));}
+  .anim-grid .ag{min-width:0; overflow-wrap:break-word;}
+  .props button{max-width:100%; min-width:0; overflow-wrap:break-word; text-align:center;}
+  .props select{max-width:100%; min-width:0; text-overflow:ellipsis;}
+  .props label,.props .hintline,.props summary,.props b{overflow-wrap:break-word;}
+  .props .field label{line-height:1.35;}
+  .props .chk{align-items:flex-start; line-height:1.35;}
+  .props .chk input{flex:0 0 auto; margin-top:1px;}
+  .props .inner>*:last-child{margin-bottom:2px;}
+  .props input[type=number],.props input[type=text]{min-width:0;}
+  .props code{white-space:normal; overflow-wrap:anywhere;}
+  /* ichki (bo'lim ichidagi) yig'iladigan bloklar — bo'lim sarlavhasi uslubini olmaydi */
+  .props details:not(.sec)>summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text); padding:5px 0;}
+  .props details:not(.sec)>summary::-webkit-details-marker{display:none;}
+  .props details.sub>summary::before{content:'▸'; color:var(--muted); transition:.15s; flex:0 0 auto;}
+  .props details.sub[open]>summary::before{transform:rotate(90deg);}
+  /* ✨ effekt kartasi */
+  .props .aefx{border:1px solid var(--border); border-radius:9px; padding:4px 8px 2px; margin:6px 0; background:var(--panel2);}
+  .props .aefx>summary{flex-wrap:wrap; gap:4px 6px; padding:4px 0;}
+  .props .aefx-n{flex:1 1 110px; min-width:0; font-size:12px; line-height:1.3; color:var(--text);}
+  .props .aefx-b{display:flex; gap:3px; margin-left:auto; flex:0 0 auto;}
+  .props .aefx-b button{padding:2px 6px; font-size:11px; line-height:1.2; border-radius:6px;}
+  .props .aefx-body{padding-top:6px;}
+  .props .pre-row{display:flex; flex-wrap:wrap; gap:4px; margin:2px 0 8px;}
+  .props .pre-row button{padding:3px 8px; font-size:11px;}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>7.2</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>7.4</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -1306,7 +1342,7 @@ function snapSF(){return PERF.lvl===0?4:(PERF.lvl===1?6:9);}
    aks holda kamerani zoom qilganda elementlar joyidan siljib ketardi. */
 /* Joriy chizish maydonining tayanch siljishi: izolyatsiya kanvasi, yaxlit
    kamera buferi yoki asosiy kanvas — shisha fon shu bo'yicha joylashadi. */
-function sceneBase(){ return (ctx===fctx)?(__isoPad||0):((ctx===cctx)?_scenePad:0); }
+function sceneBase(){ if(typeof kidIsoCtx!=='undefined'&&ctx===kidIsoCtx)return __kidBase; return (ctx===fctx)?(__isoPad||0):((ctx===cctx)?_scenePad:0); }
 let _fth3D=false;   // joriy qatlam 3D da chizilyaptimi (rangli feather chegarasi uchun)
 let _flatCam=null;
 /* Bir freymda nechta qatlam og'ir 3D quvuridan o'tayotgani. Tekstura byudjeti
@@ -1386,7 +1422,7 @@ function b3dNormal(cs,sn,ct,st){
 
 /* ─────────── GPU (WebGL) proyeksiya moduli ─────────── */
 const GM3D=(function(){
-  let gcv=null,gl=null,prog=null,tex=null,buf=null,U=null,ok=null,gl2=false;
+  let gcv=null,gl=null,prog=null,tex=null,buf=null,U=null,ok=null,gl2=false,_lost=0;
   let maxTex=4096,curMip=false,texW=0,texH=0;
   const tileCv=document.createElement('canvas');
   const tctx=tileCv.getContext('2d');
@@ -1470,7 +1506,7 @@ const GM3D=(function(){
       gl.clearColor(0,0,0,0);
       maxTex=gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096;
       /* Kontekst yo'qolsa — 2D zaxiraga o'tamiz, ilova to'xtamaydi */
-      gcv.addEventListener('webglcontextlost',e=>{e.preventDefault();ok=false;},false);
+      gcv.addEventListener('webglcontextlost',e=>{e.preventDefault();_lost++;ok=(_lost>4)?false:null;texW=0;texH=0;curMip=false;},false);
       ok=true;
     }catch(e){console.warn('GM3D init:',e);ok=false;}
     return ok;
@@ -1554,24 +1590,36 @@ const GM3D=(function(){
     const sw2=Math.max(2,Math.round(rw*ts)), sh2=Math.max(2,Math.round(rh*ts));
 
     /* ── 1) Manba hududi → tekstura ── */
-    const tw=Math.min(maxTex,Math.ceil((sw2+2)/64)*64), th=Math.min(maxTex,Math.ceil((sh2+2)/64)*64);
-    if(tileCv.width!==tw||tileCv.height!==th){tileCv.width=tw;tileCv.height=th;texW=0;}
+    /* ⚡ Bufer FAQAT O'SADI: avval har kadr (aylanish/masshtab animatsiyasida o'lcham
+       doim o'zgaradi) kanvas va GPU tekstura QAYTA AJRATILARDI — 3D dagi qotishlarning
+       asosiy sababi shu edi. Endi bir marta ajratiladi, keyin faqat ichi yangilanadi. */
+    const tw=Math.min(maxTex,Math.ceil((sw2+2)/128)*128), th=Math.min(maxTex,Math.ceil((sh2+2)/128)*128);
+    if(tileCv.width<tw||tileCv.height<th){tileCv.width=Math.max(tileCv.width,tw);tileCv.height=Math.max(tileCv.height,th);texW=0;}
+    const TW=tileCv.width, TH=tileCv.height;
     tctx.setTransform(1,0,0,1,0,0);
-    tctx.imageSmoothingEnabled=true;tctx.imageSmoothingQuality='high';
-    tctx.clearRect(0,0,Math.min(tw,sw2+2),Math.min(th,sh2+2));
+    tctx.imageSmoothingEnabled=true;tctx.imageSmoothingQuality=(state.playing&&!exporting)?'low':'high';
+    tctx.clearRect(0,0,Math.min(TW,sw2+2),Math.min(TH,sh2+2));
     tctx.drawImage(src,x0,y0,rw,rh,0,0,sw2,sh2);
     try{
       gl.bindTexture(gl.TEXTURE_2D,tex);
-      if(texW!==tw||texH!==th){
+      if(texW!==TW||texH!==TH){
         gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,tileCv);
-        texW=tw;texH=th;
+        texW=TW;texH=TH;
+      }else if(gl2){
+        // WebGL2: faqat ishlatilgan burchak yuklanadi (butun bufer emas)
+        gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,Math.min(TW,sw2+2),Math.min(TH,sh2+2),gl.RGBA,gl.UNSIGNED_BYTE,tileCv);
       }else{
         gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,tileCv);
       }
-    }catch(e){ok=false;return false;}
+    }catch(e){
+      // Xavfsizlik (tainted) xatosi — faqat shu kadr uchun zaxira yo'l; dvigatel o'chmaydi
+      if(e&&e.name==='SecurityError')return false;
+      ok=null;return false;
+    }
 
     // Mipmap faqat HAQIQIY kichrayishda (adaptiv tekstura tufayli kamdan-kam kerak)
-    const wantMip=gl2&&PERF.lvl<2&&(projW<sw2*0.72||projH<sh2*0.72);
+    // pleyda mipmap yo'q (harakatda farq sezilmaydi) — pauza/eksportda to'liq sifat
+    const wantMip=gl2&&PERF.lvl<2&&!(state.playing&&!exporting)&&(projW<sw2*0.72||projH<sh2*0.72);
     if(wantMip){
       gl.generateMipmap(gl.TEXTURE_2D);
       if(!curMip){gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);curMip=true;}
@@ -1580,13 +1628,16 @@ const GM3D=(function(){
     }
 
     /* ── 2) Chiqish buferi ── */
-    const gw=Math.min(maxTex,Math.ceil(ow/64)*64), gh=Math.min(maxTex,Math.ceil(oh/64)*64);
-    if(gcv.width!==gw||gcv.height!==gh){gcv.width=gw;gcv.height=gh;}
-    gl.viewport(0,gh-oh,ow,oh);
+    const gw=Math.min(maxTex,Math.ceil(ow/128)*128), gh=Math.min(maxTex,Math.ceil(oh/128)*128);
+    if(gcv.width<gw||gcv.height<gh){gcv.width=Math.max(gcv.width,gw);gcv.height=Math.max(gcv.height,gh);}
+    gl.viewport(0,gcv.height-oh,ow,oh);
+    // faqat ishlatiladigan hudud tozalanadi (bufer kattaroq bo'lishi mumkin)
+    gl.enable(gl.SCISSOR_TEST);gl.scissor(0,gcv.height-oh,ow,oh);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.disable(gl.SCISSOR_TEST);
     gl.bindBuffer(gl.ARRAY_BUFFER,buf);
 
-    const uMax=sw2/tw, vMax=sh2/th;
+    const uMax=sw2/TW, vMax=sh2/TH;
     const UV=[[0,0],[uMax,0],[0,vMax],[uMax,vMax]];
     const put=(pts)=>{
       for(let i=0;i<4;i++){
@@ -1816,11 +1867,12 @@ function basic3D(src,dst,cx,cy,swiv,tiltA,dist,reg,f){
   };
   const vertical=Math.abs(swiv)>=Math.abs(tiltA);   // striplar yo'nalishi
   const ang=Math.max(Math.abs(swiv),Math.abs(tiltA));
-  let N=clamp(Math.round(12+ang*22),12,64);
+  const _pl=state.playing&&!exporting;
+  let N=clamp(Math.round((12+ang*22)*(_pl?0.55:1)),_pl?8:12,64);
   const OVER=0.8;
   dst.save();
   dst.imageSmoothingEnabled=true;
-  dst.imageSmoothingQuality='high';
+  dst.imageSmoothingQuality=_pl?'low':'high';
   if(vertical){
     const sw=rw/N;
     for(let i=0;i<N;i++){
@@ -1899,7 +1951,12 @@ function previewAutoTick(){
     if(_rndMs>95)want=4;
     else if(_rndMs>44)want=2;
     else if(_rndMs>22)want=Math.max(previewDiv,1);   // chegarada — o'zgartirmaymiz
-    else want=previewDiv>1?(previewDiv===4?2:1):1;   // yengil bo'lsa pog'onama-pog'ona qaytamiz
+    else{
+      // ⚖ Gisterezis: yuqoriroq sifatdagi taxminiy kadr vaqti (piksel 4× ko'p) hali ham
+      // og'ir bo'lsa — qaytmaymiz. Aks holda 1 ↔ 1/2 orasida doimiy sakrash = qotish.
+      const up=previewDiv===4?2:1, est=_rndMs*(previewDiv/up)*(previewDiv/up)*0.75;
+      want=(previewDiv>1&&est<30)?up:previewDiv;
+    }
   }
   if(want!==previewDiv){_pvLast=now;setPreviewDiv(want,true);}
 }
@@ -1910,14 +1967,8 @@ function applyFormat(){
   if(aw>=ah){state.H=short;state.W=Math.round(short*aw/ah);}
   else{state.W=short;state.H=Math.round(short*ah/aw);}
   if(oldW&&oldH&&(oldW!==state.W||oldH!==state.H)){
-    const fx=state.W/oldW, fy=state.H/oldH, fs=Math.min(fx,fy);
-    state.layers.forEach(L=>{
-      L.x*=fx;L.y*=fy;
-      (L.kfs||[]).forEach(k=>{k.x*=fx;k.y*=fy;});
-      if(L.type==='text')L.size=Math.max(10,Math.round(L.size*fs));
-      if(L.type==='shape'||L.type==='progress'||L.type==='timer'){L.w*=fs;L.h*=fs;L.radius*=fs;}
-      if(L.maskW){L.maskW*=fs;L.maskH*=fs;}
-    });
+    const fx=state.W/oldW, fy=state.H/oldH;
+    rescaleDoc(fx,fy);
   }
   cv.width=state.W;cv.height=state.H;
   resizeSnap();
@@ -6653,7 +6704,7 @@ function fxBind(L,box){
    • WebGL bo'lmasa — effekt shunchaki o'tkazib yuboriladi, ilova ishlayveradi.
    ═══════════════════════════════════════════════════════════════════════════ */
 const PFX=(function(){
-  let cvs=null,gl=null,ok=null,vbuf=null,maxTex=4096;
+  let cvs=null,gl=null,ok=null,vbuf=null,maxTex=4096,_lost=0;
   let capW=0,capH=0,srcTex=null;
   const fbs=[];               // [{tex,fb}] ×3 — ping-pong + effekt kirishi
   const progs={};
@@ -7075,7 +7126,9 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
       gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);
       maxTex=Math.min(8192,gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096);
-      cvs.addEventListener('webglcontextlost',e=>{e.preventDefault();ok=false;},false);
+      cvs.addEventListener('webglcontextlost',e=>{e.preventDefault();_lost++;
+        // kontekst yo'qoldi — keyingi chaqiruvda yangisi yaratiladi (4 martadan keyin taslim)
+        ok=_lost>4?false:null;srcTex=null;fbs.length=0;capW=0;capH=0;for(const k in progs)delete progs[k];},false);
       ok=true;
     }catch(e){console.warn('PFX init:',e);ok=false;}
     return ok;
@@ -8473,7 +8526,7 @@ function pfxBlock(L){
   const cats=[];for(const d of PFX_DEFS)if(!cats.includes(d.cat))cats.push(d.cat);
   const add=`<div class="field"><select id="aeAdd"><option value="">＋ Effekt qo'shish… (${PFX_DEFS.length} xil)</option>
     ${cats.map(c=>`<optgroup label="${c}">${PFX_DEFS.filter(d=>d.cat===c).map(d=>`<option value="${d.id}" ${list.some(e=>e.id===d.id)?'disabled':''}>${d.n}</option>`).join('')}</optgroup>`).join('')}</select></div>`;
-  const pre=`<div style="display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px">${Object.keys(PFX_PRESETS).map(n=>`<button data-aepre="${escapeHtml(n)}" style="padding:3px 8px;font-size:11px">${n}</button>`).join('')}</div>`;
+  const pre=`<div class="pre-row">${Object.keys(PFX_PRESETS).map(n=>`<button data-aepre="${escapeHtml(n)}">${n}</button>`).join('')}</div>`;
   const items=list.map((e,i)=>{
     const d=PFX_BY[e.id];if(!d)return '';
     const ps=d.p.map(q=>{const k='e_'+d.id+'_'+q[0];
@@ -8481,21 +8534,19 @@ function pfxBlock(L){
       if(Array.isArray(q[7]))return `<div class="field"><label>${q[1]}</label><select data-ak="${k}" data-num="1">${q[7].map(([v,n])=>`<option value="${v}" ${(+(L[k]??q[5]))===v?'selected':''}>${n}</option>`).join('')}</select></div>`;
       if(q[2]===0&&q[3]===1&&q[4]===1)return `<label class="chk"><input type="checkbox" data-ak="${k}" data-num="1" ${(+(L[k]??q[5]))?'checked':''}> ${q[1]}</label>`;
       return aeSlider(L,k,q[1],q[2],q[3],q[4],q[5],q[6]&&q[6]!=='c'?q[6]:'');}).join('');
-    return `<details class="aefx" ${e._c?'':'open'} style="border:1px solid var(--border);border-radius:9px;padding:4px 8px;margin:6px 0;background:var(--panel2)">
-      <summary style="display:flex;gap:6px;align-items:center;cursor:pointer;list-style:none">
+    return `<details class="aefx" ${e._c?'':'open'}>
+      <summary>
         <input type="checkbox" data-aeon="${i}" ${e.on!==false?'checked':''} title="Yoqish/o'chirish">
-        <b style="flex:1;font-size:12px">${d.n}</b>
-        <button data-aeup="${i}" title="Yuqoriga" style="padding:1px 6px">↑</button>
-        <button data-aedn="${i}" title="Pastga" style="padding:1px 6px">↓</button>
-        <button data-aerst="${i}" title="Standart qiymatlar" style="padding:1px 6px">↺</button>
-        <button data-aerm="${i}" title="O'chirish" style="padding:1px 6px">✕</button></summary>
-      <div style="padding-top:6px">${ps}</div></details>`;}).join('');
+        <b class="aefx-n">${d.n}</b>
+        <span class="aefx-b">
+          <button data-aeup="${i}" title="Yuqoriga">↑</button><button data-aedn="${i}" title="Pastga">↓</button><button data-aerst="${i}" title="Standart qiymatlar">↺</button><button data-aerm="${i}" title="O'chirish">✕</button></span></summary>
+      <div class="aefx-body">${ps}</div></details>`;}).join('');
   return `${add}${pre}${items||'<div class="hintline">Effektlar GPU (WebGL) da ishlaydi — faqat element hududi ishlanadi, shuning uchun yengil. Har bir slayder ◆ keyframe bilan animatsiya qilinadi. Tartib muhim: yuqoridagi effekt birinchi qo\'llanadi.</div>'}`;
 }
 function trimBlock(L){
   const isAnn=typeof ANNOT!=='undefined'&&ANNOT.includes(L.shape);
   return `${!isAnn?`<label class="chk"><input type="checkbox" data-ak="trimOn" data-rr="1" ${L.trimOn?'checked':''}> Konturni Trim Paths bilan chizish (chegara kerak)</label>`:''}
-    <div class="row2">${aeSelect(L,'drawIn','✏ Kirish uslubi',DRAW_IN,'start')}${aeSelect(L,'drawOut','Chiqish uslubi',DRAW_OUT,'start')}</div>
+    ${aeSelect(L,'drawIn','✏ Kirish (chizilish) uslubi',DRAW_IN,'start')}${aeSelect(L,'drawOut','⌫ Chiqish uslubi',DRAW_OUT,'start')}
     ${aeSelect(L,'drawLoop','🔁 Doimiy (loop) animatsiya',DRAW_LOOP,'none',true)}
     ${(L.drawLoop&&L.drawLoop!=='none')?aeSlider(L,'drawLoopSp','Loop tezligi',0.05,4,0.05,1,'×'):''}
     ${L.drawLoop==='gradient'?`<div class="field"><label>Ikkinchi rang</label><input type="color" data-ak="drawC2" value="${L.drawC2||'#22d3ee'}"></div>`:''}
@@ -8543,7 +8594,7 @@ function proBlock(L){
       <div class="row2">${aeSliderN(R,'rep.rot','Burilish',-180,180,1,0,'°')}${aeSliderN(R,'rep.sc','Masshtab',50,150,1,100,'%')}</div>
       ${aeSliderN(R,'rep.op','Oxirgi nusxa shaffofligi',0,100,1,100,'%')}`:''}
     <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
-    <details ${L.ex&&Object.values(L.ex).some(Boolean)?'open':''}><summary style="cursor:pointer"><b>ƒ Expressions</b> (AE ifodalari)</summary>
+    <details class="sub" ${L.ex&&Object.values(L.ex).some(Boolean)?'open':''}><summary><b>ƒ Expressions</b><span style="color:var(--muted)">(AE ifodalari)</span></summary>
       ${[['x','Position X'],['y','Position Y'],['rot','Rotation (°)'],['scale','Scale (%)'],['op','Opacity (%)']].map(([k,n])=>`<div class="field"><label>${n}</label>
         <input type="text" data-ak="ex.${k}" data-lazy="1" placeholder="${k==='x'?'wiggle(2,30)':k==='rot'?'time*90':k==='scale'?'value+sin(time*4)*10':k==='op'?'pingpong(1)*100':'value'}" value="${escapeHtml(X[k]||'')}" style="font-family:monospace"></div>`).join('')}
       ${L._exErr?`<div class="hintline" style="color:#f87171">⚠ ${escapeHtml(L._exErr)}</div>`:''}
@@ -8551,7 +8602,7 @@ function proBlock(L){
     </details>
     <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
     ${isMedia?'':aeSelect(L,'blend','🎇 Blend rejimi',BLEND_ALL,'normal')}
-    <div class="row2">
+    <div>
       <div class="field"><label>🎭 Track matte manbasi</label><select data-ak="matteSrc" data-num="1" data-rr="1"><option value="0">— yo'q —</option>
         ${others.map(o=>`<option value="${o.id}" ${L.matteSrc===o.id?'selected':''}>${escapeHtml(layerName(o))}</option>`).join('')}</select></div>
       ${aeSelect(L,'matteMode','Matte turi',[['alpha','Alpha matte'],['alphaInv','Alpha inverted'],['luma','Luma matte'],['lumaInv','Luma inverted']],'alpha')}
@@ -8708,6 +8759,188 @@ function kitFilmLook(){const T=kitShape({shape:'rect',w:state.W,h:state.H,x:stat
     {cat:'scene',ico:'✨',n:'Zarrachalar (12 xil)',d:'Qor, yomg\'ir, uchqun, bokeh, konfetti, warp...',run:kitParticles,s:['Qo\'shing — dizaynni o\'ng paneldan tanlang']},
     {cat:'scene',ico:'🎬',n:'Kino ko\'rinishi (Adjustment)',d:'Butun sahnaga rang tusi + donadorlik + vinyetka',run:kitFilmLook,s:['Qo\'shing — ostidagi barcha qatlamlarga ta\'sir qiladi']});
 })();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   📐 SMART GUIDES — elementlar chekkalari tekisligini ko'rsatuvchi chiziqlar
+   (Figma / After Effects uslubi). Surishda yoki chekkadan cho'zishda element
+   boshqa elementlarning CHAP / O'RTA / O'NG va TEPA / O'RTA / PAST chekkalariga
+   yopishadi va ikkalasini tutashtiruvchi chiziq (uchlarida × belgisi) chiqadi.
+   Alt bosib tursangiz — yopishish o'chadi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const sGuides=[];
+function sgAABB(B){
+  const a=(B.T.rotDeg||0)*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a));
+  const hw=(B.bw*c+B.bh*s)/2,hh=(B.bw*s+B.bh*c)/2;
+  return {l:B.T.x-hw,r:B.T.x+hw,cx:B.T.x,t:B.T.y-hh,b:B.T.y+hh,cy:B.T.y};
+}
+function sgTargets(excl){
+  const out=[],t=state.time,W=state.W,H=state.H;
+  for(const o of state.layers){
+    if(o.type==='audio'||excl.has(o.id))continue;
+    if(t<o.start||t>o.start+o.dur)continue;
+    if(_mSrcCache&&_mSrcCache.has(o.id))continue;
+    let B;try{B=getSelBox(o);}catch(e){continue;}
+    if(!B||!isFinite(B.bw)||B.bw<1)continue;
+    const A=sgAABB(B);
+    // butun kadrni qoplagan fon qatlamlari — chekkalari kadr chekkasi bilan bir xil
+    if(A.r-A.l>=W*0.98&&A.b-A.t>=H*0.98)continue;
+    A.id=o.id;out.push(A);
+  }
+  return out;
+}
+let _mSrcCache=null;
+/* kadr bilan qaysi juftliklar ma'noli: markaz↔markaz, chekka↔o'sha chekka, chekka↔kadr markazi */
+function sgPairOK(tg,k,q){if(!tg.canvas)return true;const c=q==='cx'||q==='cy';const kc=k==='cx'||k==='cy';return c||(!kc&&k===q);}
+function sgExclude(L,extraIds){
+  const ex=new Set(extraIds||[]);ex.add(L.id);
+  if(isGroupHolder(L))for(const k of groupKids(L))ex.add(k.id);
+  const G=inFlatGroup(L);if(G)ex.add(G.id);
+  return ex;
+}
+/* box — taklif qilingan joy; qaytaradi {dx,dy} va sGuides ni to'ldiradi */
+function sgSnapBox(box,excl,th,opt){
+  opt=opt||{};
+  sGuides.length=0;
+  try{_mSrcCache=matteSources();}catch(e){_mSrcCache=null;}
+  const W=state.W,H=state.H;
+  const T=[{l:0,r:W,cx:W/2,t:0,b:H,cy:H/2,canvas:true},...sgTargets(excl)];
+  const mx=opt.xKeys||['l','cx','r'],my=opt.yKeys||['t','cy','b'];
+  let bx=null,by=null;
+  if(opt.x!==false)for(const tg of T)for(const k of mx)for(const q of ['l','cx','r']){
+    if(!sgPairOK(tg,k,q))continue;
+    const d=tg[q]-box[k];if(Math.abs(d)<=th&&(!bx||Math.abs(d)<Math.abs(bx)))bx=d;}
+  if(opt.y!==false)for(const tg of T)for(const k of my)for(const q of ['t','cy','b']){
+    if(!sgPairOK(tg,k,q))continue;
+    const d=tg[q]-box[k];if(Math.abs(d)<=th&&(!by||Math.abs(d)<Math.abs(by)))by=d;}
+  const dx=bx||0,dy=by||0;
+  const nb={l:box.l+dx,r:box.r+dx,cx:box.cx+dx,t:box.t+dy,b:box.b+dy,cy:box.cy+dy};
+  const eps=0.75;
+  const vMap=new Map(),hMap=new Map();
+  for(const tg of T){
+    if(bx!==null)for(const k of mx)for(const q of ['l','cx','r']){
+      if(Math.abs(tg[q]-nb[k])>eps)continue;
+      if(!sgPairOK(tg,k,q))continue;
+      const x=Math.round(tg[q]*2)/2;
+      const g=vMap.get(x)||{x,y0:Infinity,y1:-Infinity,marks:[],canvas:false,center:q==='cx'};
+      if(tg.canvas){g.canvas=true;g.y0=0;g.y1=H;}
+      else{g.y0=Math.min(g.y0,nb.t,tg.t);g.y1=Math.max(g.y1,nb.b,tg.b);g.marks.push([x,tg[q==='cx'?'cy':'t']],[x,tg[q==='cx'?'cy':'b']]);}
+      g.marks.push([x,nb[k==='cx'?'cy':'t']],[x,nb[k==='cx'?'cy':'b']]);
+      vMap.set(x,g);
+    }
+    if(by!==null)for(const k of my)for(const q of ['t','cy','b']){
+      if(Math.abs(tg[q]-nb[k])>eps)continue;
+      if(!sgPairOK(tg,k,q))continue;
+      const y=Math.round(tg[q]*2)/2;
+      const g=hMap.get(y)||{y,x0:Infinity,x1:-Infinity,marks:[],canvas:false,center:q==='cy'};
+      if(tg.canvas){g.canvas=true;g.x0=0;g.x1=W;}
+      else{g.x0=Math.min(g.x0,nb.l,tg.l);g.x1=Math.max(g.x1,nb.r,tg.r);g.marks.push([tg[q==='cy'?'cx':'l'],y],[tg[q==='cy'?'cx':'r'],y]);}
+      g.marks.push([nb[k==='cy'?'cx':'l'],y],[nb[k==='cy'?'cx':'r'],y]);
+      hMap.set(y,g);
+    }
+  }
+  for(const g of vMap.values())sGuides.push({v:true,...g});
+  for(const g of hMap.values())sGuides.push({v:false,...g});
+  return {dx,dy};
+}
+function drawSmartGuides(c){
+  if(!sGuides.length)return;
+  // ekrandagi qalinlik doim bir xil (kanvas qanchalik kichraytirilgan bo'lsa ham)
+  let k=1;try{const rw=cv.getBoundingClientRect().width;if(rw>10)k=cv.width/rw;}catch(e){}
+  const lw=1.6*k,m=4*k;
+  c.save();c.setLineDash([]);c.lineCap='round';
+  for(const g of sGuides){
+    const col=g.canvas?'#22d3ee':'#ff2d6f';
+    c.strokeStyle=col;c.lineWidth=lw;
+    c.shadowColor=g.canvas?'rgba(34,211,238,.5)':'rgba(255,45,111,.45)';c.shadowBlur=lw*3;
+    c.beginPath();
+    if(g.v){c.moveTo(g.x,g.y0);c.lineTo(g.x,g.y1);}else{c.moveTo(g.x0,g.y);c.lineTo(g.x1,g.y);}
+    if(g.canvas&&!g.marks.length){c.stroke();continue;}
+    c.stroke();c.shadowBlur=0;
+    // × belgilar — tekislangan chekkalarning uchlari
+    c.beginPath();
+    const seen=new Set();
+    for(const [x,y] of g.marks){const k=Math.round(x)+','+Math.round(y);if(seen.has(k))continue;seen.add(k);
+      c.moveTo(x-m,y-m);c.lineTo(x+m,y+m);c.moveTo(x+m,y-m);c.lineTo(x-m,y+m);}
+    c.stroke();
+  }
+  c.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🧩 GURUH A'ZOSI — alohida bufer (guruhlanmagan element bilan AYNAN bir xil)
+   GPU suv/piksel o'tishlari, ✨ effektlar, maska va feather guruh ichida ham
+   ishlashi uchun a'zo vaqtincha o'z buferiga chiziladi, so'ng guruh buferiga
+   qo'yiladi (guruhning 3D proyeksiyasidan OLDIN — AE tartibi).
+   ═══════════════════════════════════════════════════════════════════════════ */
+const kidIsoCv=document.createElement('canvas'),kidIsoCtx=kidIsoCv.getContext('2d');
+var __kidBase=0;
+function kidIsoBegin(tgt){
+  const c=tgt.canvas;
+  if(kidIsoCv.width<c.width||kidIsoCv.height<c.height){kidIsoCv.width=Math.max(kidIsoCv.width,c.width);kidIsoCv.height=Math.max(kidIsoCv.height,c.height);}
+  const M=tgt.getTransform();
+  kidIsoCtx.setTransform(M.a,M.b,M.c,M.d,M.e,M.f);
+  kidIsoCtx.globalAlpha=1;kidIsoCtx.globalCompositeOperation='source-over';kidIsoCtx.filter='none';
+  __kidBase=(tgt===fctx)?(__isoPad||0):((tgt===cctx)?_scenePad:0);
+  return kidIsoCtx;
+}
+function kidIsoRegion(K,plan,fx){
+  const M=ctx.getTransform(),cw=kidIsoCv.width,ch=kidIsoCv.height;
+  let b={w:200,h:200};try{b=layerBounds(K);}catch(e){}
+  const sc=Math.max(1,fx?(fx.scale||1)*Math.max(fx.sx||1,fx.sy||1):1)*1.12;
+  const hx=b.w/2*sc+Math.abs(fx?fx.dx||0:0),hy=b.h/2*sc+Math.abs(fx?fx.dy||0:0);
+  const pt=(x,y)=>[M.a*x+M.c*y+M.e,M.b*x+M.d*y+M.f];
+  const cs=[pt(-hx,-hy),pt(hx,-hy),pt(hx,hy),pt(-hx,hy)];
+  const bs=[pt(-b.w/2,-b.h/2),pt(b.w/2,-b.h/2),pt(b.w/2,b.h/2),pt(-b.w/2,b.h/2)];
+  const k=Math.hypot(M.a,M.b)||1;
+  const mg=((plan?plan.margin:0)+Math.max(K.featherT||0,K.featherB||0,K.featherL||0,K.featherR||0)+(K.shOutB||0)*1.4+40)*k;
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;for(const [x,y] of cs){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}
+  const R={x0:Math.max(0,Math.floor(x0-mg)),y0:Math.max(0,Math.floor(y0-mg)),x1:Math.min(cw,Math.ceil(x1+mg)),y1:Math.min(ch,Math.ceil(y1+mg))};
+  let bx0=Infinity,by0=Infinity,bx1=-Infinity,by1=-Infinity;for(const [x,y] of bs){bx0=Math.min(bx0,x);by0=Math.min(by0,y);bx1=Math.max(bx1,x);by1=Math.max(by1,y);}
+  R.box={x0:bx0-R.x0,y0:by0-R.y0,x1:bx1-R.x0,y1:by1-R.y0};
+  if(R.x1-R.x0<2||R.y1-R.y0<2){R.empty=true;return R;}
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(R.x0,R.y0,R.x1-R.x0,R.y1-R.y0);ctx.restore();
+  return R;
+}
+function kidIsoEnd(tgt,K,plan,R){
+  if(!R||R.empty)return;
+  const w=R.x1-R.x0,h=R.y1-R.y0;
+  if(plan){try{pfxApply(plan,kidIsoCv,kidIsoCtx,{x0:R.x0,y0:R.y0,x1:R.x1,y1:R.y1,ox:R.x0-__kidBase,oy:R.y0-__kidBase},R.box);}catch(e){console.warn('kid pfx',e);}}
+  tgt.save();tgt.setTransform(1,0,0,1,0,0);tgt.globalAlpha=1;tgt.filter='none';
+  tgt.globalCompositeOperation=(K.blend&&K.blend!=='normal')?K.blend:'source-over';
+  tgt.drawImage(kidIsoCv,R.x0,R.y0,w,h,R.x0,R.y0,w,h);
+  tgt.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥 KO'RISH SIFATI (1/2, 1/4) — TO'LIQ va YO'QOTISHSIZ masshtablash
+   Avval faqat x/y, o'lcham va radius o'zgartirilardi: guruh markazi (gox/goy),
+   keyframe'dagi o'lchamlar, 3D masofa, soyalar, kamera... eski qiymatda qolib,
+   play paytida (avto sifat tushganda) GURUH butunlay joyidan sakrab ketardi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const PX_PROPS=['w','h','radius','borderW','maskW','maskH','innerX','innerY','blur','depth','olW','olOffset','olGapSize','olGapT','olGapB','olGapL','olGapR',
+  'rTL','rTR','rBR','rBL','mkW','mkH','mkX','mkY','mkFeather','mkRadius','dist3','depth3','shOutB','shOutS','shOutX','shOutY','shInB','shInS','shInX','shInY',
+  'borderRunGlow','borderGlowI','size','tshadow','tdepth','fxBlur','featherT','featherB','featherL','featherR','burstSpread','burstSize','burstX','burstY','carR'];
+const PX_SET=new Set(PX_PROPS);
+function rescaleDoc(fx,fy){
+  const fs=Math.min(fx,fy),M=kfPM();
+  for(const L of state.layers){
+    L.x*=fx;L.y*=fy;
+    if(typeof L.gox==='number'){L.gox*=fx;L.goy*=fy;}
+    for(const p of PX_PROPS)if(typeof L[p]==='number'&&(p!=='size'||L.type==='text'))L[p]*=fs;
+    if(L.szFull!=null)L.szFull=L.szFull;   // to'liq sifatdagi asl o'lcham (saqlanadi)
+    if(L.car){if(typeof L.car.R==='number')L.car.R*=fs;if(typeof L.car.gap==='number')L.car.gap*=fs;}
+    if(L.rep){if(typeof L.rep.dx==='number')L.rep.dx*=fs;if(typeof L.rep.dy==='number')L.rep.dy*=fs;}
+    for(const k of (L.kfs||[])){
+      if(typeof k.x==='number')k.x*=fx;if(typeof k.y==='number')k.y*=fy;
+      for(const kk in k){const prop=M[kk];if(prop&&PX_SET.has(prop)&&typeof k[kk]==='number')k[kk]*=fs;}
+    }
+    if(L._kfPend)for(const kk in L._kfPend){const prop=M[kk]||kk;if(PX_SET.has(prop)&&typeof L._kfPend[kk]==='number'){L._kfPend[kk]*=fs;if(L._kfPrev&&typeof L._kfPrev[kk]==='number')L._kfPrev[kk]*=fs;}
+      if((kk==='x'||kk==='y')&&typeof L._kfPend[kk]==='number'){const f=kk==='x'?fx:fy;L._kfPend[kk]*=f;if(L._kfPrev&&typeof L._kfPrev[kk]==='number')L._kfPrev[kk]*=f;}}
+  }
+  const C=state.cam;
+  if(C){const sc=o=>{if(typeof o.x==='number')o.x*=fx;if(typeof o.y==='number')o.y*=fy;if(typeof o.dist==='number')o.dist*=fs;};sc(C);(C.kfs||[]).forEach(sc);}
+  try{_outlineCache.clear();_gooCache.clear();}catch(e){}
+}
 
 function drawShape(L,local,t,baseAlpha){
   const fx=objectFX(L,local,t);
@@ -10300,6 +10533,7 @@ function drawTop(L,t,_CAML,sceneCtx){
       for(const K of kids){
         if(K.type==='audio')continue;
         if(t<K.start||t>K.start+K.dur)continue;
+        const _kidTgt=ctx;
         try{
           const kl=t-K.start;
           const KT=kfValue(K,kl);
@@ -10310,30 +10544,58 @@ function drawTop(L,t,_CAML,sceneCtx){
             for(const kk in KT){const prop=_M[kk];
               if(prop!==undefined&&KT[kk]!==undefined&&K[prop]!==undefined){ksaved[prop]=K[prop];K[prop]=KT[kk];}}
           }
+          // 🧲 elastik + ⚓ anchor + 🧊 a'zoning o'z 3D si — guruhlanmagandagidek
+          let KT2=KT,_kst=null;
+          if(K.elast&&K.elast.on){const _e=elasticT(K,kl,KT);KT2=_e.T;_kst=_e.st;}
+          let _kfx=null;try{_kfx=objectFX(K,kl,t);}catch(e){}
+          const _kpl=pfxPlan(K,kl,t,_kfx);
+          const _kfOn=K.featherOn&&((K.featherT||0)+(K.featherB||0)+(K.featherL||0)+(K.featherR||0)>0);
+          const _kIso=!!_kpl||!!K.mkOn||_kfOn;
+          const _tgt=ctx;let _kR=null;
+          if(_kIso)ctx=kidIsoBegin(_tgt);
           ctx.save();
           applyGroupM(ctx,_GM);
-          let kA=clamp((KT.alpha??1)*gA,0,1);
+          let kA=clamp((KT2.alpha??1)*gA,0,1);
           const _cr=_carM?_carM.get(K.id):null;
           if(_cr){
             const xf=_cr.xf;
-            if(xf.a<0.015){ctx.restore();if(ksaved)for(const kk in ksaved)K[kk]=ksaved[kk];continue;}
+            if(xf.a<0.015){ctx.restore();if(_kIso)ctx=_tgt;if(ksaved)for(const kk in ksaved)K[kk]=ksaved[kk];continue;}
             ctx.translate(xf.x,xf.y);ctx.rotate(xf.rot);ctx.scale(xf.s*xf.sx,xf.s);
-            ctx.translate(KT.x-_cr.cx,KT.y-_cr.cy);
+            ctx.translate(KT2.x-_cr.cx,KT2.y-_cr.cy);
             kA*=xf.a;
-          }else ctx.translate(KT.x,KT.y);
-          ctx.rotate((KT.rotDeg||0)*Math.PI/180);
-          const ks=Math.max(0.01,KT.scale||1);
+          }else ctx.translate(KT2.x,KT2.y);
+          if(_kst)applyStretch(ctx,_kst);
+          let _kax=0,_kay=0;
+          if(K.anchorX||K.anchorY){const _ab=layerBounds(K);_kax=(K.anchorX||0)*_ab.w/2;_kay=(K.anchorY||0)*_ab.h/2;ctx.translate(_kax,_kay);}
+          ctx.rotate((KT2.rotDeg||0)*Math.PI/180);
+          {
+            const _krx=(KT2.rx||0)+(_kfx?(_kfx.rx3||0):0),_kry=(KT2.ry||0)+(_kfx?(_kfx.ry3||0):0);
+            const _kd=(KT2.dist3!==undefined?KT2.dist3:(K.dist3||0));
+            if(Math.abs(_krx)+Math.abs(_kry)>0.05||Math.abs(_kd)>0.5){const _b3=layerBounds(K);tilt3D(ctx,_kry*Math.PI/180,_krx*Math.PI/180,_kd,_b3.w||200,_b3.h||200);}
+          }
+          const ks=Math.max(0.01,KT2.scale||1);
           ctx.scale(ks,ks);
-          if(K.blend&&K.blend!=='normal')ctx.globalCompositeOperation=K.blend;
-          if(K.type==='shape')drawShape(K,kl,t,kA);
-          else if(K.type==='progress')drawProgress(K,kl,t,kA);
-          else if(K.type==='timer')drawTimer(K,kl,t,kA);
-          else if(K.type==='video'||K.type==='image')drawMedia(K,kl,t,kA);
-          else drawText(K,kl,t,kA);
+          if(_kax||_kay)ctx.translate(-_kax,-_kay);
+          if(_kIso)_kR=kidIsoRegion(K,_kpl,_kfx);
+          if(!_kIso&&K.blend&&K.blend!=='normal')ctx.globalCompositeOperation=K.blend;
+          if(!(_kR&&_kR.empty)){
+            if(_kpl&&_kpl.liq)__glLiq=true;
+            try{
+              drawRepeated(K,(_a)=>{
+                if(K.type==='shape')drawShape(K,kl,t,_a);
+                else if(K.type==='progress')drawProgress(K,kl,t,_a);
+                else if(K.type==='timer')drawTimer(K,kl,t,_a);
+                else if(K.type==='video'||K.type==='image')drawMedia(K,kl,t,_a);
+                else drawText(K,kl,t,_a);
+              },kA);
+            }finally{__glLiq=false;}
+            if(_kIso){const _fb=layerBounds(K);if(K.mkOn)applyMask(K,_fb.w,_fb.h);if(_kfOn)drawFeather(K,_fb.w,_fb.h);}
+          }
           ctx.restore();
+          if(_kIso){ctx=_tgt;kidIsoEnd(_tgt,K,_kpl,_kR);}
           if(K.burst&&K.burst!=='none'&&!_cr){ctx.save();applyGroupM(ctx,_GM);ctx.translate(KT.x+(K.burstX||0),KT.y+(K.burstY||0));drawBurst(K,kl,kA);ctx.restore();}
           if(ksaved)for(const kk in ksaved)K[kk]=ksaved[kk];
-        }catch(e){ try{ctx.restore();}catch(e2){} }
+        }catch(e){ try{ctx.restore();}catch(e2){} ctx=_kidTgt;__glLiq=false; }
       }
     }
     if(_useF){
@@ -10558,6 +10820,7 @@ function render(){
     }
     ctx.restore();
   }
+  if(sGuides.length&&!exporting)drawSmartGuides(ctx);
   if(measures.length){
     ctx.save();
     measures.forEach(drawMeasure);
@@ -13610,7 +13873,7 @@ function renderProps(){
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px">
           ${TIMERS.map(x=>`<button class="tmrPick" data-k="${x.v}" title="${x.n}" style="padding:3px 2px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:8px;${x.v===k?'border-color:var(--accent);background:var(--accent-soft)':''}">
             <canvas data-tk="${x.v}" width="112" height="64" style="width:100%;height:auto;display:block;border-radius:5px;background:#0b0c11"></canvas>
-            <span style="font-size:10px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${x.n}</span></button>`).join('')}
+            <span style="font-size:10px;line-height:1.15;text-align:center;max-width:100%;overflow-wrap:break-word">${x.n}</span></button>`).join('')}
           </div></div>
         <div class="field"><label>Vaqt manbai</label>
           ${opt('pTScope',[['video','🎬 Butun video davomida (boshidan oxirigacha)'],['layer','▭ Timeline\'dagi uzunligi bo\'yicha'],['custom','⌛ Aniq soniya']],L.tScope)}</div>
@@ -16082,6 +16345,19 @@ document.getElementById('inDuration').onchange=e=>{
       // natijaviy markazni esa yana burchakka qaytaramiz
       const rp=selUnrotate(B,p.x,p.y);
       const _rc=(x,y)=>{const w=selRotate(B,x,y);return groupToRaw(L,w.x,w.y);};
+      // 📐 Chekkadan cho'zishda ham boshqa elementlar chekkasiga yopishadi
+      sGuides.length=0;
+      if(!_altDown&&Math.abs(B.T.rotDeg||0)<0.5&&!isGroupHolder(L)&&L.type!=='text'){
+        const th2=Math.max(6,state.W*0.0065);
+        const bx={l:B.left,r:B.right,cx:B.T.x,t:B.top,b:B.bottom,cy:B.T.y};
+        const ex=sgExclude(L);
+        if(h.includes('e')||h.includes('w')){const k=h.includes('e')?'r':'l';const b2={...bx,[k]:rp.x};
+          const sn=sgSnapBox(b2,ex,th2,{xKeys:[k],y:false});rp.x+=sn.dx;}
+        const keepV=sGuides.slice();
+        if(h.includes('n')||h.includes('s')){const k=h.includes('s')?'b':'t';const b2={...bx,[k]:rp.y};
+          const sn=sgSnapBox(b2,ex,th2,{yKeys:[k],x:false});rp.y+=sn.dy;}
+        sGuides.push(...keepV);
+      }
       // 🧩 Guruh ramkasi: burchak/chekka tortilsa — BUTUN guruh masshtablanadi (markaz atrofida)
       if(isGroupHolder(L)){
         const fx=Math.abs(rp.x-B.T.x)/Math.max(B.bw/2,1), fy=Math.abs(rp.y-B.T.y)/Math.max(B.bh/2,1);
@@ -16172,27 +16448,31 @@ document.getElementById('inDuration').onchange=e=>{
       let nx=clamp(p.x-off.x,-state.W*0.5,state.W*1.5);
       let ny=clamp(p.y-off.y,-state.H*0.5,state.H*1.5);
       const B=getSelBox(L);
-      const th=Math.max(8,state.W*0.008);
+      const th=Math.max(6,state.W*0.0065);
       guides.length=0;
-      const candX=[
-        {v:state.W/2,line:state.W/2},
-        {v:B.bw/2,line:0},
-        {v:state.W-B.bw/2,line:state.W},
-      ];
-      const candY=[
-        {v:state.H/2,line:state.H/2},
-        {v:B.bh/2,line:0},
-        {v:state.H-B.bh/2,line:state.H},
-      ];
-      for(const o of state.layers){
-        if(o.id===L.id)continue;
-        if(state.time<o.start||state.time>o.start+o.dur)continue;
-        const oT=kfValue(o,state.time-o.start);
-        candX.push({v:oT.x,line:oT.x});
-        candY.push({v:oT.y,line:oT.y});
-      }
-      for(const c of candX){if(Math.abs(nx-c.v)<th){nx=c.v;guides.push({t:'v',pos:c.line});break;}}
-      for(const c of candY){if(Math.abs(ny-c.v)<th){ny=c.v;guides.push({t:'h',pos:c.line});break;}}
+      // 📐 Smart guides: chekkalar + markazlar (boshqa elementlar va kadr)
+      if(!_altDown){
+        let box;
+        if(groupMove){
+          if(!groupMove._u0){
+            let u=null;
+            for(const id of groupMove.starts.keys()){const o=state.layers.find(x=>x.id===id);if(!o||o.type==='audio'||inFlatGroup(o)&&groupMove.starts.has(inFlatGroup(o).id))continue;
+              let A;try{A=sgAABB(getSelBox(o));}catch(e){continue;}
+              u=u?{l:Math.min(u.l,A.l),r:Math.max(u.r,A.r),t:Math.min(u.t,A.t),b:Math.max(u.b,A.b)}:A;}
+            groupMove._u0=u;
+          }
+          const mw=groupMove.mainW||groupMove.main,u=groupMove._u0;
+          if(u){const ddx=nx-mw.x,ddy=ny-mw.y;box={l:u.l+ddx,r:u.r+ddx,t:u.t+ddy,b:u.b+ddy};box.cx=(box.l+box.r)/2;box.cy=(box.t+box.b)/2;}
+        }else{
+          const A=sgAABB(B);const ox=nx-B.T.x,oy=ny-B.T.y;
+          box={l:A.l+ox,r:A.r+ox,cx:A.cx+ox,t:A.t+oy,b:A.b+oy,cy:A.cy+oy};
+        }
+        if(box){
+          const ex=sgExclude(L,groupMove?[...groupMove.starts.keys()]:[]);
+          const sn=sgSnapBox(box,ex,th);
+          nx+=sn.dx;ny+=sn.dy;
+        }else sGuides.length=0;
+      }else sGuides.length=0;
       if(groupMove){
         // Siljish ko'ringan (dunyo) koordinatada o'lchanadi va hammaga bir xil qo'shiladi —
         // guruh aylangan/masshtablangan bo'lsa ham element sakramaydi
@@ -16233,7 +16513,7 @@ document.getElementById('inDuration').onchange=e=>{
     if(dragging||resizing||innerDrag||rotating){
       const L=dragging||innerDrag?.L||resizing?.L||rotating?.L;
       dragging=null;resizing=null;innerDrag=null;rotating=null;groupMove=null;
-      guides.length=0;measures.length=0;dragInfo='';
+      guides.length=0;measures.length=0;dragInfo='';sGuides.length=0;
       cv.style.cursor='grab';
       renderProps();
       if(L&&hasKF(L))renderTimeline();
