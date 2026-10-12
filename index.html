@@ -528,6 +528,31 @@
   .props .sgfx>summary{flex-wrap:wrap; gap:4px 6px; padding:4px 0;}
   .props .sgfx .aefx-body{padding-top:6px;}
   .props .sgfx input[type=color]{width:40px; height:28px; padding:2px; flex:0 0 40px;}
+  /* ═══ 7.8 — 🔢 aniq qiymat + ↺ asl holat (barcha slayderlar) ═══ */
+  .ne-head{display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap;margin-bottom:4px;}
+  .ne-head>label{flex:1 1 92px;margin-bottom:0!important;min-width:0;}
+  .ne-head.ne-nolab{justify-content:flex-end;}
+  .ne-ctl{display:inline-flex;align-items:center;gap:3px;margin-left:auto;flex:0 0 auto;}
+  .field .ne-ctl input.ne-box,.ne-box{width:58px;height:24px;padding:0 6px;border:1px solid var(--border);border-radius:6px;background:var(--panel2);color:var(--text);font:600 11.5px/22px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-align:right;outline:none;transition:border-color .12s,box-shadow .12s;}
+  .field .ne-ctl input.ne-box:hover{border-color:rgba(167,139,250,.55);}
+  .field .ne-ctl input.ne-box:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft);background:#0d0d14;}
+  .ne-box:disabled{opacity:.45;}
+  .ne-box.ne-bad{animation:neBad .35s;border-color:var(--danger)!important;}
+  @keyframes neBad{0%,100%{transform:none}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+  .ne-u{font-style:normal;font-size:10.5px;color:var(--muted);min-width:6px;white-space:nowrap;}
+  .ne-rst{width:22px;height:22px;min-width:22px;padding:0!important;gap:0!important;justify-content:center;border-radius:6px;font-size:13px;line-height:1;opacity:.3;background:transparent!important;border:1px solid transparent!important;color:var(--muted);cursor:default;box-shadow:none!important;}
+  .ne-rst::before{content:'↺';}
+  .ne-rst.mod{opacity:1;color:var(--accent2);border-color:rgba(167,139,250,.45)!important;background:var(--accent-soft)!important;cursor:pointer;}
+  .ne-rst.mod:hover{background:var(--accent)!important;color:#fff;}
+  .ne-rst.ne-spin::before{display:inline-block;animation:neSpin .45s ease;}
+  @keyframes neSpin{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+  .ne-hid{display:none!important;}
+  .ne-secrst{margin-left:auto;margin-right:8px;width:20px;height:20px;flex:0 0 20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;letter-spacing:0;color:var(--muted);opacity:.3;text-transform:none;cursor:default;}
+  .ne-secrst::before{content:'↺';}
+  .ne-secrst.mod{opacity:1;color:var(--accent2);background:var(--accent-soft);cursor:pointer;}
+  .ne-secrst.mod:hover{background:var(--accent);color:#fff;}
+  details.sec>summary:has(>.ne-secrst)::after{margin-left:0;}
+  @media (pointer:coarse){.field .ne-ctl input.ne-box{font-size:16px;width:66px;height:30px;line-height:28px;} .ne-rst{width:30px;height:30px;min-width:30px;font-size:16px;opacity:.45;} .ne-secrst{width:28px;height:28px;flex-basis:28px;font-size:15px;}}
   /* ═══ 7.7 — 🌊 Premium o'tishlar ═══ */
   .tr-addbtn{background:linear-gradient(100deg,#0369a1,#7c3aed 55%,#db2777)!important;border-color:transparent!important;color:#fff!important;font-weight:700;}
   .tr-addbtn:hover{filter:brightness(1.12);}
@@ -576,7 +601,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>7.7</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>7.8</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -6937,7 +6962,7 @@ function fxSlider(L,D,key,label,min,max,step,unit){
   const v=_nv(L,D,key);
   const shown=(step<1)?(+v).toFixed(step<0.1?2:1):Math.round(v);
   return `<div class="field"><label>${label}: <b id="fxv_${key}">${shown}</b>${unit||''}</label>
-    <input type="range" data-fxk="${key}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
+    <input type="range" data-fxk="${key}" data-def="${(D&&D[key]!=null&&typeof D[key]==='number')?D[key]:''}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
 }
 function fxColor(L,D,key,label){
   return `<div class="field"><label>${label}</label><input type="color" data-fxk="${key}" data-fxc="1" value="${_nv(L,D,key)}"></div>`;
@@ -8832,13 +8857,13 @@ function aeSlider(L,key,label,min,max,step,def,unit){
   const v=L[key]??def;
   const sv=step<1?(+v).toFixed(step<0.1?2:(step<1?1:0)):Math.round(v);
   return `<div class="field"><label>${label}: <b data-av="${key}">${sv}</b>${unit||''}</label>
-    <input type="range" data-ak="${key}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
+    <input type="range" data-ak="${key}" data-def="${def??''}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
 }
 function aeSliderN(obj,path,label,min,max,step,def,unit){
   const k=path.split('.')[1];const v=(obj&&obj[k]!=null)?obj[k]:def;
   const sv=step<1?(+v).toFixed(step<0.1?2:1):Math.round(v);
   return `<div class="field"><label>${label}: <b data-av="${path}">${sv}</b>${unit||''}</label>
-    <input type="range" data-ak="${path}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
+    <input type="range" data-ak="${path}" data-def="${def??''}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
 }
 function aeSelect(L,key,label,opts,def,rr){
   const v=L[key]??def;
@@ -8895,8 +8920,8 @@ function proBlock(L){
   return `
     <label class="chk"><input type="checkbox" data-ak="mblur" data-rr="1" ${L.mblur?'checked':''}> 🎞 Motion blur (harakat xiraligi)</label>
     ${L.mblur?`<div class="row2">
-      <div class="field"><label>Shutter: <b data-sv="mbShutter">${state.mbShutter??180}</b>°</label><input type="range" data-sk="mbShutter" min="20" max="720" step="10" value="${state.mbShutter??180}"></div>
-      <div class="field"><label>Namunalar: <b data-sv="mbSamples">${state.mbSamples??12}</b></label><input type="range" data-sk="mbSamples" min="3" max="32" step="1" value="${state.mbSamples??12}"></div></div>
+      <div class="field"><label>Shutter: <b data-sv="mbShutter">${state.mbShutter??180}</b>°</label><input type="range" data-sk="mbShutter" data-def="180" min="20" max="720" step="10" value="${state.mbShutter??180}"></div>
+      <div class="field"><label>Namunalar: <b data-sv="mbSamples">${state.mbSamples??12}</b></label><input type="range" data-sk="mbSamples" data-def="12" min="3" max="32" step="1" value="${state.mbSamples??12}"></div></div>
       <div class="hintline">Faqat element HARAKATLANAYOTGANDA ishlaydi. Preview'da namunalar avtomatik kamaytiriladi, eksportda to'liq sifat.</div>`:''}
     <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
     <label class="chk"><input type="checkbox" data-ak="elast.on" data-rr="1" ${E.on?'checked':''}> 🧲 Elastik harakat (inertial bounce + squash)</label>
@@ -10110,7 +10135,7 @@ function camSlHTML(s,V){
   const v=V[key]??0;
   const shown=unit==='%'?Math.round(v*100):(st<1?(+v).toFixed(1):Math.round(v));
   return `<div class="field"><label>${lab}: <b id="${id}V">${shown}</b>${unit==='%'?'%':unit}</label>
-    <input type="range" id="${id}" data-ck="${key}" min="${mn}" max="${mx}" step="${st}" value="${v}"></div>`;
+    <input type="range" id="${id}" data-ck="${key}" data-def="${camDefaults()[key]??''}" min="${mn}" max="${mx}" step="${st}" value="${v}"></div>`;
 }
 function camLayerOpts(sel){
   const opts=state.layers.filter(l=>l.type!=='audio').map(l=>`<option value="${l.id}" ${String(sel)===String(l.id)?'selected':''}>${escapeHtml(layerName(l)).slice(0,32)}</option>`).join('');
@@ -10161,7 +10186,7 @@ function camSection(){
     <details class="sec" ${camSubOpen('lens')?'open':''} data-cs="lens"><summary>🔭 Ob'ektiv — ${Math.round(fl)}mm · ${Math.round(camFOV(fl))}°</summary><div class="inner">
       ${free?'':`<label class="chk"><input type="checkbox" id="cmFlOn" ${c.flOn?'checked':''}> Kamera ob'ektivi barcha qatlamlarga (aks holda qatlamning o'z perspektivasi)</label>`}
       <div class="field"><label>Fokus masofasi: <b id="cmFlV">${Math.round(fl)}</b>mm · ko'rish burchagi <b id="cmFovV">${Math.round(camFOV(fl))}</b>°</label>
-        <input type="range" id="cmFl" data-ck="fl" min="10" max="300" step="1" value="${Math.round(fl)}" ${lensOn?'':'disabled'}></div>
+        <input type="range" id="cmFl" data-ck="fl" data-def="${CAM_FL_DEF}" min="10" max="300" step="1" value="${Math.round(fl)}" ${lensOn?'':'disabled'}></div>
       <div class="seg" id="cmFlP">${[18,24,35,50,85,135,200].map(m=>`<button data-mm="${m}" style="font-size:11px" ${lensOn?'':'disabled'}>${m}</button>`).join('')}</div>
       <div class="hintline">18–24mm — keng, perspektiv kuchli (yaqin narsalar katta). 85–200mm — tor, "siqilgan" fon. Keyframe bilan o'zgartirib + dolly = Vertigo effekti.</div>
     </div></details>
@@ -10178,7 +10203,7 @@ function camSection(){
     <details class="sec" ${camSubOpen('shake')?'open':''} data-cs="shake"><summary>📳 Qo'l kamerasi (silkinish)${(V.shk||0)>0.5?' · '+Math.round(V.shk):''}</summary><div class="inner">
       ${camSlHTML(['cmShk','shk','Silkinish kuchi',0,100,1,''],V)}
       <div class="field"><label>Tezligi: <b id="cmShfV">${(c.shkF||1.2).toFixed(1)}</b>×</label>
-        <input type="range" id="cmShf" min="0.2" max="5" step="0.1" value="${c.shkF||1.2}"></div>
+        <input type="range" id="cmShf" data-def="1.2" min="0.2" max="5" step="0.1" value="${c.shkF||1.2}"></div>
       <div class="hintline">Silkinish ham ◆ keyframe'ga yoziladi — masalan zarba paytida kuchayib, keyin tinchlanadi. Eksportda aynan bir xil chiqadi.</div>
     </div></details>
     <div class="row2">
@@ -11658,11 +11683,11 @@ function segBlock(L){
   return sec('🎯 AI ajratish — odam va ob\'ektlar',h,true);
 }
 const _sgSub={};
-function segSl(k,n,mn,mx,st,u){const v=L_SG()[k]??0;return `<div class="field"><label>${n}: <b data-sgv="${k}">${v}</b>${u}</label><input type="range" data-sgk="${k}" min="${mn}" max="${mx}" step="${st}" value="${v}"></div>`;}
+function segSl(k,n,mn,mx,st,u){const v=L_SG()[k]??0;return `<div class="field"><label>${n}: <b data-sgv="${k}">${v}</b>${u}</label><input type="range" data-sgk="${k}" data-def="${(segDefaults()[k])??''}" min="${mn}" max="${mx}" step="${st}" value="${v}"></div>`;}
 let _sgL=null;function L_SG(){return (_sgL&&_sgL.seg)||{};}
 function segFxCard(f,i){
   const d=SEG_FXM.get(f.id);if(!d)return '';
-  const ps=d[3].map(p=>`<div class="field"><label>${p[1]}: <b data-sfv="${i}.${p[0]}">${f[p[0]]??p[5]}</b>${p[6]}</label><input type="range" data-sf="${i}.${p[0]}" min="${p[2]}" max="${p[3]}" step="${p[4]}" value="${f[p[0]]??p[5]}"></div>`).join('');
+  const ps=d[3].map(p=>`<div class="field"><label>${p[1]}: <b data-sfv="${i}.${p[0]}">${f[p[0]]??p[5]}</b>${p[6]}</label><input type="range" data-sf="${i}.${p[0]}" data-def="${p[5]??''}" min="${p[2]}" max="${p[3]}" step="${p[4]}" value="${f[p[0]]??p[5]}"></div>`).join('');
   const cs=['c1','c2'].filter(k=>d[4]&&d[4][k]!==undefined).map(k=>`<input type="color" data-sfc="${i}.${k}" value="${f[k]||d[4][k]}" title="${k==='c1'?'Rang':'Rang 2'}">`).join('');
   const bl=d[4]&&d[4].bl!==undefined?`<select data-sfb="${i}" style="flex:1;min-width:0">${[['normal','Oddiy'],['multiply','Ko\'paytirish'],['screen','Yoritish'],['overlay','Overlay'],['color','Rang']].map(([v,n])=>`<option value="${v}" ${(f.bl||'normal')===v?'selected':''}>${n}</option>`).join('')}</select>`:'';
   return `<details class="sgfx" ${f._c?'':'open'} data-sfi="${i}"><summary><span class="aefx-n">${d[1]}</span><span class="aefx-b">
@@ -11726,7 +11751,7 @@ function segBind(L,box){
 /* ═══ Chroma key paneli (professional) ═══ */
 function ckBlock(L){
   if(L.type!=='video'&&L.type!=='image')return '';
-  const sl=(k,n,mn,mx,st,def,u,hint)=>`<div class="field"><label>${n}: <b data-ckv="${k}">${L[k]??def}</b>${u}${hint?` <span style="color:var(--muted)">— ${hint}</span>`:''}</label><input type="range" data-ck="${k}" min="${mn}" max="${mx}" step="${st}" value="${L[k]??def}"></div>`;
+  const sl=(k,n,mn,mx,st,def,u,hint)=>`<div class="field"><label>${n}: <b data-ckv="${k}">${L[k]??def}</b>${u}${hint?` <span style="color:var(--muted)">— ${hint}</span>`:''}</label><input type="range" data-ck="${k}" data-def="${def??''}" min="${mn}" max="${mx}" step="${st}" value="${L[k]??def}"></div>`;
   return sec('🟩 Fonni olib tashlash (chroma key)',`
     <label class="chk"><input type="checkbox" id="pCkOn" ${L.chromaOn?'checked':''}> Rang bo'yicha olib tashlash (yashil / ko'k ekran)</label>
     ${L.chromaOn?`
@@ -12238,7 +12263,8 @@ function trPropsMaybe(box){
   return true;
 }
 function trSl(T,k,n,mn,mx,st,u,hint){
-  return `<div class="field"><label>${n}: <b data-trv="${k}">${T[k]}</b>${u}${hint?` <span style="color:var(--muted)">— ${hint}</span>`:''}</label><input type="range" data-tr="${k}" min="${mn}" max="${mx}" step="${st}" value="${T[k]}"></div>`;
+  const D0=(trSl._d&&trSl._d.kind===T.kind)?trSl._d:(trSl._d=trDefaults(T.kind));
+  return `<div class="field"><label>${n}: <b data-trv="${k}">${T[k]}</b>${u}${hint?` <span style="color:var(--muted)">— ${hint}</span>`:''}</label><input type="range" data-tr="${k}" data-def="${D0[k]??''}" min="${mn}" max="${mx}" step="${st}" value="${T[k]}"></div>`;
 }
 function trPanel(T){
   const d=TR_BY[T.kind]||TR_DEFS[0],dist=d[1]>=19,cover=!dist;
@@ -12363,6 +12389,430 @@ document.addEventListener('mousedown',e=>{
 },true);
 document.getElementById('btnTrans')?.addEventListener('click',()=>trGallery(null));
 addEventListener('keydown',e=>{if(e.key==='Escape'){const ov=document.getElementById('trOv');if(ov&&ov.style.display==='flex')trGalleryClose();}});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🔢 ANIQ QIYMAT + ↺ ASL HOLAT — ilovadagi BARCHA slayderlar uchun
+   ───────────────────────────────────────────────────────────────────────────
+   • Har bir slayder yonida raqam maydoni: qiymatni klaviaturadan yozish
+     (Enter), ↑/↓ — bir qadam (Shift ×10, Alt ×0.1), oddiy ifoda ham bo'ladi
+     ("120*1.5", "90-15").
+   • ↺ — slayderni asl qiymatiga qaytaradi (slayderni 2 marta bosish ham shu).
+     Bo'lim sarlavhasidagi ↺ — bo'limdagi BARCHA slayderlarni birdaniga.
+   • Asl qiymat: panel quruvchisi bergan data-def, bo'lmasa — xuddi shu
+     element YANGI yaratilgandagi qiymat. Buning uchun panel ko'rinmas holda
+     "yangi" nusxa bilan bir marta quriladi va natija keshlanadi.
+   • Mavjud handlerlarga tegilmaydi: qiymat slayderga yoziladi va odatdagi
+     input/change hodisalari yuboriladi — keyframe, undo, eksport hammasi
+     qo'l bilan surgandek ishlaydi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const NE={cache:new Map(),busy:false,ptr:false,timer:0,obs:null};
+addEventListener('pointerdown',()=>{NE.ptr=true;},true);
+addEventListener('pointerup',()=>{NE.ptr=false;},true);
+addEventListener('pointercancel',()=>{NE.ptr=false;},true);
+
+/* matndan son: "1,5" → 1.5; oddiy arifmetik ifoda ham */
+function neNum(s){
+  if(s==null)return NaN;
+  s=String(s).trim().replace(/,/g,'.').replace(/[−–]/g,'-').replace(/\s+/g,'');
+  if(!s)return NaN;
+  if(/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(s))return +s;
+  if(/^[\d.+\-*/()]+$/.test(s)&&s.length<48){
+    try{const v=Function('"use strict";return ('+s+')')();return (typeof v==='number'&&isFinite(v))?v:NaN;}catch(e){return NaN;}
+  }
+  const m=s.match(/[-+]?(\d+\.?\d*|\.\d+)/);return m?+m[0]:NaN;
+}
+function neLabStr(t){const m=String(t||'').replace(/,/g,'.').replace(/[−–]/g,'-').match(/-?(\d+\.?\d*|\.\d+)/);return m?m[0]:null;}
+function neLabNum(t){const s=neLabStr(t);return s==null?NaN:+s;}
+function neStep(r){const s=r.getAttribute('step');if(s==='any')return 0;if(s==null||s==='')return 1;const v=+s;return v>0?v:1;}
+function neDecs(x){if(!(x>0))return 3;let d=0;while(d<5&&Math.abs(Math.round(x*10**d)-x*10**d)>1e-6)d++;return d;}
+function neFmt(v,step){
+  const d=neDecs(+(+step).toFixed(8));let s=(+v).toFixed(d);
+  if(s.includes('.'))s=s.replace(/0+$/,'').replace(/\.$/,'');
+  return s==='-0'?'0':s;
+}
+function neRange(r){
+  const mn=r.min===''?0:+r.min, mx=r.max===''?100:+r.max;
+  return [isFinite(mn)?mn:0,isFinite(mx)?mx:100];
+}
+
+/* slayder qaysi yorliq/qiymat bilan bog'liq */
+function neLink(r){
+  const field=r.closest('.field')||r.parentElement;
+  let lab=null,b=null;
+  if(r.id){const x=document.getElementById(r.id+'V');if(x&&field&&field.contains(x))b=x;}
+  let p=r.previousElementSibling;
+  while(p&&p.tagName!=='LABEL'&&!(p.classList&&p.classList.contains('ne-head')))p=p.previousElementSibling;
+  if(p&&p.tagName==='LABEL')lab=p;
+  else if(field&&field.querySelectorAll('input[type=range]').length===1){
+    const l=field.querySelector('label');if(l&&!l.classList.contains('chk')&&!l.querySelector('input'))lab=l;
+  }
+  if(lab&&(lab.classList.contains('chk')||lab.querySelector('input')))lab=null;
+  if(!b&&lab){b=[...lab.querySelectorAll('b')].find(x=>!isNaN(neLabNum(x.textContent)))||null;}
+  return {field,lab,b};
+}
+/* yorliqdagi raqam slayder qiymatining necha baravari (masalan zoom: 1 → "100") */
+function neScale(r,b){
+  const rv=+r.value, dv=b?neLabNum(b.textContent):NaN;
+  if(!b||!isFinite(dv))return {k:1,ok:false};
+  if(Math.abs(rv)>1e-9&&Math.abs(dv)>1e-9){
+    for(const k of [1,100,0.01,1000,0.001,10,0.1]){
+      const tol=Math.max((neStep(r)||0.01)*k,Math.abs(rv*k)*0.03)+(Number.isInteger(dv)?0.51:0.051);
+      if(Math.abs(dv-rv*k)<=tol)return {k,ok:true};
+    }
+    return {k:1,ok:false};
+  }
+  if(Math.abs(dv-rv)<1e-9){
+    const nx=b.nextSibling,u=(nx&&nx.nodeType===3?nx.nodeValue:'')+b.textContent;
+    if(/%/.test(u)&&neRange(r)[1]<=1.0001)return {k:100,ok:true};
+    return {k:1,ok:true};
+  }
+  return {k:1,ok:false};
+}
+/* raqam yorlig'ini yashirib, o'lchov birligini (px, %, °, s …) maydon yoniga ko'chiramiz.
+   Yorliq murakkab bo'lsa (masalan "50mm · ko'rish burchagi 40°") — tegmaymiz. */
+function neAbsorb(b){
+  const own=(b.textContent||'').replace(/,/g,'.').replace(/^[^\d\-.]*-?(\d+\.?\d*|\.\d+)/,'').trim();
+  const nx=b.nextSibling;let tok='',rest='';
+  if(nx&&nx.nodeType===3){
+    const m=nx.nodeValue.match(/^(\s*)([^\s\d·—,;:()][^\s·—,;:()]{0,3})?([\s\S]*)$/);
+    tok=(m&&m[2])||'';rest=(m&&m[3])||'';
+    if(tok&&/^[a-zA-Z]{3,}$/.test(tok)&&!/^(sec|deg|fps)$/i.test(tok))return null;   // so'z — birlik emas
+  }
+  if(rest.trim())return null;
+  let el=nx&&nx.nodeType===3?nx.nextSibling:nx;
+  while(el&&el.nodeType===3&&!el.nodeValue.trim())el=el.nextSibling;
+  if(el&&!(el.nodeType===1&&el.tagName==='SPAN'))return null;
+  if(own.length>4)return null;
+  const unit=(own+tok).trim();
+  b.classList.add('ne-hid');
+  if(nx&&nx.nodeType===3)nx.nodeValue=' ';
+  const pv=b.previousSibling;
+  if(pv&&pv.nodeType===3)pv.nodeValue=pv.nodeValue.replace(/\s*:\s*$/,'')+' ';
+  return unit;
+}
+
+/* barqaror imzo — qayta qurilgan panelda shu slayderni topish uchun */
+function neBaseSig(r){
+  if(r.id)return '#'+r.id;
+  const a=[];
+  for(const at of r.attributes){const n=at.name;if(n.startsWith('data-')&&!n.startsWith('data-ne')&&n!=='data-def')a.push(n+'='+at.value);}
+  a.sort();
+  const cls=[...r.classList].filter(c=>!c.startsWith('ne-')).join('.');
+  return (cls?'.'+cls:'')+'['+a.join(',')+']';
+}
+function neSigs(root){
+  const seen={},out=[];
+  root.querySelectorAll('input[type=range]').forEach(r=>{let s=neBaseSig(r);seen[s]=(seen[s]||0)+1;if(seen[s]>1)s+='~'+seen[s];out.push([r,s]);});
+  return out;
+}
+
+/* ═══ panelni boyitish ═══ */
+function neScan(root){
+  if(!root||NE.busy)return;
+  let added=0;
+  for(const [r,sig] of neSigs(root)){
+    if(r._ne){r._ne.sig=sig;continue;}
+    try{neEnhance(r,sig);added++;}catch(e){console.warn('neEnhance',e);}
+  }
+  if(added){
+    if(root.id==='props'&&!neDefsFromCache(root))neSchedule();
+    neSecButtons(root);
+  }
+}
+/* keshda bo'lsa — asl qiymatlar DARHOL (qayta qurishda ↺ tugmalari miltillamaydi) */
+function neKey(L,rs){return L.id+'|'+state.W+'x'+state.H+'|'+rs.map(x=>x[1]).join('|');}
+function neDefsFromCache(root){
+  const L=state.layers.find(x=>x.id===state.selected);
+  if(!L||(state.multi&&state.multi.length>1)||trSel)return true;
+  const rs=neSigs(root).filter(([r])=>r._ne);
+  if(!rs.some(([r])=>r._ne.def==null))return true;
+  const map=NE.cache.get(neKey(L,rs));if(!map)return false;
+  for(const [r,s2] of rs){const n=r._ne;n.tried=true;if(n.def==null&&map.has(s2)&&isFinite(map.get(s2)))n.def=map.get(s2);neMod(r);}
+  return true;
+}
+function neEnhance(r,sig){
+  const {lab,b}=neLink(r);
+  const sc=neScale(r,b);
+  let unit='';
+  if(b&&sc.ok){const u=neAbsorb(b);if(u!=null)unit=u;}
+  const n={sig,k:sc.k,b:(b&&sc.ok)?b:null,unit,def:null,shown:''};
+  const dd=r.getAttribute('data-def');
+  if(dd!=null&&dd!==''&&isFinite(+dd))n.def=+dd;
+  r._ne=n;
+  if(n.b)n.b._neR=r;
+  // boshqaruv: [raqam][birlik][↺]
+  const ctl=document.createElement('span');ctl.className='ne-ctl';
+  const box=document.createElement('input');
+  box.type='text';box.className='ne-box';box.inputMode='decimal';box.autocomplete='off';box.spellcheck=false;
+  box.setAttribute('enterkeyhint','done');box.setAttribute('aria-label','Qiymat');
+  box.title='Qiymatni yozing — Enter. ↑/↓ = qadam (Shift ×10). Ifoda ham bo\'ladi: 120*1.5';
+  if(r.disabled)box.disabled=true;
+  ctl.appendChild(box);
+  if(unit){const u=document.createElement('i');u.className='ne-u';u.textContent=unit;ctl.appendChild(u);}
+  const rst=document.createElement('button');rst.type='button';rst.className='ne-rst';rst.tabIndex=-1;rst.hidden=true;
+  rst.setAttribute('aria-label','Asl qiymatga qaytarish');
+  ctl.appendChild(rst);
+  n.box=box;n.rst=rst;
+  const head=document.createElement('div');head.className='ne-head'+(lab?'':' ne-nolab');
+  if(lab){lab.parentNode.insertBefore(head,lab);head.appendChild(lab);}
+  else r.parentNode.insertBefore(head,r);
+  head.appendChild(ctl);
+  // hodisalar
+  r.addEventListener('input',()=>neShow(r));
+  r.addEventListener('change',()=>neShow(r));
+  r.addEventListener('dblclick',e=>{if(n.def!=null){e.preventDefault();neReset(r);}});
+  rst.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();neReset(r);});
+  box.addEventListener('focus',()=>{box.select();});
+  box.addEventListener('mouseup',e=>{if(box._sel){e.preventDefault();box._sel=false;}});
+  box.addEventListener('mousedown',()=>{if(document.activeElement!==box)box._sel=true;});
+  box.addEventListener('keydown',e=>{
+    e.stopPropagation();
+    if(e.key==='Enter'){e.preventDefault();neCommit(r);box._done=true;box.blur();}
+    else if(e.key==='Escape'){e.preventDefault();box._esc=true;box.blur();}
+    else if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+      e.preventDefault();
+      const [mn,mx]=neRange(r);
+      const s=(neStep(r)||(mx-mn)/200)*(e.shiftKey?10:1)*(e.altKey?0.1:1);
+      const typed=neNum(box.value);
+      const cur=(isFinite(typed)&&box.value!==n.shown)?typed/n.k:+r.value;
+      neApply(r,cur+(e.key==='ArrowUp'?s:-s),true);
+    }
+  });
+  box.addEventListener('keyup',e=>e.stopPropagation());
+  box.addEventListener('keypress',e=>e.stopPropagation());
+  box.addEventListener('blur',()=>{
+    if(box._esc){box._esc=false;neShow(r,true);return;}
+    if(box._done){box._done=false;return;}
+    neCommit(r);
+  });
+  neShow(r,true);
+}
+function neShow(r,force){
+  const n=r._ne;if(!n)return;
+  if(!force&&document.activeElement===n.box)return;
+  let s=null;
+  if(n.b){s=neLabStr(n.b.textContent);}
+  if(s==null)s=neFmt(+r.value*n.k,(neStep(r)||0.001)*n.k);
+  n.box.value=s;n.shown=s;
+  if(n.box.disabled!==r.disabled)n.box.disabled=r.disabled;
+  neMod(r);
+}
+function neMod(r){
+  const n=r._ne;if(!n||!n.rst)return;
+  const d=n.def;
+  if(d==null||!isFinite(d)){n.rst.hidden=true;return;}
+  n.rst.hidden=false;
+  const [mn,mx]=neRange(r);const dc=Math.min(mx,Math.max(mn,d));
+  const mod=Math.abs(+r.value-dc)>Math.max((neStep(r)||0.001)/2+1e-9,Math.abs(dc)*1e-4);
+  if(n.rst.classList.contains('mod')!==mod){n.rst.classList.toggle('mod',mod);n.rst.disabled=false;}
+  const dv=neFmt(d*n.k,(neStep(r)||0.001)*n.k)+(n.unit||'');
+  n.rst.title=mod?'↺ Asl qiymatga qaytarish: '+dv+'  (slayderni 2 marta bosish ham)':'Asl qiymatda ('+dv+')';
+  const det=r.closest('details');if(det)neSecState(det);
+}
+function neCommit(r){
+  const n=r._ne;if(!n)return;
+  if(n.box.value===n.shown)return;
+  const v=neNum(n.box.value);
+  if(!isFinite(v)){neShow(r,true);neFlash(n.box);return;}
+  neApply(r,v/n.k);
+}
+function neFlash(el){el.classList.remove('ne-bad');void el.offsetWidth;el.classList.add('ne-bad');}
+/* qiymatni slayderga yozib, odatdagi hodisalarni yuboramiz */
+function neApply(r,raw,keepFocus){
+  const n=r._ne;
+  const [mn,mx]=neRange(r);
+  const clamped=Math.min(mx,Math.max(mn,raw));
+  if(n&&clamped!==raw&&n.box)neFlash(n.box);
+  raw=clamped;
+  if(!NE.noHist){try{historyMaybe();}catch(e){}}
+  const st=r.getAttribute('step'),sv=neStep(r);
+  const q=sv?(raw-mn)/sv:0;const grid=!sv||Math.abs(q-Math.round(q))<1e-6;
+  if(!grid)r.setAttribute('step','any');
+  r.value=String(raw);
+  const sig=n&&n.sig;
+  r.dispatchEvent(new Event('input',{bubbles:true}));
+  r.dispatchEvent(new Event('change',{bubbles:true}));
+  if(!grid){if(st==null)r.removeAttribute('step');else r.setAttribute('step',st);}
+  let rr=r;
+  if(!r.isConnected&&sig){rr=neFind(sig)||r;}   // handler panelni qayta qurgan bo'lishi mumkin
+  if(rr._ne)neShow(rr,true);
+  if(keepFocus&&rr._ne&&rr._ne.box.isConnected){rr._ne.box.focus();rr._ne.box.select();}
+  return rr;
+}
+function neFind(sig){
+  const box=document.getElementById('props');if(!box)return null;
+  neScan(box);
+  for(const [r,s] of neSigs(box))if(s===sig)return r;
+  return null;
+}
+function neReset(r){
+  const n=r._ne;if(!n||n.def==null)return;
+  const rr=neApply(r,n.def);
+  if(rr&&rr._ne){const c=rr._ne.rst;if(c){c.classList.remove('ne-spin');void c.offsetWidth;c.classList.add('ne-spin');}}
+}
+
+/* ═══ bo'lim sarlavhasidagi ↺ — bo'limdagi barcha slayderlarni tiklash ═══ */
+function neSecRanges(det){return [...det.querySelectorAll('input[type=range]')].filter(r=>r._ne&&r._ne.def!=null);}
+function neSecButtons(root){
+  root.querySelectorAll('details').forEach(det=>{
+    const sum=det.querySelector(':scope>summary');if(!sum)return;
+    const rs=neSecRanges(det);
+    let btn=sum.querySelector(':scope>.ne-secrst');
+    if(rs.length<2){if(btn)btn.remove();return;}
+    if(!btn){
+      btn=document.createElement('span');btn.className='ne-secrst';btn.setAttribute('role','button');
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();neResetSection(det);});
+      btn.addEventListener('mousedown',e=>e.stopPropagation());
+      const after=sum.querySelector(':scope>.aefx-b');
+      if(after)sum.insertBefore(btn,after);else sum.appendChild(btn);
+    }
+    neSecState(det);
+  });
+}
+function neSecState(det){
+  const sum=det.querySelector(':scope>summary');const btn=sum&&sum.querySelector(':scope>.ne-secrst');if(!btn)return;
+  const rs=neSecRanges(det);const m=rs.filter(r=>r._ne.rst&&r._ne.rst.classList.contains('mod')).length;
+  btn.classList.toggle('mod',m>0);
+  btn.title=m?`↺ Bo'limdagi ${m} ta o'zgargan slayderni asl holatiga qaytarish`:'Bo\'limdagi slayderlar asl holatda';
+  const up=det.parentElement&&det.parentElement.closest('details');if(up&&up!==det)neSecState(up);
+}
+function neResetSection(det){
+  const list=neSecRanges(det).filter(r=>r._ne.rst&&r._ne.rst.classList.contains('mod')).map(r=>[r._ne.sig,r._ne.def]);
+  if(!list.length){toast('Bu bo\'limdagi slayderlar allaqachon asl holatda');return;}
+  try{saveHistory();}catch(e){}
+  const keep=NE.noHist;NE.noHist=true;
+  for(const [sig,d] of list){const r=neFind(sig);if(r&&r._ne)neApply(r,d);}
+  NE.noHist=keep;
+  toast('↺ '+list.length+' ta slayder asl holatiga qaytdi');
+}
+
+/* ═══ ASL QIYMATLARNI ANIQLASH: panelni "yangi element" bilan ko'rinmas quramiz ═══ */
+function neFresh(L){
+  const t=L.type;let F;
+  if(t==='text')F=newText('x');
+  else if(t==='shape'){F=newShape();F.shape=L.shape;
+    if(['icon','toggle','chart','studio','counter','gooTab','particles','lava','filmstrip'].includes(L.shape)){try{uiShapeDefaults(F);}catch(e){}}
+    // shakl tanlanganda ilova o'zi qo'yadigan boshlang'ich qiymatlar (pShape handleri bilan bir xil)
+    try{if(CURVE_SHAPES.includes(L.shape))F.borderW=8;}catch(e){}
+    if(L.shape==='select'){F.borderW=5;F.inTime=Math.max(F.inTime,1.2);}}
+  else if(t==='progress')F=newProgress();
+  else if(t==='timer')F=newTimer(L.tKind||'edge');
+  else if(t==='video'||t==='image'||t==='audio')F=newMedia(t,L.name||'');
+  else F=baseLayer(t);
+  return F;
+}
+const NE_KEEP=new Set(['id','track','start','dur','x','y','trim','parent','group','gid']);
+const _neIsObj=x=>x&&typeof x==='object'&&Object.getPrototypeOf(x)===Object.prototype;
+function neCloneDef(v,f,top,keepUnknown){
+  if(Array.isArray(v)){
+    if(v.length&&v.every(_neIsObj))return v.map((x,i)=>neCloneDef(x,Array.isArray(f)?f[i]:undefined,false,keepUnknown));
+    return v;
+  }
+  const o={};
+  for(const k in v){
+    const x=v[k];
+    if(k[0]==='_'||(top&&NE_KEEP.has(k))){o[k]=x;continue;}
+    if(top&&k==='kfs'){o[k]=[];continue;}
+    if(/(kfs|Kfs|pts|Pts)$/.test(k)){o[k]=x;continue;}   // vaqt/nuqta ro'yxatlari — tuzilma, parametr emas
+    if(typeof x==='number'){
+      if(f&&typeof f[k]==='number')o[k]=f[k];
+      else if(keepUnknown)o[k]=x;        // 2-urinish: noma'lum sonlarni saqlaymiz
+      continue;                          // 1-urinish: o'chiramiz → panel o'zining standartini qo'yadi
+    }
+    if(Array.isArray(x)||_neIsObj(x)){o[k]=neCloneDef(x,f?f[k]:undefined,false,keepUnknown);continue;}
+    o[k]=x;
+  }
+  return o;
+}
+function neProbe(L){
+  const real=document.getElementById('props');if(!real||!real.parentNode)return null;
+  const par=real.parentNode,nx=real.nextSibling,st=real.scrollTop;
+  const keep={sel:state.selected,multi:state.multi,uid,ts:trackSeq,lb:_lbCache,lm:_linkMemo,cb:curveBoundL,tr:trSel,secs:{...secState}};
+  let sg;try{sg=_sgL;}catch(e){}
+  let F;try{F=neFresh(L);}finally{uid=keep.uid;trackSeq=keep.ts;}
+  const hid=document.createElement('div');
+  hid.id='props';hid.setAttribute('data-ne-probe','1');
+  hid.style.cssText='position:fixed;left:-30000px;top:0;width:'+Math.max(240,real.clientWidth||300)+'px;height:20px;overflow:hidden;visibility:hidden;pointer-events:none;contain:strict';
+  let out=null;
+  // ⚠️ haqiqiy panel vaqtincha DOM'dan olinadi — aks holda id bo'yicha bog'lovchilar uni topib qolardi
+  par.removeChild(real);document.body.appendChild(hid);
+  NE.busy=true;
+  try{
+    for(const keepUnknown of [false,true]){
+      const tmp=neCloneDef(L,F,true,keepUnknown);
+      state.layers.unshift(tmp);
+      try{
+        state.selected=L.id;state.multi=[];trSel=null;
+        renderProps();
+        out=new Map();
+        for(const [r,s] of neSigs(hid))out.set(s,+r.value);
+        break;
+      }catch(e){out=null;if(keepUnknown)console.warn('neProbe',e);}
+      finally{const i=state.layers.indexOf(tmp);if(i>=0)state.layers.splice(i,1);hid.innerHTML='';}
+    }
+  }finally{
+    state.selected=keep.sel;state.multi=keep.multi;uid=keep.uid;trackSeq=keep.ts;
+    _lbCache=keep.lb;_linkMemo=keep.lm;curveBoundL=keep.cb;trSel=keep.tr;
+    try{_sgL=sg;}catch(e){}
+    for(const k in secState)delete secState[k];Object.assign(secState,keep.secs);
+    hid.remove();
+    if(nx&&nx.parentNode===par)par.insertBefore(real,nx);else par.appendChild(real);
+    real.scrollTop=st;
+    NE.busy=false;
+  }
+  return out;
+}
+function neSchedule(){clearTimeout(NE.timer);NE.timer=setTimeout(neRunDefaults,80);}
+function neRunDefaults(){
+  const box=document.getElementById('props');if(!box||NE.busy||exporting)return;
+  const rs=neSigs(box).filter(([r])=>r._ne);
+  const need=rs.filter(([r])=>r._ne.def==null&&!r._ne.tried);
+  if(!need.length)return;
+  const L=state.layers.find(x=>x.id===state.selected);
+  if(!L||(state.multi&&state.multi.length>1)||trSel){need.forEach(([r])=>r._ne.tried=true);return;}
+  const ae=document.activeElement;
+  if(NE.ptr||state.playing||(ae&&ae!==box&&box.contains(ae)&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))){NE.timer=setTimeout(neRunDefaults,450);return;}
+  const key=neKey(L,rs);
+  let map=NE.cache.get(key);
+  if(!map){
+    map=neProbe(L)||new Map();
+    NE.cache.set(key,map);
+    if(NE.cache.size>60)NE.cache.delete(NE.cache.keys().next().value);
+  }
+  for(const [r,s] of rs){
+    const n=r._ne;n.tried=true;
+    if(n.def==null&&map.has(s)&&isFinite(map.get(s)))n.def=map.get(s);
+    neMod(r);
+  }
+  neSecButtons(box);
+}
+
+/* ═══ kuzatuvchi: panel qayta qurilganda yangi slayderlar, yorliq yangilansa — maydon ═══ */
+(function(){
+  const box=document.getElementById('props');if(!box)return;
+  let q=false;
+  NE.obs=new MutationObserver(muts=>{
+    if(NE.busy)return;
+    let scan=false;
+    for(const m of muts){
+      const t=m.target.nodeType===3?m.target.parentNode:m.target;
+      if(t&&t._neR){neShow(t._neR);continue;}
+      if(m.type==='childList'&&m.addedNodes.length)scan=true;
+    }
+    if(scan&&!q){q=true;queueMicrotask(()=>{q=false;neScan(box);});}
+  });
+  NE.obs.observe(box,{childList:true,subtree:true,characterData:true});
+})();
+/* dastur kodi slayder qiymatini o'zi o'zgartirsa ham (masalan kamera ijroda) maydon yangilanadi */
+(function(){
+  const d=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+  if(!d||!d.set)return;
+  Object.defineProperty(HTMLInputElement.prototype,'value',{
+    configurable:true,enumerable:d.enumerable,
+    get(){return d.get.call(this);},
+    set(v){d.set.call(this,v);if(this._ne&&!this._ne.b)neShow(this);}
+  });
+})();
 
 function drawShape(L,local,t,baseAlpha){
   const fx=objectFX(L,local,t);
@@ -16254,9 +16704,9 @@ function maskBlock(L){
     <label class="chk"><input type="checkbox" id="pMkInv" ${L.mkInvert?'checked':''}> Teskari (shakl ichini o'chirish)</label>
     <div class="row2">
       <div class="field"><label>Kenglik: <b id="pMkWV">${mw}</b>px</label>
-        <input type="range" id="pMkW" min="10" max="${maxW}" value="${mw}"></div>
+        <input type="range" id="pMkW" data-def="${Math.round(b.w)}" min="10" max="${maxW}" value="${mw}"></div>
       <div class="field"><label>Balandlik: <b id="pMkHV">${mh}</b>px</label>
-        <input type="range" id="pMkH" min="10" max="${maxH}" value="${mh}"></div>
+        <input type="range" id="pMkH" data-def="${Math.round(b.h)}" min="10" max="${maxH}" value="${mh}"></div>
     </div>
     <div class="row2">
       <div class="field"><label>Siljish X: <b id="pMkXV">${Math.round(L.mkX||0)}</b>px</label>
@@ -16387,9 +16837,9 @@ function transformBlock(L){
     ${centerBlock([L.id],'pCt')}
     <div class="row2">
       <div class="field"><label>Masshtab: <b id="pKsV">${Math.round(T.scale*100)}%</b></label>
-        <input type="range" id="pKs" min="10" max="400" value="${Math.round(T.scale*100)}"></div>
+        <input type="range" id="pKs" data-def="100" min="10" max="400" value="${Math.round(T.scale*100)}"></div>
       <div class="field"><label>Aylanish Z: <b id="pRotV">${Math.round(T.rotDeg)}°</b></label>
-        <input type="range" id="pRot" min="-180" max="180" value="${Math.round(T.rotDeg)}"></div>
+        <input type="range" id="pRot" data-def="0" min="-180" max="180" value="${Math.round(T.rotDeg)}"></div>
     </div>
     ${isGroupHolder(L)?`
     <div style="font-weight:700;font-size:11px;margin:10px 0 4px;letter-spacing:.4px;color:var(--accent2)">🧩 GURUH</div>
@@ -16403,9 +16853,9 @@ function transformBlock(L){
     <div style="font-weight:700;font-size:11px;margin:10px 0 4px;letter-spacing:.4px;color:var(--accent2)">🧊 BASIC 3D</div>
     <div class="hintline">Element tekis plastina kabi 3D fazoda buriladi (Premiere Pro "Basic 3D" uslubi). Barchasi ◆ keyframe bilan animatsiya bo'ladi.</div>
     <div class="field"><label>↔ Swivel (vertikal o'q): <b id="pRYV">${Math.round(T.ry)}°</b></label>
-      <input type="range" id="pRY" min="-180" max="180" value="${Math.round(T.ry)}"></div>
+      <input type="range" id="pRY" data-def="0" min="-180" max="180" value="${Math.round(T.ry)}"></div>
     <div class="field"><label>↕ Tilt (gorizontal o'q): <b id="pRXV">${Math.round(T.rx)}°</b></label>
-      <input type="range" id="pRX" min="-180" max="180" value="${Math.round(T.rx)}"></div>
+      <input type="range" id="pRX" data-def="0" min="-180" max="180" value="${Math.round(T.rx)}"></div>
     <div class="field"><label>⤢ Chuqurlik Z (Distance to Image): <b id="pDZV">${Math.round(T.dist3??L.dist3??0)}</b> <span style="color:var(--muted)">— 3D sahnadagi o'rni: musbat = uzoqroq, manfiy = yaqinroq. Kamera burilganda parallaks shu qiymatdan kelib chiqadi.</span></label>
       <input type="range" id="pDZ" min="-900" max="2400" value="${Math.round(T.dist3??L.dist3??0)}"></div>
     <div class="field"><label>🎥 Perspektiv kuchi: <b id="pPrsV">${Math.round(T.persp3??L.persp3??100)}</b>% <span style="color:var(--muted)">— kamera fokusi (Premiere standarti = 100)</span></label>
@@ -16427,7 +16877,7 @@ function transformBlock(L){
       <button id="pDepReset" style="justify-content:center">↺ Chuqurlikni tiklash</button>
     </div>
     <div class="field"><label>Shaffoflik: <b id="pAlV">${Math.round(T.alpha*100)}%</b></label>
-      <input type="range" id="pAl" min="0" max="100" value="${Math.round(T.alpha*100)}"></div>
+      <input type="range" id="pAl" data-def="100" min="0" max="100" value="${Math.round(T.alpha*100)}"></div>
     <div class="field"><label>⚓ Anchor point (aylanish/masshtab markazi)</label>
       <div class="anchor-grid" id="pAnchor">
         ${[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]].map(([ax,ay])=>
@@ -16687,7 +17137,7 @@ function renderBulkProps(box){
   }
   html+=sec('Umumiy',`
     <div class="field"><label>Shaffoflik: <b id="mOpV">100</b>%</label>
-      <input type="range" id="mOp" min="0" max="100" value="100"></div>`,true);
+      <input type="range" id="mOp" data-def="100" min="0" max="100" value="100"></div>`,true);
   // 🐞 Bu yerda aniqlanmagan `L` ishlatilar edi — ReferenceError butun renderProps()
   // ni to'xtatib qo'yardi, natijada KO'P TANLANGAN kliplarni surish umuman
   // ishlamasdi (mousedown ichida xato chiqib, drag hodisalari ulanmay qolardi).
@@ -16781,7 +17231,7 @@ function renderProps(){
       <div class="sw" data-g="#f8fafc,#cbd5e1" style="background:linear-gradient(#f8fafc,#cbd5e1)" title="Oq"></div>
     </div>
     <div class="field"><label>🫥 Fon shaffofligi: <b id="pBgAV">${Math.round(state.bgA??100)}</b>% <span style="color:var(--muted)">— 0% = fon umuman yo'q</span></label>
-      <input type="range" id="pBgA" min="0" max="100" value="${Math.round(state.bgA??100)}"></div>
+      <input type="range" id="pBgA" data-def="100" min="0" max="100" value="${Math.round(state.bgA??100)}"></div>
     <div class="row2">
       <button id="pBgClear" style="justify-content:center">🫥 Fonni shaffof qilish</button>
       <button id="pBgSolid" style="justify-content:center">🎨 To'liq fon</button>
@@ -16801,7 +17251,7 @@ function renderProps(){
     ${(state.bgPattern)?`<div class="row2">
       <div class="field"><label>Rangi</label><input type="color" id="pBgPatC" value="${state.bgPatColor||'#000000'}"></div>
       <div class="field"><label>Kuchi: <b id="pBgPatAV">${state.bgPatA??22}</b>%</label>
-        <input type="range" id="pBgPatA" min="4" max="70" value="${state.bgPatA??22}"></div>
+        <input type="range" id="pBgPatA" data-def="22" min="4" max="70" value="${state.bgPatA??22}"></div>
     </div>`:''}`,!L)+camSection();
 
   if(!L){
@@ -18160,43 +18610,8 @@ function renderProps(){
 /* Yorliqdagi raqamni (masalan "Kenglik: 909px" dagi 909) bosib, klaviaturadan
    yangi qiymat kiritish mumkin. Slider joyida qoladi — ikkalasi ham ishlaydi. */
 function enhanceRanges(root){
-  root.querySelectorAll('input[type=range]').forEach(r=>{
-    if(r._enh)return;
-    r._enh=true;
-    const b=root.querySelector('#'+r.id+'V');
-    if(!b)return;
-    b.classList.add('editNum');
-    b.title='Bosing va klaviaturadan yangi qiymat kiriting (Enter = tasdiqlash)';
-    b.addEventListener('click',()=>{
-      if(b._editing)return;
-      b._editing=true;
-      b.contentEditable='true';
-      b.focus();
-      const sel=getSelection();
-      const rg=document.createRange();
-      rg.selectNodeContents(b);
-      sel.removeAllRanges();
-      sel.addRange(rg);
-    });
-    const commit=()=>{
-      if(!b._editing)return;
-      b._editing=false;
-      b.contentEditable='false';
-      let v=parseFloat(b.textContent.replace(',','.').replace(/[^0-9.\-]/g,''));
-      if(!isNaN(v)){
-        if(r.id==='pSp')v*=100; // tezlik yorlig'i "x" da, slider esa % da
-        r.value=clamp(v,+r.min,+r.max);
-      }
-      // 'input' hodisasi mavjud handlerni ishga tushiradi — u yorliqni ham to'g'ri formatda qaytaradi
-      r.dispatchEvent(new Event('input'));
-    };
-    b.addEventListener('blur',commit);
-    b.addEventListener('keydown',e=>{
-      e.stopPropagation();
-      if(e.key==='Enter'){e.preventDefault();b.blur();}
-      if(e.key==='Escape'){e.preventDefault();b._editing=false;b.contentEditable='false';r.dispatchEvent(new Event('input'));}
-    });
-  });
+  // 7.8: barcha slayderlar uchun yagona tizim — raqam maydoni + ↺ asl holat (m_num)
+  try{neScan(root);}catch(e){console.warn('neScan',e);}
 }
 
 /* ===== 📈 CURVE EDITOR (grafik tezlik) ===== */
