@@ -589,10 +589,67 @@
   /* ═══ 7.5 — 🧊 3D sahna ish maydoni + 🎥 kamera asbobi ═══ */
   #btnCamTool{position:absolute; top:44px; left:46px; z-index:6; padding:5px 11px; font-size:12px;}
   #btnCamTool.on{background:#0e7490; border-color:#22d3ee; color:#fff; font-weight:600;}
+  /* ═══ 8.0 — 🎥 Kamera: tushunarli panel, sahna asbobi, timeline qatori, 3D yordam ═══ */
+  .cam-switch{display:flex;align-items:center;gap:9px;padding:9px 11px;margin:2px 0 8px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);cursor:pointer;user-select:none;}
+  .cam-switch input{accent-color:var(--accent);width:17px;height:17px;margin:0;}
+  .cam-switch .cs-t{flex:1;font-weight:700;font-size:13.5px;color:var(--text);}
+  .cam-switch .cs-s{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--muted);padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.05);}
+  .cam-switch.on{border-color:rgba(34,211,238,.55);background:linear-gradient(90deg,rgba(14,116,144,.28),rgba(139,92,246,.14));}
+  .cam-switch.on .cs-s{color:#a5f3fc;background:rgba(34,211,238,.16);}
+  details.cam-guide{border:1px solid rgba(250,204,21,.28);background:rgba(250,204,21,.06);border-radius:10px;margin:0 0 10px;}
+  details.cam-guide>summary{cursor:pointer;list-style:none;padding:8px 10px;font-size:12.5px;font-weight:700;color:#fde68a;}
+  details.cam-guide>summary::-webkit-details-marker{display:none;}
+  details.cam-guide>summary span{font-weight:500;color:var(--muted);font-size:11px;}
+  details.cam-guide .cg-in{padding:0 11px 9px;font-size:11.8px;line-height:1.5;color:var(--text);}
+  details.cam-guide .cg-in p{margin:0 0 7px;}
+  details.cam-guide .cg-in ol{margin:0 0 8px;padding-left:19px;}
+  details.cam-guide .cg-in li{margin-bottom:3px;}
+  .cam-state{font-size:11.8px;line-height:1.5;padding:8px 10px;border-radius:9px;margin:0 0 8px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text);}
+  .cam-state.kf{border-color:rgba(167,139,250,.6);background:rgba(139,92,246,.14);}
+  .cam-state.auto{border-color:rgba(52,211,153,.45);background:rgba(16,185,129,.09);}
+  .cam-kfbar{display:grid;grid-template-columns:34px 1fr 34px 34px;gap:5px;margin-bottom:8px;}
+  .cam-kfbar button{justify-content:center;padding:8px 0;min-width:0;}
+  .cam-kfbar .cam-kfmain{background:linear-gradient(180deg,var(--accent),#6d28d9);border-color:var(--accent);color:#fff;font-weight:700;}
+  .cam-sub{display:flex;align-items:baseline;gap:8px;font-size:12px;font-weight:700;color:var(--text);margin:10px 0 6px;padding-top:9px;border-top:1px solid var(--border);}
+  .cam-sub span{font-weight:500;font-size:11px;color:var(--muted);}
+  .cam-tools{margin:2px 0 10px;}
+  .cam-tools button{justify-content:center;font-size:12px;}
+  .cam-tools button.on{background:#0e7490;border-color:#22d3ee;color:#fff;}
+  .cam-pre .row2 button{font-size:11.5px;justify-content:flex-start;}
+  .props .kf-item.cur{outline:1px solid var(--accent2);}
+  #camHud{position:absolute;top:44px;left:150px;z-index:7;display:none;flex-direction:column;gap:4px;max-width:calc(100% - 170px);}
+  #camHud .ch-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:4px;border-radius:11px;background:rgba(12,14,20,.82);border:1px solid rgba(34,211,238,.35);backdrop-filter:blur(6px);box-shadow:0 6px 22px rgba(0,0,0,.35);}
+  #camHud button{padding:5px 9px;font-size:12px;border-radius:8px;min-width:0;}
+  #camHud button.on{background:#0e7490;border-color:#22d3ee;color:#fff;font-weight:600;}
+  #camHud button.kf{color:#c4b5fd;}
+  #camHud button.kf.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  #camHud .sep{width:1px;align-self:stretch;background:var(--border);margin:2px 2px;}
+  #camHud .ch-tip{align-self:flex-start;font-size:11.5px;color:#cffafe;background:rgba(8,47,73,.78);border:1px solid rgba(34,211,238,.25);border-radius:8px;padding:4px 9px;}
+  body.v3on #camHud{display:none !important;}
+  @media (max-width:820px){ #camHud{top:76px;left:10px;max-width:calc(100% - 20px);} #camHud button span{display:none;} }
+  .tl-names .nm.cam-nm{color:#67e8f9;cursor:pointer;}
+  .tl-row.tl-camrow{background:linear-gradient(90deg,rgba(8,145,178,.07),rgba(8,145,178,.02));}
+  .tl-bar.cambar{background:rgba(8,145,178,.16);border:1px dashed rgba(34,211,238,.35);opacity:1;cursor:pointer;color:#a5f3fc;padding:0 10px;}
+  .tl-bar.cambar .camlab{position:relative;z-index:1;font-size:10.5px;opacity:.85;pointer-events:none;overflow:hidden;text-overflow:ellipsis;}
+  .tl-bar.cambar .camseg{position:absolute;top:50%;height:3px;margin-top:-1.5px;background:linear-gradient(90deg,#22d3ee,#34d399);border-radius:2px;pointer-events:none;opacity:.9;}
+  .tl-bar.cambar .kfd.camkf{background:#34d399;border-color:#064e3b;cursor:ew-resize;}
+  .tl-bar.cambar .kfd.camkf.selk{background:#fff;border-color:#22d3ee;}
+  #v3Help{position:absolute;top:54px;left:14px;z-index:8;width:min(400px,calc(100% - 28px));max-height:calc(100% - 70px);overflow:auto;padding:13px 15px;border-radius:13px;
+    background:rgba(14,15,21,.94);border:1px solid rgba(139,92,246,.45);box-shadow:0 14px 40px rgba(0,0,0,.5);font-size:12px;line-height:1.5;color:var(--text);backdrop-filter:blur(8px);}
+  #v3Help .vh-h{font-size:14px;font-weight:800;margin-bottom:6px;}
+  #v3Help .vh-h2{font-size:12px;font-weight:800;margin:10px 0 4px;color:#c4b5fd;}
+  #v3Help .vh-p{color:#cbd5e1;margin-bottom:8px;}
+  #v3Help .vh-l{display:flex;align-items:center;gap:9px;margin:4px 0;}
+  #v3Help .lg{flex:0 0 22px;height:12px;border-radius:3px;}
+  #v3Help ul{margin:0;padding-left:18px;}
+  #v3Help li{margin-bottom:3px;}
+  #v3Help .vh-b{display:flex;gap:8px;margin-top:11px;}
+  #v3Help .vh-b button{flex:1;justify-content:center;}
+  #v3Help .vh-b .pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
   #v3cv{position:absolute; inset:0; width:100%; height:100%; z-index:4; display:none; cursor:grab; touch-action:none;}
   body.v3on #v3cv{display:block;}
-  #v3Bar{position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:7; display:none; gap:4px; align-items:center;
-    background:rgba(16,17,22,.86); border:1px solid var(--border); border-radius:10px; padding:4px; backdrop-filter:blur(6px); max-width:calc(100% - 330px); flex-wrap:wrap; justify-content:center;}
+  #v3Bar{position:absolute; top:10px; right:12px; z-index:7; display:none; gap:3px; align-items:center;
+    background:rgba(16,17,22,.86); border:1px solid var(--border); border-radius:10px; padding:4px; backdrop-filter:blur(6px); max-width:calc(100% - 230px); flex-wrap:wrap; justify-content:flex-end;}
   body.v3on #v3Bar{display:flex;}
   #v3Bar button{padding:4px 9px; font-size:11.5px; border-radius:7px; min-width:0;}
   #v3Bar button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
@@ -604,7 +661,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>7.9</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.0</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -2081,7 +2138,7 @@ function camSet(key,val){
   if(kf){ kf[key]=val; camClearPend(); return 'kf'; }
   if(!camPendAlive()){camPend={};camPendT=state.time;}
   camPend[key]=val;
-  if(c.autoKf){camAddKf();return 'kf';}
+  if(c.autoKf!==false){camAddKf();return 'kf';}   // AE kabi: ◆ bor bo'lsa, o'zgarish o'zi yoziladi
   return 'pend';
 }
 /* ◆ Kamera keyframe qo'yish — kutilayotgan o'zgarishlar bilan birga */
@@ -9430,7 +9487,7 @@ let v3cv=null,v3x=null,v3Bar=null,v3VW=0,v3VH=0,v3DPR=1;
 let v3lcv=null,v3lctx=null;
 const v3pip=document.createElement('canvas'),v3pipx=v3pip.getContext('2d');
 let v3TexAt=0,v3PathKey='',v3PathPts=null,v3LabBoxes=[];
-let v3Items=[],v3PipR=null,v3KfHit=[],v3CamHit=null,v3Giz=null,v3LastComp='',v3LastTex='',v3Hover=null;
+let v3Items=[],v3PipR=null,v3KfHit=[],v3CamHit=null,v3Giz=null,v3LastComp='',v3Hover=null,v3PipShowFast=false;
 
 /* ── Ko'rish proyeksiyasi ── */
 function v3D(){return V3.rad*V3.distK;}
@@ -9530,7 +9587,7 @@ function v3Collect(t){
     }
     const it={L,T,ecx,ecy,pvx,pvy,dz,rx,ry,
       cs:Math.cos(ry*Math.PI/180),sn:Math.sin(ry*Math.PI/180),ct:Math.cos(rx*Math.PI/180),st:Math.sin(rx*Math.PI/180),
-      alpha:clamp((T.alpha??1)*(fx?fx.alpha??1:1),0,1)};
+      alpha:(function(){const a0=(T.alpha??1)*(fx?fx.alpha??1:1);return Number.isFinite(a0)?clamp(a0,0,1):1;})()};
     // 📦 Kontent qutisi (tanlash/kontur uchun) — element aniq chegarasi
     let bx;
     if(isGroupHolder(L)){
@@ -9573,7 +9630,7 @@ function v3Collect(t){
 function v3Lim(){return Math.round(Math.max(cv.width,cv.height)*1.5);}
 /* ── Viewport WebGL (tekstura plastinalar) ── */
 const V3GL=(function(){
-  let c=null,gl=null,prog=null,buf=null,U=null,ok=null;
+  let c=null,gl=null,prog=null,buf=null,U=null,ok=null,vw=4,vh=4;
   const tex=new Map();
   const VD=new Float32Array(4*6);
   function init(){
@@ -9599,7 +9656,7 @@ const V3GL=(function(){
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
       gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
       gl.clearColor(0,0,0,0);
-      c.addEventListener('webglcontextlost',e=>{e.preventDefault();ok=null;tex.clear();v3LastTex='';},false);
+      c.addEventListener('webglcontextlost',e=>{e.preventDefault();ok=null;tex.clear();try{v3TexAll=true;v3LastView='';}catch(x){}},false);
       ok=true;
     }catch(e){ok=false;}
     return ok;
@@ -9608,7 +9665,18 @@ const V3GL=(function(){
     if(!init())return false;
     if(c.width!==W||c.height!==H){c.width=W;c.height=H;}
     gl.viewport(0,0,W,H);gl.clear(gl.COLOR_BUFFER_BIT);
+    vw=W;vh=H;
     return true;
+  }
+  /* Kichik qism (pastki-chap burchak) — kamera monitorini tez chizish uchun.
+     Kanvasdagi joyi: (0, H-h) dan w×h */
+  function sub(w,h){
+    if(!ok)return false;
+    w=Math.max(2,Math.min(c.width,Math.round(w)));h=Math.max(2,Math.min(c.height,Math.round(h)));
+    gl.viewport(0,0,w,h);
+    gl.enable(gl.SCISSOR_TEST);gl.scissor(0,0,w,h);gl.clear(gl.COLOR_BUFFER_BIT);gl.disable(gl.SCISSOR_TEST);
+    vw=w;vh=h;
+    return {w,h,y:c.height-h};
   }
   function upload(id,src){
     if(!init())return;
@@ -9624,7 +9692,7 @@ const V3GL=(function(){
   function prune(ids){for(const [id,e] of tex)if(!ids.has(id)){try{gl.deleteTexture(e.t);}catch(x){}tex.delete(id);}}
   function quad(id,P,alpha,tint){
     const e=tex.get(id);if(!e||!e.ok)return;
-    const W=c.width,H=c.height,UVs=[[0,0],[1,0],[0,1],[1,1]];
+    const W=vw,H=vh,UVs=[[0,0],[1,0],[0,1],[1,1]];
     for(let i=0;i<4;i++){const p=P[i],k=i*6,w=p.w;
       VD[k]=(p.x/W*2-1)*w;VD[k+1]=(1-p.y/H*2)*w;VD[k+2]=0;VD[k+3]=w;VD[k+4]=UVs[i][0];VD[k+5]=UVs[i][1];}
     gl.bindTexture(gl.TEXTURE_2D,e.t);
@@ -9633,21 +9701,75 @@ const V3GL=(function(){
     if(tint)gl.uniform4f(U.k,tint[0],tint[1],tint[2],tint[3]);else gl.uniform4f(U.k,0,0,0,0);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   }
-  return {init,begin,upload,has,prune,quad,canvas:()=>c};
+  function drop(id){const e=tex.get(id);if(e){try{gl.deleteTexture(e.t);}catch(x){}tex.delete(id);}}
+  return {init,begin,sub,upload,has,prune,drop,quad,canvas:()=>c};
 })();
 
 /* ── Har bir qatlam o'z teksturasiga (yassi, kamerasiz) chiziladi ── */
-function v3BuildTex(items,t){
-  if(!V3GL.init())return;
+/* ⚡ Tekstura qayta qurilishi QISMLAB: faqat o'zgargan qatlamlar (va ularga bog'liqlar).
+   Chuqurlik (Z) va 3D burilish teksturaga ta'sir qilmaydi (plastina yassi chiziladi) —
+   shuning uchun plastinani oldinga/orqaga surish teksturani umuman qayta chizmaydi.
+   Interaktiv paytda vaqt byudjeti bor: ulgurmagani keyingi kadrda (qotish yo'q). */
+const v3tile=document.createElement('canvas'),v3tilex=v3tile.getContext('2d');
+let v3TexDirty=new Set(), v3TexAll=true, v3TexG='', v3TexKeys=new Map(), v3TexStamp=0, __v3More=false;
+function v3TexRep(k,v){
+  if(k==='el'||(k&&k.charCodeAt(0)===95))return undefined;
+  if(k==='dist3'||k==='rx'||k==='ry'||k==='depth3')return undefined;   // yassi chizishga ta'sir qilmaydi
+  if(v&&typeof v==='object'&&!Array.isArray(v)&&Object.getPrototypeOf(v)!==Object.prototype)return undefined;
+  return v;
+}
+function v3TexGlobal(){
+  let s=state.time.toFixed(4)+'|'+cv.width+'x'+cv.height+'|'+_visEpoch;
+  for(const L of state.layers){
+    const e=L.el;
+    if(e){
+      if(L.type==='video')s+='|'+(+e.currentTime||0).toFixed(3)+(e.seeking?'s':'')+e.readyState;
+      else if(L.type==='image')s+='|'+(e.complete?1:0)+(e.naturalWidth||0);
+    }
+    if(L._seg)s+='|'+(L._seg.done||0)+'/'+(L._seg.total||0);
+  }
+  return s;
+}
+/* Qaysi qatlam teksturasi qaysi qatlamlarga bog'liq (guruh a'zolari, bog'lanish, matte, quti) */
+function v3TexMarkChanged(){
+  const keys=new Map(), changed=new Set();
+  for(const L of state.layers){
+    if(L.type==='audio')continue;
+    let k;try{k=JSON.stringify(L,v3TexRep);}catch(e){k=String(Math.random());}
+    keys.set(L.id,k);
+    if(v3TexKeys.get(L.id)!==k)changed.add(L.id);
+  }
+  v3TexKeys=keys;
+  if(!changed.size)return;
+  const deps=new Map();
+  const add=(a,b)=>{if(a==null||b==null)return;let s=deps.get(b);if(!s){s=new Set();deps.set(b,s);}s.add(a);};
+  for(const L of state.layers){
+    if(L.linkTo!=null){add(L.id,L.linkTo);add(L.linkTo,L.id);}
+    if(L.matteSrc!=null)add(L.id,L.matteSrc);
+    if(L.ovfIn!=null&&L.ovfIn!=='')add(L.id,L.ovfIn);
+  }
+  // o'zgargan qatlamga bog'liq bo'lganlar ham (zanjir bo'ylab)
+  const q=[...changed];
+  while(q.length){const id=q.pop();const s=deps.get(id);if(s)for(const d of s)if(!changed.has(d)){changed.add(d);q.push(d);}}
+  for(const id of changed)v3TexDirty.add(id);
+}
+function v3BuildTex(items,t,budget){
+  if(!V3GL.init())return 0;
   if(!v3lcv){v3lcv=document.createElement('canvas');v3lctx=v3lcv.getContext('2d');}
   const TM=(state.playing?720:1280);
-  const tile=document.createElement('canvas'),tc=tile.getContext('2d');
-  const ids=new Set();
+  const tile=v3tile,tc=v3tilex;
+  const t0=performance.now();
+  let n=0;
+  // tanlangan qatlam birinchi (foydalanuvchi aynan shunga qarab turibdi)
+  const list=items.filter(it=>v3TexDirty.has(it.L.id));
+  list.sort((a,b)=>(b.L.id===state.selected)-(a.L.id===state.selected));
   try{
-    for(const it of items){
-      if(!it.texOK)continue;
+    for(const it of list){
+      if(n>0&&budget&&performance.now()-t0>budget)break;
+      v3TexDirty.delete(it.L.id);
+      if(!it.texOK){V3GL.drop(it.L.id);continue;}
       const {x0,y0,x1,y1}=it.rect;
-      if(x1-x0<2||y1-y0<2){it.texOK=false;continue;}
+      if(x1-x0<2||y1-y0<2){it.texOK=false;V3GL.drop(it.L.id);continue;}
       // bir xil (X va Y uchun teng) siljish — ichki chizish kodi shunga tayanadi (sceneBase)
       const Q=Math.max(0,-Math.min(x0,y0));
       const nw=x1+Q, nh=y1+Q;
@@ -9664,16 +9786,22 @@ function v3BuildTex(items,t){
       for(let k=0;k<8;k++)c.restore();
       c.setTransform(1,0,0,1,0,0);
       const rw=x1-x0,rh=y1-y0,s=Math.min(1,TM/Math.max(rw,rh));
-      tile.width=Math.max(2,Math.round(rw*s));tile.height=Math.max(2,Math.round(rh*s));
+      const tw=Math.max(2,Math.round(rw*s)),th=Math.max(2,Math.round(rh*s));
+      if(tile.width!==tw||tile.height!==th){tile.width=tw;tile.height=th;}else tc.clearRect(0,0,tw,th);
       tc.imageSmoothingQuality='high';
-      tc.drawImage(v3lcv,x0+Q,y0+Q,rw,rh,0,0,tile.width,tile.height);
+      tc.drawImage(v3lcv,x0+Q,y0+Q,rw,rh,0,0,tw,th);
       V3GL.upload(it.L.id,tile);
-      ids.add(it.L.id);
+      n++;
     }
   }finally{
     __v3Flat=false;ctx=mainCtx;_linkMemo=new Map();__v3Pad=0;
   }
+  // endi ko'rinmaydigan qatlamlar teksturasi bo'shatiladi
+  const ids=new Set(items.map(it=>it.L.id));
   V3GL.prune(ids);
+  for(const id of [...v3TexDirty])if(!ids.has(id))v3TexDirty.delete(id);
+  if(n)v3TexStamp++;
+  return n;
 }
 
 /* ── Imzo: sahna o'zgarmagan bo'lsa qayta chizilmaydi (aylantirish = tekin) ── */
@@ -9684,6 +9812,54 @@ function v3SigLayers(){
   return s;
 }
 
+/* ═══ 📺 Kamera monitori ═══
+   Tahrir paytida (surish, scrub, play) monitor GPU'da — tayyor plastinalarni kamera
+   ko'zi orqali proyeksiya qilib — bir zumda chiziladi. Harakat to'xtagach (~¼ s)
+   haqiqiy kadr (effektlar, o'tishlar, DOF bilan) BIR MARTA hisoblanadi. Avval har bir
+   o'zgarishda to'liq 1080p kadr qayta chizilardi — 3D oynadagi qotishning asosiy sababi. */
+const v3pipF=document.createElement('canvas'),v3pipFx=v3pipF.getContext('2d');
+const v3bgCv=document.createElement('canvas'),v3bgx=v3bgCv.getContext('2d');
+let v3PipSig='',v3PipNeed=true,v3PipChg=0,v3PipMode='exact',v3PipStamp=0,v3BgKey='',v3LastSL='',v3LastView='';
+function v3PipBg(w,h){
+  const k=[w,h,cv.width,cv.height,state.bg,JSON.stringify(state.bgGrad||null),state.bgPattern,state.bgPatColor,state.bgPatA,state.bgA].join('|');
+  if(k===v3BgKey)return v3bgCv;
+  v3BgKey=k;
+  if(v3bgCv.width!==w||v3bgCv.height!==h){v3bgCv.width=w;v3bgCv.height=h;}
+  v3bgx.clearRect(0,0,w,h);
+  const tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height;
+  const sv=ctx;
+  try{ctx=tmp.getContext('2d');drawBG();}catch(e){}finally{ctx=sv;}
+  v3bgx.drawImage(tmp,0,0,w,h);
+  tmp.width=tmp.height=1;
+  return v3bgCv;
+}
+function v3PipExact(){
+  renderComp(true);
+  const pw=Math.min(cv.width,760),ph=Math.round(cv.height*pw/cv.width);
+  if(v3pip.width!==pw||v3pip.height!==ph){v3pip.width=pw;v3pip.height=ph;}
+  v3pipx.clearRect(0,0,pw,ph);v3pipx.drawImage(cv,0,0,pw,ph);
+  v3PipMode='exact';v3PipNeed=false;v3PipShowFast=false;v3PipStamp++;
+}
+/* Tez monitor: plastinalar kamera ko'zidan (render bilan bir xil proyeksiya) */
+function v3PipFast(C,mw,mh){
+  if(!V3.tex||!V3GL.init())return false;
+  const r=V3GL.sub(mw,mh);if(!r)return false;
+  const cw=cv.width,ch=cv.height,s=r.w/cw,zm=C.zoom||1,f=C.fv*zm,M=C.m,E=C.eye;
+  const pt=w=>{const p=m3v(M,w.x-E.x,w.y-E.y,w.z-E.z);if(!(p.z>1))return null;return {x:(cw/2+f*p.x/p.z)*s,y:(ch/2+f*p.y/p.z)*s,w:p.z};};
+  for(const it of v3Items){   // qatlamlar tartibida (render kabi)
+    if(!it.texOK||!V3GL.has(it.L.id))continue;
+    const P=it.rectW.map(pt);
+    if(P.some(p=>!p))continue;
+    V3GL.quad(it.L.id,P,it.alpha,null);
+  }
+  if(v3pipF.width!==r.w||v3pipF.height!==r.h){v3pipF.width=r.w;v3pipF.height=r.h;}
+  v3pipFx.globalCompositeOperation='copy';
+  v3pipFx.drawImage(v3PipBg(r.w,r.h),0,0);
+  v3pipFx.globalCompositeOperation='source-over';
+  v3pipFx.drawImage(V3GL.canvas(),0,r.y,r.w,r.h,0,0,r.w,r.h);
+  return true;
+}
+
 /* ═══ Asosiy kadr: render() 3D rejimida shu yerga keladi ═══ */
 function v3Frame(){
   v3Ensure();
@@ -9691,29 +9867,43 @@ function v3Frame(){
   const r=wrap.getBoundingClientRect();
   v3DPR=Math.min(2,window.devicePixelRatio||1);
   const W=Math.max(50,Math.round(r.width*v3DPR)),H=Math.max(50,Math.round(r.height*v3DPR));
-  if(v3cv.width!==W||v3cv.height!==H){v3cv.width=W;v3cv.height=H;}
+  if(v3cv.width!==W||v3cv.height!==H){v3cv.width=W;v3cv.height=H;v3LastView='';}
   v3VW=W;v3VH=H;
   const t=state.time;
-  const sL=v3SigLayers();
-  const sC=sL+'|'+JSON.stringify(state.cam)+'|'+(camPendAlive()?JSON.stringify(camPend):'')+'|'+[state.bg,state.bgGrad,state.bgPattern,state.bgPatColor,state.bgPatA,state.bgA].join(',');
-  // 1) Kamera natijasi (monitor uchun) — faqat o'zgarganda
-  if(sC!==v3LastComp){
-    renderComp(true);
-    const pw=Math.min(cv.width,760),ph=Math.round(cv.height*pw/cv.width);
-    if(v3pip.width!==pw||v3pip.height!==ph){v3pip.width=pw;v3pip.height=ph;}
-    v3pipx.clearRect(0,0,pw,ph);v3pipx.drawImage(cv,0,0,pw,ph);
-    v3LastComp=sC;
-  }
-  _lbCache=new Map();
-  // 2) Plastinalar
-  v3Items=v3Collect(t);
-  // ⚡ Pleyda teksturalar har kadrda emas (~15 fps) — 3D oyna yengil qoladi; pauzada darhol
   const nowT=performance.now();
-  if(V3.tex&&sL!==v3LastTex&&!(state.playing&&nowT-v3TexAt<66)){v3BuildTex(v3Items,t);v3LastTex=sL;v3TexAt=nowT;}
-  v3Draw(t);
+  const sL=v3SigLayers();
+  const sC=sL+'|'+JSON.stringify(state.cam)+'|'+(camPendAlive()?JSON.stringify(camPend):'')+'|'+[state.bg,JSON.stringify(state.bgGrad||null),state.bgPattern,state.bgPatColor,state.bgPatA,state.bgA].join(',');
+  // 1) Monitor: o'zgarish bo'lsa — hozircha tez, tinchlanganda aniq
+  if(sC!==v3PipSig){v3PipSig=sC;v3PipNeed=true;v3PipChg=nowT;}
+  const calm=!state.playing&&!v3Drag&&nowT-v3PipChg>240;
+  const pipExactNow=V3.pip&&v3PipNeed&&(calm||!v3pip.width||v3pip.width<3);
+  // 2) Teksturalar: nima o'zgargan
+  if(sL!==v3LastSL){v3LastSL=sL;v3TexMarkChanged();}
+  const gk=v3TexGlobal();
+  if(gk!==v3TexG){v3TexG=gk;v3TexAll=true;}
+  const vk=[W,H,V3.yaw,V3.pitch,V3.distK,V3.tx,V3.ty,V3.tz,V3.ortho,V3.view,V3.tex,V3.pip,V3.grid,v3Sel,v3Hover,
+    v3Drag?v3Drag.type+(v3Drag.axis||''):'',state.selected,v3PipStamp,v3PipNeed?1:0,getCam().on?1:0].join('|');
+  const viewChanged=vk!==v3LastView||sC!==v3LastComp;
+  if(!viewChanged&&!v3TexAll&&!v3TexDirty.size&&!pipExactNow){__v3More=V3.pip&&v3PipNeed;return;}
+  _lbCache=new Map();
+  v3Items=v3Collect(t);
+  if(v3TexAll){for(const it of v3Items)v3TexDirty.add(it.L.id);v3TexAll=false;}
+  for(const it of v3Items)if(it.texOK&&!V3GL.has(it.L.id))v3TexDirty.add(it.L.id);
+  if(pipExactNow)v3PipExact();
+  // ⚡ Teksturalar: pleyda ~15 fps, tahrirda vaqt byudjeti bilan (ulgurmagani keyingi kadrda)
+  const busy=state.playing||!!v3Drag||(Date.now()-lastInput<300);
+  if(V3.tex&&v3TexDirty.size&&!(state.playing&&nowT-v3TexAt<66)){
+    v3BuildTex(v3Items,t,busy?14:0);v3TexAt=nowT;
+  }
+  v3LastComp=sC;
+  v3Draw(t,V3.pip&&v3PipNeed);
+  v3LastView=[W,H,V3.yaw,V3.pitch,V3.distK,V3.tx,V3.ty,V3.tz,V3.ortho,V3.view,V3.tex,V3.pip,V3.grid,v3Sel,v3Hover,
+    v3Drag?v3Drag.type+(v3Drag.axis||''):'',state.selected,v3PipStamp,v3PipNeed?1:0,getCam().on?1:0].join('|');
+  __v3More=(V3.tex&&v3TexDirty.size>0)||(V3.pip&&v3PipNeed);
 }
+function v3Redraw(){v3LastView='';}
 
-function v3Draw(t){
+function v3Draw(t,fastPip){
   const c=v3x,W=v3VW,H=v3VH,u=v3DPR;
   v3LabBoxes=[];
   c.setTransform(1,0,0,1,0,0);c.globalAlpha=1;c.globalCompositeOperation='source-over';c.filter='none';
@@ -9722,19 +9912,27 @@ function v3Draw(t){
   const cw=cv.width,ch=cv.height;
   const C=getCam().on?camAt(t):null;
   const Cv=C||(function(){const cc=getCam();return camSolve({...cc,type:'orbit',tgt:null},camBase(camDefaults()),t,true);})();
-  // ── Pol setkasi
+  // ── Pol setkasi (⚡ chiziqlar shaffoflik bo'yicha guruhlanib, bir necha chizishda)
   if(V3.grid){
     const gy=ch/2;
     const raw=V3.rad/5, pw=Math.pow(10,Math.floor(Math.log10(raw))), st=[1,2,2.5,5,10].map(x=>x*pw).find(x=>x>=raw)||raw;
     const N=14, cx0=Math.round(V3.tx/st)*st, cz0=Math.round(V3.tz/st)*st;
+    const B=new Map();
+    const put=(a,b,al,w)=>{const k=(Math.round(al*40)/40).toFixed(3)+'|'+w;let L=B.get(k);if(!L){L=[];B.set(k,L);}L.push(a,b);};
     for(let i=-N;i<=N;i++){
-      const maj=Math.round((cx0+i*st)/st)%5===0, a=(maj?0.30:0.14)*(1-Math.abs(i)/(N+1)*0.75);
-      v3Line({x:cx0+i*st,y:gy,z:cz0-N*st},{x:cx0+i*st,y:gy,z:cz0+N*st},`rgba(170,178,196,${a.toFixed(3)})`,maj?1.1:0.8);
+      const majX=Math.round((cx0+i*st)/st)%5===0, aX=(majX?0.30:0.14)*(1-Math.abs(i)/(N+1)*0.75);
+      put({x:cx0+i*st,y:gy,z:cz0-N*st},{x:cx0+i*st,y:gy,z:cz0+N*st},aX,majX?1.1:0.8);
+      const majZ=Math.round((cz0+i*st)/st)%5===0, aZ=(majZ?0.30:0.14)*(1-Math.abs(i)/(N+1)*0.75);
+      put({x:cx0-N*st,y:gy,z:cz0+i*st},{x:cx0+N*st,y:gy,z:cz0+i*st},aZ,majZ?1.1:0.8);
     }
-    for(let i=-N;i<=N;i++){
-      const maj=Math.round((cz0+i*st)/st)%5===0, a=(maj?0.30:0.14)*(1-Math.abs(i)/(N+1)*0.75);
-      v3Line({x:cx0-N*st,y:gy,z:cz0+i*st},{x:cx0+N*st,y:gy,z:cz0+i*st},`rgba(170,178,196,${a.toFixed(3)})`,maj?1.1:0.8);
+    c.save();
+    for(const [k,L] of B){
+      const [al,w]=k.split('|');
+      c.strokeStyle='rgba(170,178,196,'+al+')';c.lineWidth=(+w)*u;c.beginPath();
+      for(let i=0;i<L.length;i+=2)v3Seg(c,L[i],L[i+1]);
+      c.stroke();
     }
+    c.restore();
     v3Line({x:cx0-N*st,y:gy,z:0},{x:cx0+N*st,y:gy,z:0},'rgba(239,68,68,.55)',1.4);
     v3Line({x:0,y:gy,z:cz0-N*st},{x:0,y:gy,z:cz0+N*st},'rgba(59,130,246,.55)',1.4);
   }
@@ -9791,22 +9989,30 @@ function v3Draw(t){
   v3DrawTriad();
   // ── Kamera monitori
   v3PipR=null;
-  if(V3.pip&&v3pip.width>2){
-    const mw=Math.min(W*0.3,H*0.34*v3pip.width/v3pip.height), mh=mw*v3pip.height/v3pip.width;
+  if(V3.pip){
+    const ar=cv.width/cv.height;
+    const mw=Math.min(W*0.3,H*0.34*ar), mh=mw/ar;
     const mx=W-mw-14*u, my=H-mh-16*u;
-    c.save();
-    c.fillStyle='rgba(0,0,0,.55)';pathRound(c,mx-5*u,my-22*u,mw+10*u,mh+27*u,9*u);c.fill();
-    c.drawImage(v3pip,mx,my,mw,mh);
-    c.strokeStyle='rgba(125,211,252,.85)';c.lineWidth=1.4*u;c.strokeRect(mx,my,mw,mh);
-    c.fillStyle='#e0f2fe';c.font=`600 ${Math.round(11*u)}px Inter,sans-serif`;c.textBaseline='middle';
-    c.fillText('🎥 KAMERA · '+t.toFixed(2)+'s'+(getCam().on?'':' · (o\'chiq)'),mx+2*u,my-11*u);
-    c.restore();
-    v3PipR={x:mx,y:my,w:mw,h:mh};
+    // tahrir paytida — tez (GPU) monitor; tinchlanganda aniq kadr
+    if(fastPip){v3PipShowFast=v3PipFast(Cv,mw,mh);}
+    const src=(v3PipShowFast&&v3PipNeed)?v3pipF:v3pip;
+    if(src.width>2){
+      c.save();
+      c.fillStyle='rgba(0,0,0,.55)';pathRound(c,mx-5*u,my-22*u,mw+10*u,mh+27*u,9*u);c.fill();
+      c.drawImage(src,mx,my,mw,mh);
+      c.strokeStyle='rgba(125,211,252,.85)';c.lineWidth=1.4*u;c.strokeRect(mx,my,mw,mh);
+      c.fillStyle='#e0f2fe';c.font=`600 ${Math.round(11*u)}px Inter,sans-serif`;c.textBaseline='middle';
+      let lb='🎥 KAMERA · '+t.toFixed(2)+'s'+(getCam().on?'':' · o\'chiq');
+      if(c.measureText(lb).width>mw+4*u)lb='🎥 '+t.toFixed(2)+'s';
+      c.fillText(lb,mx+2*u,my-11*u);
+      c.restore();
+      v3PipR={x:mx,y:my,w:mw,h:mh};
+    }
   }
   // ── Yordam
   c.save();c.fillStyle='rgba(255,255,255,.42)';c.font=`500 ${Math.round(11*u)}px Inter,sans-serif`;c.textBaseline='alphabetic';
-  const hl="Surish = aylantirish · Shift / o'ng tugma = siljitish · G'ildirak = yaqinlashtirish · 2× bosish = sig'dirish";
-  const hl2=v3Giz?"Rangli o'qni surish = aniq X / Y / Z bo'ylab ko'chirish · plastinani surish = chuqurlik (Z)":"Plastinani bosing = tanlash · kamerani bosing = kamera o'qlari · ◆ = o'sha vaqtga o'tish";
+  const hl="🖱 Surish = ko'rinishni aylantirish · Shift / o'ng tugma = siljitish · G'ildirak = yaqinlashtirish · 2× bosish = hammasini sig'dirish";
+  const hl2=v3Giz?(v3Giz.kind==='cam'?"🎥 Kamera tanlandi: rangli o'qni surib ko'chiring (X qizil · Y yashil · Z ko'k) → ◆ bilan yozing":"Rangli o'qni surish = aniq X / Y / Z bo'ylab · plastinani surish = oldinga / orqaga (chuqurlik)"):"Plastinani bosing = tanlash · kamerani bosing = uni surish · ◆ = o'sha vaqtga o'tish · ❓ = tushuntirish";
   c.fillText(hl,96*u,H-30*u);c.fillText(hl2,96*u,H-14*u);
   c.restore();
 }
@@ -9837,7 +10043,7 @@ function v3DrawCam(C,on,t){
   const K=(cam.kfs||[]).slice().sort((a,b)=>a.t-b.t);
   if(on&&(K.length>1||cam.tgt)){
     const D=Math.max(0.2,state.duration),N=120;
-    const pk=JSON.stringify(cam)+'|'+D+'|'+cv.width+'x'+cv.height+'|'+(cam.tgt?v3LastTex:'');
+    const pk=JSON.stringify(cam)+'|'+D+'|'+cv.width+'x'+cv.height+'|'+(cam.tgt?v3LastSL:'');
     if(pk!==v3PathKey){v3PathKey=pk;v3PathPts=[];for(let i=0;i<=N;i++){const tt=D*i/N;v3PathPts.push(camSolve(cam,camRaw(tt),tt,true).eye);}}
     const pts=v3PathPts;
     c.save();c.strokeStyle='rgba(52,211,153,.95)';c.lineWidth=2.2*u;c.beginPath();
@@ -9950,17 +10156,48 @@ function v3Ensure(){
     const a=b.dataset.a;
     if(a==='persp')v3SetView('persp');else if(a==='front')v3SetView('front');else if(a==='top')v3SetView('top');else if(a==='side')v3SetView('side');
     else if(a==='fit')v3Fit();
-    else if(a==='tex'){V3.tex=!V3.tex;v3LastTex='';}
+    else if(a==='tex'){V3.tex=!V3.tex;v3TexAll=true;}
     else if(a==='pip')V3.pip=!V3.pip;
     else if(a==='grid')V3.grid=!V3.grid;
     else if(a==='cam'){v3SelectCam();}
     else if(a==='look'){v3LookFromCam();}
+    else if(a==='kf'){const c=getCam();if(!c.on)c.on=true;saveHistory();const t=camAddKf();_camUiKey='';renderProps();renderTimeline();toast('◆ Kamera keyframe — '+t.toFixed(2)+'s');}
+    else if(a==='help'){v3ShowHelp(!(v3Help&&v3Help.style.display!=='none'));}
     saveV3();v3BarSync();seekDirty=true;
   });
+  v3Help=document.createElement('div');v3Help.id='v3Help';v3Help.style.display='none';wrap.appendChild(v3Help);
+  v3Help.addEventListener('mousedown',e=>e.stopPropagation());
+  v3Help.addEventListener('pointerdown',e=>e.stopPropagation());
+  v3Help.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;e.stopPropagation();
+    if(b.dataset.h==='ok'){v3ShowHelp(false);try{localStorage.setItem('gm_v3help','1');}catch(x){}}
+    else if(b.dataset.h==='back'){v3ShowHelp(false);setView3D(false);}});
   v3cv.addEventListener('pointerdown',v3Down);
   v3cv.addEventListener('pointermove',v3HoverMove);
   v3cv.addEventListener('dblclick',e=>{e.preventDefault();e.stopPropagation();v3Fit();seekDirty=true;});
   v3cv.addEventListener('contextmenu',e=>e.preventDefault());
+  v3BarSync();
+}
+let v3Help=null;
+function v3ShowHelp(on){
+  if(!v3Help)return;
+  if(on){
+    const sw=(c,dash)=>`<i class="lg" style="${dash?`border:2px dashed ${c};background:transparent`:`background:${c}`}"></i>`;
+    v3Help.innerHTML=`<div class="vh-h">🧊 3D sahna — bu nima?</div>
+      <div class="vh-p">Bu — sahnangizni <b>yon tomondan</b> ko'rish oynasi (faqat tahrir uchun, eksportga ta'sir qilmaydi). Kamera qayerda turgani, nimaga qarayotgani va elementlar qanchalik chuqurlikda ekanini shu yerda ko'rasiz.</div>
+      <div class="vh-l">${sw('rgba(255,255,255,.7)',1)} <span><b>Oq punktir ramka</b> — KADR (ekran tekisligi, Z = 0)</span></div>
+      <div class="vh-l">${sw('#8b5cf6')} <span><b>Rangli plastinalar</b> — elementlaringiz. Oldinga/orqaga turgani = <b>Chuqurlik Z</b></span></div>
+      <div class="vh-l">${sw('#d7dce6')} <span><b>Kamera korpusi</b> + <b style="color:#7dd3fc">ko'k piramida</b> — kamera ko'rayotgan hudud</span></div>
+      <div class="vh-l">${sw('#34d399')} <span><b>Yashil chiziq va ◆</b> — kameraning harakat yo'li va keyframe'lari</span></div>
+      <div class="vh-l">${sw('#38bdf8')} <span><b>📺 O'ng pastdagi monitor</b> — kamera hozir aynan nimani suratga olayotgani</span></div>
+      <div class="vh-h2">Qanday ishlatiladi</div>
+      <ul><li>Bo'sh joyni <b>surish</b> — ko'rinishni aylantirish · <b>g'ildirak</b> — yaqinlashtirish · <b>Shift</b>+surish — siljitish</li>
+      <li><b>Plastinani surish</b> — elementni oldinga/orqaga (chuqurlik) ko'chirish</li>
+      <li><b>Kamerani bosing</b> → rangli X/Y/Z o'qlarini surib kamerani ko'chiring → <b>◆</b> bilan yozing</li>
+      <li><b>◆ nuqtani bosing</b> — o'sha vaqtga o'tish; surish — kamera yo'lini o'zgartirish</li>
+      <li><b>Monitorni bosing</b> — oddiy kadr ko'rinishiga qaytish</li></ul>
+      <div class="vh-b"><button data-h="ok" class="pri">Tushunarli</button><button data-h="back">🎬 Kadrga qaytish</button></div>`;
+    v3Help.style.display='block';
+  }else v3Help.style.display='none';
   v3BarSync();
 }
 function v3BarSync(){
@@ -9975,10 +10212,13 @@ function v3BarSync(){
     B('fit','⤢','', 'Hammasini sig\'dirish (2× bosish ham)')+
     B('look','👁','', 'Ko\'rinishni kamera ortidan qaratish')+
     B('cam','🎥',v3Sel==='cam','Kamerani tanlash — X/Y/Z o\'qlari bilan surish')+
+    B('kf','◆',!!camKfAt(),'Kamera keyframe — playhead joyiga (kamerani surgach bosing)')+
     '<span class="sep"></span>'+
     B('tex','🖼',V3.tex,'Plastinalarda haqiqiy tasvir')+
     B('pip','📺',V3.pip,'Kamera monitori')+
-    B('grid','▦',V3.grid,'Pol setkasi');
+    B('grid','▦',V3.grid,'Pol setkasi')+
+    '<span class="sep"></span>'+
+    B('help','❓',!!(v3Help&&v3Help.style.display!=='none'),'Bu oynada nima nima? — qisqa tushuntirish');
 }
 function v3SetView(v){
   V3.view=v;
@@ -10207,16 +10447,20 @@ function setView3D(on){
   v3Ensure();
   document.body.classList.toggle('v3on',view3D);
   const b=document.getElementById('btn3DScene');
-  if(b){b.classList.toggle('on',view3D);b.textContent=view3D?'🎬 Kamera ko\'rinishi':'🧊 3D sahna';}
+  if(b){b.classList.toggle('on',view3D);b.textContent=view3D?'🎬 Kadrga qaytish':'🧊 3D sahna';
+    b.title=view3D?'Oddiy kadr (kamera) ko\'rinishiga qaytish':'3D sahna — elementlar va kamerani yon tomondan ko\'rish';}
+  try{camHudSync(true);}catch(e){}
   try{localStorage.setItem('gm_v3on',view3D?'1':'0');}catch(e){}
-  v3LastComp='';v3LastTex='';
+  v3LastComp='';v3TexAll=true;v3LastView='';v3PipNeed=true;v3PipSig='';
   seekDirty=true;
   if(view3D){
     if(!v3Fit._done){try{v3Fit();}catch(e){}v3Fit._done=true;}
     v3BarSync();
-    toast('🧊 3D sahna — surib aylantiring · plastina yoki kamerani bosib X/Y/Z o\'qlari bilan suring');
+    let seen=false;try{seen=localStorage.getItem('gm_v3help')==='1';}catch(e){}
+    if(!seen)v3ShowHelp(true);
+    else toast('🧊 3D sahna — surib aylantiring · plastina yoki kamerani bosib suring · ❓ — tushuntirish');
   }else{
-    v3Sel=null;
+    v3Sel=null;v3ShowHelp(false);
     try{render();}catch(e){}
   }
 }
@@ -10232,19 +10476,19 @@ function camRanges(){
 function camSliders(c){
   const R=camRanges();
   if(c.type==='free')return [
-    ['cmEx','ex','📍 Joy X',-R.pos,R.pos,1,''],['cmEy','ey','📍 Joy Y (− = yuqori)',-R.pos,R.pos,1,''],
-    ['cmEz','ez','📍 Joy Z (chuqurlik)',R.ez[0],R.ez[1],1,''],
-    ['cmSw','sw',c.tgt?'↔ Pan (nishondan qo\'shimcha)':'↔ Pan (chapga-o\'ngga burilish)',-180,180,0.5,'°'],
-    ['cmTi','ti',c.tgt?'↕ Tilt (nishondan qo\'shimcha)':'↕ Tilt (yuqoriga-pastga)',-89,89,0.5,'°'],
+    ['cmEx','ex','↔ Joyi: chapga (−) · o\'ngga (+)',-R.pos,R.pos,1,''],['cmEy','ey','↕ Joyi: tepaga (−) · pastga (+)',-R.pos,R.pos,1,''],
+    ['cmEz','ez','⤢ Joyi: orqaga (−) · oldinga (+)',R.ez[0],R.ez[1],1,''],
+    ['cmSw','sw',c.tgt?'↔ Burilish (nishondan qo\'shimcha)':'↔ Burilish: chapga · o\'ngga (pan)',-180,180,0.5,'°'],
+    ['cmTi','ti',c.tgt?'↕ Qarash (nishondan qo\'shimcha)':'↕ Qarash: pastga · tepaga (tilt)',-89,89,0.5,'°'],
   ];
   return [
-    ['cmSw','sw','↔ Orbit (chap-o\'ng)',-180,180,0.5,'°'],['cmTi','ti','↕ Orbit (tepa-past)',-90,90,0.5,'°'],
-    ['cmDz','dist','⤢ Dolly (− = yaqinlashadi)',R.dist[0],R.dist[1],1,''],
-    ['cmX','x',c.tgt?'🎯 Nishondan siljish X':'🎯 Nishon X (pan)',-R.pos,R.pos,1,''],['cmY','y',c.tgt?'🎯 Nishondan siljish Y':'🎯 Nishon Y (pan)',-R.pos,R.pos,1,''],
-    ['cmZ','z','🎯 Nishon Z (chuqurlik)',-R.z,R.z,1,''],
+    ['cmX','x',c.tgt?'↔ Nishondan chapga · o\'ngga':'↔ Surish: chapga (−) · o\'ngga (+)',-R.pos,R.pos,1,''],
+    ['cmY','y',c.tgt?'↕ Nishondan tepaga · pastga':'↕ Surish: tepaga (−) · pastga (+)',-R.pos,R.pos,1,''],
+    ['cmDz','dist','⤢ Yaqinlashish (−) · uzoqlashish (+)',R.dist[0],R.dist[1],1,''],
+    ['cmSw','sw','🌀 Aylanib qarash: chap · o\'ng',-180,180,0.5,'°'],['cmTi','ti','🌀 Aylanib qarash: tepa · past',-90,90,0.5,'°'],
   ];
 }
-const CAM_SL_COMMON=[['cmRl','roll','⟲ Roll',-180,180,0.5,'°'],['cmZm','zoom','🔍 Zoom (2D)',0.2,4,0.01,'%']];
+const CAM_SL_COMMON=[['cmRl','roll','⟲ Qiyshaytirish',-180,180,0.5,'°'],['cmZm','zoom','🔍 Zoom',0.2,4,0.01,'%']];
 function camSlHTML(s,V){
   const [id,key,lab,mn,mx,st,unit]=s;
   const v=V[key]??0;
@@ -10256,54 +10500,107 @@ function camLayerOpts(sel){
   const opts=state.layers.filter(l=>l.type!=='audio').map(l=>`<option value="${l.id}" ${String(sel)===String(l.id)?'selected':''}>${escapeHtml(layerName(l)).slice(0,32)}</option>`).join('');
   return opts;
 }
+/* ❓ Qo'llanma ochiq/yopiq holati eslab qolinadi (birinchi marta — ochiq) */
+function camGuideOpen(){try{return localStorage.getItem('gm_camGuide')!=='0';}catch(e){return true;}}
+function camAutoOn(){return getCam().autoKf!==false;}
+/* Playhead'dan oldingi / keyingi kamera ◆ */
+function camKfNav(dir){
+  const K=(getCam().kfs||[]).map(k=>k.t).sort((a,b)=>a-b);
+  if(!K.length)return null;
+  const t=state.time;
+  const n=dir>0?K.find(x=>x>t+0.01):[...K].reverse().find(x=>x<t-0.01);
+  return n===undefined?null:n;
+}
+function camGoTime(t){
+  state.time=clamp(t,0,state.duration);camClearPend();seekDirty=true;syncTimeUI(true);_camUiKey='';
+  renderProps();renderTimeline();
+}
 function camSection(){
   const c=getCam();
   const n=(c.kfs||[]).length;
   const V=camValues(state.time);
-  const onKf=!!camKfAt();
+  const kAt=camKfAt();
+  const onKf=!!kAt;
   const pend=camPendCount();
   const kfList=(c.kfs||[]).slice().sort((a,b)=>a.t-b.t);
   const free=c.type==='free';
   const sl=camSliders(c);
   const lensOn=free||!!c.flOn;
   const fl=V.fl||CAM_FL_DEF;
+  const auto=camAutoOn();
+  const tS=state.time.toFixed(2);
+  const prv=camKfNav(-1), nxt=camKfNav(1);
+  // ── Holat kartasi: hozir nima bo'ladi — oddiy tilda
+  let st;
+  if(!n)st=`<b>⏸ Kamera hozir harakatsiz</b> — bitta holatda turibdi.<br>Harakat uchun: <b>1)</b> ◆ bosing · <b>2)</b> playheadni keyinroqqa suring · <b>3)</b> kamerani o'zgartiring${auto?' — ◆ o\'zi qo\'shiladi':' va yana ◆ bosing'}.`;
+  else if(onKf)st=`<b>◆ ${kAt.t.toFixed(2)}s dagi keyframe ustidasiz</b> — o'zgarishlar shu nuqtaga yoziladi.`;
+  else if(auto)st=`<b>⏺ ${tS}s</b> — kamerani o'zgartirsangiz, shu vaqtga <b>yangi ◆ o'zi qo'shiladi</b>.`;
+  else if(pend)st=`⏳ <b>${pend} ta o'zgarish</b> hali yozilmagan — <b>◆ Keyframe</b> ni bosing (aks holda playhead surilganda yo'qoladi).`;
+  else st=`Playhead keyframe'lar orasida (${tS}s). O'zgartirib, <b>◆ Keyframe</b> bilan yozing.`;
+  const guide=`<details class="cam-guide" ${camGuideOpen()?'open':''}><summary>❓ Kamera qanday ishlaydi? <span>— 30 soniyada</span></summary><div class="cg-in">
+      <p>🎬 <b>Kamera — tomoshabinning ko'zi.</b> Elementlar sahnada o'z joyida turadi, kamera esa ularga qarab <b>suriladi, yaqinlashadi, aylanadi</b>. Eksportda aynan kamera ko'rgan kadr chiqadi.</p>
+      <ol>
+        <li>Playheadni <b>boshiga</b> qo'ying, kamerani boshlang'ich holatga keltiring → <b>◆ Keyframe</b>.</li>
+        <li>Playheadni <b>keyinroqqa</b> suring (masalan 3s).</li>
+        <li>Kamerani o'zgartiring (slayder yoki sahnada <b>🎥 asbob</b>) — ◆ o'zi qo'shiladi. <b>▶</b> bosing: kamera 1-nuqtadan 2-nuqtaga silliq uchadi.</li>
+      </ol>
+      <p>🧱 <b>3D chuqurlik:</b> elementning <b>Chuqurlik Z</b> qiymati (element panelida) uni kameradan uzoqlashtiradi (+) yoki yaqinlashtiradi (−). Kamera harakatlanganda yaqin narsalar tez, uzoqdagilar sekin siljiydi — haqiqiy 3D hissi.</p>
+      <p>🧊 <b>3D sahna</b> — hammasini yondan ko'rish: oq ramka = kadr, ko'k piramida = kamera ko'rayotgan hudud, yashil chiziq = kamera yo'li.</p>
+      <p>⚡ Eng oson boshlash — pastdagi <b>🎬 Tayyor harakatlar</b>dan birini bosing.</p>
+    </div></details>`;
+  const presets=`<div class="field cam-pre"><label>🎬 Tayyor harakatlar — 1 bosishda</label>
+    <div class="row2" id="cmPresets">
+      <button data-p="push">🎬 Ichkariga kirish</button><button data-p="orbit">🌀 Aylanib o'tish</button>
+      <button data-p="truck">↔ Yonlama suzish</button><button data-p="crane">🏗 Ko'tarilish</button>
+      <button data-p="drift">🍃 Parallaks suzish</button><button data-p="fly">✈️ Uchib o'tish</button>
+      <button data-p="vertigo">🌀 Vertigo</button><button data-p="hand">📳 Qo'l kamera</button>
+    </div></div>`;
   return sec('🎥 Sahna kamerasi (3D)',`
-    <label class="chk"><input type="checkbox" id="cmOn" ${c.on?'checked':''}> Kamerani yoqish</label>
-    <div class="hintline">Kamera butun sahnani 3D da suratga oladi. Har qatlamning <b>Chuqurlik Z</b> qiymati — uning fazodagi joyi: kamera harakatlanganda yaqin va uzoq qatlamlar har xil tezlikda siljiydi (haqiqiy parallaks). <b>🧊 3D sahna</b> — hammasini Fusion'dagidek fazoda ko'rish va surish.</div>
-    ${c.on?`
-    <div class="field"><label>Kamera turi</label>
-      <div class="seg" id="cmType">
-        <button data-t="orbit" class="${!free?'on':''}" style="font-size:12px">🌀 Orbit</button>
-        <button data-t="free" class="${free?'on':''}" style="font-size:12px">✈️ Erkin (Fusion)</button>
-      </div></div>
-    <div class="hintline">${free?'✈️ <b>Erkin kamera</b> — fazodagi aniq joyda turadi (X/Y/Z) va o\'zi buriladi (Pan/Tilt/Roll). Sahna ichidan uchib o\'tish uchun.':'🌀 <b>Orbit</b> — kamera nishon nuqtasi atrofida aylanadi va yaqinlashadi. Mahsulot/kartani aylanib ko\'rsatish uchun.'} Turni almashtirganda kadr o'zgarmaydi.</div>
-    <div class="field"><label>🎯 Nishon (Point of Interest)</label>
-      <select id="cmTgt"><option value="">— yo'q (qo'lda) —</option>${camLayerOpts(c.tgt)}</select></div>
-    <div class="kf-banner" style="${n?'':'display:none'}">
-      ${onKf?'◆ Playhead <b>keyframe ustida</b> — o\'zgarishlar to\'g\'ridan-to\'g\'ri shu nuqtaga yoziladi'
-            :(pend?`⏳ <b>${pend} ta o\'zgarish</b> yozilishini kutmoqda — <b>◆ Kamera keyframe</b> ni bosing`
-                  :'Playhead keyframe\'lar orasida. Slayderni suring → natija darhol ko\'rinadi → ◆ bilan yozing')}
+    <label class="cam-switch ${c.on?'on':''}"><input type="checkbox" id="cmOn" ${c.on?'checked':''}><span class="cs-t">🎥 Kamera</span><span class="cs-s">${c.on?'YOQIQ':'O\'CHIQ'}</span></label>
+    ${guide}
+    ${!c.on?`<div class="hintline">Kamera o'chiq — kadr oddiy (tekis) ko'rinadi. Yoqing yoki tayyor harakatlardan birini bosing — kamera o'zi yoqiladi.</div>${presets}`:`
+    <div class="cam-state ${onKf?'kf':(auto&&n?'auto':'')}">${st}</div>
+    <div class="cam-kfbar">
+      <button id="cmKfPrev" title="Oldingi ◆" ${prv===null?'disabled':''}>◀</button>
+      <button id="cmKf" class="cam-kfmain" title="Playhead joyiga (${tS}s) kamera keyframe" style="${pend?'outline:2px solid var(--accent2);':''}">◆ ${onKf?'Yangilash':'Keyframe'}${pend?' ('+pend+')':''}</button>
+      <button id="cmKfNext" title="Keyingi ◆" ${nxt===null?'disabled':''}>▶</button>
+      <button id="cmKfDel" title="Shu ◆ ni o'chirish" ${onKf?'':'disabled'}>✕</button>
     </div>
+    <label class="chk"><input type="checkbox" id="cmAuto" ${auto?'checked':''}> ⏺ Avto ◆ — o'zgartirsangiz playhead joyiga o'zi yoziladi (After Effects kabi)</label>
+    <div class="cam-sub">🎛 Kamerani boshqarish <span>${free?'✈️ erkin kamera':'🌀 orbit kamera'}</span></div>
     ${sl.map(s=>camSlHTML(s,V)).join('')}
     <div class="row2">${CAM_SL_COMMON.map(s=>camSlHTML(s,V)).join('')}</div>
-    <div class="row2">
-      <button id="cmKf" style="justify-content:center;${pend?'outline:2px solid var(--accent2);':''}">◆ Kamera keyframe${pend?' ('+pend+')':''}</button>
-      <button id="cmKfDel" style="justify-content:center" ${onKf?'':'disabled'}>✕ Shu nuqtani o'chirish</button>
+    <div class="row2 cam-tools">
+      <button id="cmTool" class="${camToolOn?'on':''}" title="Kadrning o'zida sichqoncha bilan kamerani boshqarish">🎥 Sahnada boshqarish${camToolOn?' ✓':''}</button>
+      <button id="cm3D" title="Sahnani yondan ko'rish — kamera, uning yo'li va elementlar chuqurligi">🧊 3D sahnada ko'rish</button>
     </div>
-    <label class="chk"><input type="checkbox" id="cmAuto" ${c.autoKf?'checked':''}> ⏺ Avto-keyframe (har o'zgarish darhol ◆ ga yoziladi)</label>
-    <div class="field"><label>Harakat uslubi (interpolatsiya)</label>
-      <select id="cmEase">${CAM_EASES.map(([v2,nm])=>`<option value="${v2}" ${(c.ease||'spline')===v2?'selected':''}>${nm}</option>`).join('')}</select></div>
-    ${n?`<div class="field"><label>◆ Keyframe'lar (${n}) — bosing = o'sha vaqtga o'tish</label>
-      ${kfList.map((k,ix)=>`<div class="kf-item">
-        <span class="cmGo" data-t="${k.t}" style="cursor:pointer;flex:1">◆ ${k.t.toFixed(2)}s · ${c.type==='free'?`joy ${Math.round(k.ex??c.ex??0)}, ${Math.round(k.ey??c.ey??0)}, ${Math.round(k.ez??c.ez??0)}`:`orbit ${Math.round(k.sw||0)}° / ${Math.round(k.ti||0)}° · dolly ${Math.round(k.dist||0)}`}</span>
-        <span class="cmDel" data-i="${ix}" style="cursor:pointer;color:#f87171">✕</span></div>`).join('')}
+    ${n?`<div class="field"><label>◆ Kamera keyframe'lari (${n}) — bosing = o'sha vaqtga o'tish</label>
+      ${kfList.map((k,ix)=>`<div class="kf-item${Math.abs(k.t-state.time)<0.05?' cur':''}">
+        <span class="cmGo" data-t="${k.t}" style="cursor:pointer;flex:1">◆ ${k.t.toFixed(2)}s · ${c.type==='free'?`joy ${Math.round(k.ex??c.ex??0)}, ${Math.round(k.ey??c.ey??0)}, ${Math.round(k.ez??c.ez??0)}`:`surish ${Math.round(k.x||0)}, ${Math.round(k.y||0)} · yaqin ${Math.round(k.dist||0)} · ${Math.round(k.sw||0)}°`}</span>
+        <span class="cmDel" data-i="${ix}" style="cursor:pointer;color:#f87171" title="O'chirish">✕</span></div>`).join('')}
+      <div class="field" style="margin-top:6px"><label>Harakat uslubi (keyframe'lar orasida)</label>
+        <select id="cmEase">${CAM_EASES.map(([v2,nm])=>`<option value="${v2}" ${(c.ease||'spline')===v2?'selected':''}>${nm}</option>`).join('')}</select></div>
     </div>`:''}
+    ${presets}
+    <button id="cmBring" style="width:100%;justify-content:center;margin-top:2px" ${state.selected?'':'disabled'} title="Tanlangan elementni kamera hozir qarab turgan joyga ko'chiradi (keyframe bo'lsa — shu vaqtga yoziladi)">📍 Tanlangan elementni kamera ko'rinishiga keltirish</button>
+    <div class="hintline">📍 Kamera boshqa joyga surilgan vaqtda qo'shilgan <b>yangi element o'zi kamera qaragan joyga</b> qo'yiladi; tanlash, surish va dastaklar ham kamera ko'rinishida aniq ishlaydi.</div>
+    <details class="sec" ${camSubOpen('pro')?'open':''} data-cs="pro"><summary>⚙ Qo'shimcha: turi, nishon, chuqurlik${c.tgt?' · 🎯':''}</summary><div class="inner">
+      <div class="field"><label>Kamera turi</label>
+        <div class="seg" id="cmType">
+          <button data-t="orbit" class="${!free?'on':''}" style="font-size:12px">🌀 Orbit</button>
+          <button data-t="free" class="${free?'on':''}" style="font-size:12px">✈️ Erkin</button>
+        </div></div>
+      <div class="hintline">${free?'✈️ <b>Erkin</b> — kamera fazodagi aniq joyda turadi (X/Y/Z) va o\'zi buriladi. Sahna ichidan uchib o\'tish uchun.':'🌀 <b>Orbit</b> — kamera bir nuqtaga qarab turadi va uning atrofida aylanadi / yaqinlashadi. Ko\'p holatlar uchun eng qulayi.'} Turni almashtirganda kadr o'zgarmaydi.</div>
+      <div class="field"><label>🎯 Nishon — kamera doim shu elementga qarasin</label>
+        <select id="cmTgt"><option value="">— yo'q —</option>${camLayerOpts(c.tgt)}</select></div>
+      ${free?'':camSlHTML(['cmZ','z','🎯 Qarash nuqtasi chuqurligi (Z)',-camRanges().z,camRanges().z,1,''],V)}
+    </div></details>
     <details class="sec" ${camSubOpen('lens')?'open':''} data-cs="lens"><summary>🔭 Ob'ektiv — ${Math.round(fl)}mm · ${Math.round(camFOV(fl))}°</summary><div class="inner">
       ${free?'':`<label class="chk"><input type="checkbox" id="cmFlOn" ${c.flOn?'checked':''}> Kamera ob'ektivi barcha qatlamlarga (aks holda qatlamning o'z perspektivasi)</label>`}
       <div class="field"><label>Fokus masofasi: <b id="cmFlV">${Math.round(fl)}</b>mm · ko'rish burchagi <b id="cmFovV">${Math.round(camFOV(fl))}</b>°</label>
         <input type="range" id="cmFl" data-ck="fl" data-def="${CAM_FL_DEF}" min="10" max="300" step="1" value="${Math.round(fl)}" ${lensOn?'':'disabled'}></div>
       <div class="seg" id="cmFlP">${[18,24,35,50,85,135,200].map(m=>`<button data-mm="${m}" style="font-size:11px" ${lensOn?'':'disabled'}>${m}</button>`).join('')}</div>
-      <div class="hintline">18–24mm — keng, perspektiv kuchli (yaqin narsalar katta). 85–200mm — tor, "siqilgan" fon. Keyframe bilan o'zgartirib + dolly = Vertigo effekti.</div>
+      <div class="hintline">18–24mm — keng, perspektiv kuchli (yaqin narsalar katta). 85–200mm — tor, "siqilgan" fon. Keyframe bilan o'zgartirib + yaqinlashish = Vertigo effekti.</div>
     </div></details>
     <details class="sec" ${camSubOpen('dof')?'open':''} data-cs="dof"><summary>🌫 Chuqurlik xiraligi (DOF)${c.dof?' · yoqiq':''}</summary><div class="inner">
       <label class="chk"><input type="checkbox" id="cmDof" ${c.dof?'checked':''}> Fokusdan tashqaridagi qatlamlar xiralashsin</label>
@@ -10321,31 +10618,18 @@ function camSection(){
         <input type="range" id="cmShf" data-def="1.2" min="0.2" max="5" step="0.1" value="${c.shkF||1.2}"></div>
       <div class="hintline">Silkinish ham ◆ keyframe'ga yoziladi — masalan zarba paytida kuchayib, keyin tinchlanadi. Eksportda aynan bir xil chiqadi.</div>
     </div></details>
-    <div class="row2">
+    <div class="row2" style="margin-top:6px">
       <button id="cmReset" style="justify-content:center">↺ Kamerani tiklash</button>
-      <button id="cmKfClr" style="justify-content:center">🗑 Keyframe'larni tozalash</button>
+      <button id="cmKfClr" style="justify-content:center" ${n?'':'disabled'}>🗑 Barcha ◆ ni tozalash</button>
     </div>
-    <div class="field" style="margin-top:8px"><label>🎬 Tayyor kamera harakatlari</label>
-    <div class="row2" id="cmPresets">
-      <button data-p="orbit">🌀 Orbit</button><button data-p="push">🎬 Ichkariga kirish</button>
-      <button data-p="fly">✈️ Uchib o'tish</button><button data-p="crane">🏗 Kran (ko'tarilish)</button>
-      <button data-p="truck">↔ Yonlama (truck)</button><button data-p="vertigo">🌀 Vertigo (dolly-zoom)</button>
-      <button data-p="drift">🍃 Parallaks suzish</button><button data-p="hand">📳 Qo'l kamera</button>
-    </div></div>
-    <button id="cmBring" style="width:100%;justify-content:center;margin-top:6px" ${state.selected?'':'disabled'} title="Tanlangan elementni kamera hozir qarab turgan joyga ko'chiradi (keyframe bo'lsa — shu vaqtga yoziladi)">📍 Tanlangan elementni kamera ko'rinishiga keltirish</button>
-    <div class="hintline">📍 Kamera ◆ bilan boshqa joyga surilgan bo'lsa — o'sha vaqtda qo'shilgan <b>yangi element avtomatik kamera qaragan joyga</b> qo'yiladi. Sahnada tanlash, surish, o'lcham va burilish dastaklari ham kamera ko'rinishida aniq ishlaydi. Element joyi — sahnaning o'zida, kamera esa unga qaraydi.</div>
-    <div class="row2">
-      <button id="cm3D" style="justify-content:center">🧊 3D sahnada ko'rish</button>
-      <button id="cmTool" style="justify-content:center;${camToolOn?'outline:2px solid var(--accent2);':''}">🎥 Kamera asbobi${camToolOn?' ✓':''}</button>
-    </div>
-    <div class="hintline">🎥 <b>Kamera asbobi</b> yoqilsa — kadrning o'zida: surish = ${free?'atrofga qarash':'orbit'}, Shift+surish = siljitish, g'ildirak = ${free?'oldinga/orqaga uchish':'dolly'}, Alt+surish = ob'ektiv (zoom).</div>
-    `:''}
+    `}
   `,false);
 }
 const _camSubOpen={};
 function camSubOpen(k){return !!_camSubOpen[k];}
 let _camUiKey='';
 function syncCamUI(){
+  try{camHudSync();}catch(e){}
   const box=document.getElementById('props');
   if(!box||!document.getElementById('cmOn'))return;
   const V=camValues(state.time);
@@ -10379,7 +10663,7 @@ function bindCam(){
       _camUiKey='';seekDirty=true;
       if(camPendCount()!==was)renderProps();
     };
-    inp.onchange=()=>{saveHistory();if(c.autoKf)renderProps();};
+    inp.onchange=()=>{saveHistory();if(camAutoOn()||camPendCount()){renderProps();renderTimeline();}};
   });
   box.querySelectorAll('details[data-cs]').forEach(d=>d.addEventListener('toggle',()=>{_camSubOpen[d.dataset.cs]=d.open;}));
   const ty=g('cmType');
@@ -10397,7 +10681,10 @@ function bindCam(){
     if(id){const L=state.layers.find(x=>String(x.id)===String(id));if(L)toast('🎯 Kamera endi "'+layerName(L)+'" ga qaraydi — u qayerga borsa, kamera ham kuzatadi');}
     _camUiKey='';renderProps();seekDirty=true;
   };
-  const au=g('cmAuto');if(au)au.onchange=e=>{c.autoKf=e.target.checked;toast(c.autoKf?'⏺ Avto-keyframe yoqildi':'Avto-keyframe o\'chirildi');};
+  const au=g('cmAuto');if(au)au.onchange=e=>{c.autoKf=!!e.target.checked;renderProps();toast(c.autoKf?'⏺ Avto ◆ yoqildi — o\'zgarishlar playhead joyiga o\'zi yoziladi':'Avto ◆ o\'chirildi — o\'zgarishni ◆ tugmasi bilan yozasiz');};
+  const kp=g('cmKfPrev');if(kp)kp.onclick=()=>{const t=camKfNav(-1);if(t!==null)camGoTime(t);};
+  const kn=g('cmKfNext');if(kn)kn.onclick=()=>{const t=camKfNav(1);if(t!==null)camGoTime(t);};
+  const gd=box.querySelector('details.cam-guide');if(gd)gd.addEventListener('toggle',()=>{try{localStorage.setItem('gm_camGuide',gd.open?'1':'0');}catch(e){}});
   const fo=g('cmFlOn');if(fo)fo.onchange=e=>{saveHistory();c.flOn=e.target.checked;renderProps();seekDirty=true;};
   const fp=g('cmFlP');if(fp)fp.querySelectorAll('button').forEach(b=>b.onclick=()=>{saveHistory();camSet('fl',+b.dataset.mm);_camUiKey='';renderProps();seekDirty=true;});
   const dof=g('cmDof');if(dof)dof.onchange=e=>{saveHistory();c.dof=e.target.checked;if(c.dof&&!(c.ap>0)&&!(c.kfs||[]).some(k=>k.ap>0))c.ap=40;_camSubOpen.dof=true;renderProps();seekDirty=true;};
@@ -10410,7 +10697,8 @@ function bindCam(){
   const es=g('cmEase');
   if(es)es.onchange=e=>{c.ease=e.target.value;seekDirty=true;toast('🎥 Harakat uslubi: '+e.target.selectedOptions[0].textContent);};
   const kf=g('cmKf');
-  if(kf)kf.onclick=()=>{saveHistory();const t=camAddKf();_camUiKey='';renderProps();renderTimeline();seekDirty=true;toast('◆ Kamera keyframe — '+t.toFixed(2)+'s');};
+  if(kf)kf.onclick=()=>{saveHistory();const n0=(c.kfs||[]).length;const t=camAddKf();_camUiKey='';renderProps();renderTimeline();seekDirty=true;
+    toast('◆ Kamera keyframe — '+t.toFixed(2)+'s'+(n0===0?' · endi playheadni suring va kamerani o\'zgartiring — 2-nuqta o\'zi qo\'shiladi':''));};
   const kd=g('cmKfDel');
   if(kd)kd.onclick=()=>{
     const k=camKfAt();
@@ -10469,8 +10757,10 @@ function camPreset(p){
 
 /* ═══════════════════════════════════════════════════════════════════════════
    🎥 KAMERA ASBOBI — kadrning o'zida kamerani boshqarish (AE: Orbit/Track/Dolly)
+   Rejim tugmalari sahnadagi panelda: 🌀 Aylantirish · ✋ Surish · ⤢ Yaqinlash · 🔭 Ob'ektiv
+   (Shift = surish, Alt = ob'ektiv, g'ildirak = yaqinlash — tezkor yo'llar sifatida qoladi)
    ═══════════════════════════════════════════════════════════════════════════ */
-let camToolOn=false;
+let camToolOn=false, camToolMode='orbit', _camHudKey='';
 function setCamTool(on){
   camToolOn=!!on;
   const c=getCam();
@@ -10478,8 +10768,55 @@ function setCamTool(on){
   const b=document.getElementById('btnCamTool');
   if(b)b.classList.toggle('on',camToolOn);
   if(cv)cv.style.cursor=camToolOn?'move':'';
-  renderProps();seekDirty=true;
-  toast(camToolOn?'🎥 Kamera asbobi: surish = '+(c.type==='free'?'qarash':'orbit')+' · Shift = siljitish · g\'ildirak = '+(c.type==='free'?'uchish':'dolly')+' · Alt = ob\'ektiv':'🎥 Kamera asbobi o\'chirildi');
+  renderProps();renderTimeline();seekDirty=true;camHudSync(true);
+  if(camToolOn)toast('🎥 Kamera asbobi: yuqoridagi tugmalardan amalni tanlang va kadrni sichqoncha bilan suring');
+  else toast('🎥 Kamera asbobi yopildi — endi elementlarni tanlab surasiz');
+}
+const CAM_MODES=[['orbit','🌀','Aylantirish','Kadrni surib kamerani aylantiring (orbit)','Qarash','Kadrni surib atrofga qarang (burilish)'],
+  ['track','✋','Surish','Kamerani chapga-o\'ngga / tepaga-pastga suradi'],
+  ['dolly','⤢','Yaqinlash','Yuqoriga surish = yaqinlashadi, pastga = uzoqlashadi'],
+  ['lens','🔭','Ob\'ektiv','Yuqoriga = keng burchak, pastga = tor (zoom-ob\'ektiv)']];
+function camHudSync(force){
+  const wrap=document.getElementById('stageWrap');if(!wrap)return;
+  let h=document.getElementById('camHud');
+  if(!h){
+    h=document.createElement('div');h.id='camHud';wrap.appendChild(h);
+    h.addEventListener('mousedown',e=>e.stopPropagation());
+    h.addEventListener('pointerdown',e=>e.stopPropagation());
+    h.addEventListener('click',e=>{
+      const b=e.target.closest('button');if(!b)return;e.stopPropagation();
+      if(b.dataset.m){camToolMode=b.dataset.m;camHudSync(true);return;}
+      const a=b.dataset.a;
+      if(a==='kf'){saveHistory();const t=camAddKf();_camUiKey='';renderProps();renderTimeline();seekDirty=true;camHudSync(true);toast('◆ Kamera keyframe — '+t.toFixed(2)+'s');}
+      else if(a==='prev'||a==='next'){const t=camKfNav(a==='next'?1:-1);if(t!==null)camGoTime(t);camHudSync(true);}
+      else if(a==='off')setCamTool(false);
+    });
+  }
+  // 🎥 tugmasida holat: kamera yoqiq bo'lsa ◆ soni ko'rinadi
+  const c=getCam(),n=(c.kfs||[]).length;
+  const bt=document.getElementById('btnCamTool');
+  if(bt){const lab=c.on?('🎥 Kamera'+(n?' · ◆'+n:' · yoqiq')):'🎥 Kamera';if(bt.textContent!==lab)bt.textContent=lab;}
+  const on=camToolOn&&!view3D;
+  const kAt=camKfAt();
+  const key=[on,camToolMode,c.type,n,kAt?kAt.t:-1,camKfNav(-1),camKfNav(1),camAutoOn()].join('|');
+  if(!force&&key===_camHudKey)return;
+  _camHudKey=key;
+  h.style.display=on?'flex':'none';
+  if(!on)return;
+  h.style.left=(bt&&bt.offsetWidth&&innerWidth>820)?(bt.offsetLeft+bt.offsetWidth+8)+'px':'';
+  const free=c.type==='free';
+  const M=CAM_MODES.map(([m,ic,lab,ti,flab,fti])=>`<button data-m="${m}" class="${camToolMode===m?'on':''}" title="${(free&&fti)||ti}">${ic} <span>${(free&&flab)||lab}</span></button>`).join('');
+  const cur=CAM_MODES.find(x=>x[0]===camToolMode)||CAM_MODES[0];
+  const tip=camToolMode==='orbit'?(free?'Kadrni suring — kamera atrofga qaraydi':'Kadrni suring — kamera markaz atrofida aylanadi')
+    :camToolMode==='track'?'Kadrni suring — kamera chapga-o\'ngga, tepaga-pastga siljiydi'
+    :camToolMode==='dolly'?'Yuqoriga surish — yaqinlashadi · pastga — uzoqlashadi'
+    :'Yuqoriga — keng ob\'ektiv · pastga — tor (zoom)';
+  h.innerHTML=`<div class="ch-row">${M}<i class="sep"></i>
+      <button data-a="prev" title="Oldingi ◆" ${camKfNav(-1)===null?'disabled':''}>◀</button>
+      <button data-a="kf" class="kf ${kAt?'on':''}" title="Playhead joyiga kamera keyframe">◆ <span>${kAt?'Yangilash':'Keyframe'}</span></button>
+      <button data-a="next" title="Keyingi ◆" ${camKfNav(1)===null?'disabled':''}>▶</button>
+      <i class="sep"></i><button data-a="off" title="Kamera asbobini yopish — elementlarni tanlashga qaytish">✕</button></div>
+    <div class="ch-tip">${cur[1]} ${tip}${n&&camAutoOn()?' · ◆ o\'zi yoziladi':(n?'':' · harakat uchun: ◆ → vaqtni suring → yana o\'zgartiring')}</div>`;
 }
 function camToolMouse(e){
   const c=getCam();
@@ -10487,11 +10824,12 @@ function camToolMouse(e){
   const k=cv.width/Math.max(1,r.width);
   saveHistory();
   let lx=e.clientX,ly=e.clientY;
-  const mode=e.altKey?'lens':(e.shiftKey||e.button===1||e.button===2)?'track':'rot';
+  const mode=e.altKey?'lens':(e.shiftKey||e.button===1||e.button===2)?'track':camToolMode;
+  const M=Math.max(cv.width,cv.height);
   const move=ev=>{
     const dx=(ev.clientX-lx), dy=(ev.clientY-ly);lx=ev.clientX;ly=ev.clientY;
     const V=camValues(state.time), C=camAt(state.time);
-    if(mode==='rot'){
+    if(mode==='orbit'){
       if(c.type==='free'){camSet('sw',clamp(V.sw+dx*0.18,-180,180));camSet('ti',clamp(V.ti-dy*0.18,-89,89));}
       else{camSet('sw',clamp(V.sw-dx*0.3,-180,180));camSet('ti',clamp(V.ti+dy*0.3,-90,90));}
     }else if(mode==='track'){
@@ -10500,13 +10838,17 @@ function camToolMouse(e){
       const w=m3v(C.M,-dx*s,-dy*s,0);
       if(c.type==='free'){camSet('ex',V.ex+w.x);camSet('ey',V.ey+w.y);camSet('ez',V.ez+w.z);}
       else{camSet('x',V.x+w.x);camSet('y',V.y+w.y);camSet('z',(V.z||0)+w.z);}
+    }else if(mode==='dolly'){
+      const d=dy*k*1.3;
+      if(c.type==='free'){camSet('ex',V.ex-C.fwd.x*d);camSet('ey',V.ey-C.fwd.y*d);camSet('ez',V.ez-C.fwd.z*d);}
+      else camSet('dist',clamp(V.dist+d,-(C.fv*0.9),M*6));
     }else{
       if(c.type!=='free'&&!c.flOn)c.flOn=true;
       camSet('fl',clamp((V.fl||CAM_FL_DEF)*Math.exp(-dy*0.006),10,300));
     }
     _camUiKey='';seekDirty=true;try{syncCamUI();}catch(x){}
   };
-  const up=()=>{removeEventListener('mousemove',move);removeEventListener('mouseup',up);renderProps();};
+  const up=()=>{removeEventListener('mousemove',move);removeEventListener('mouseup',up);renderProps();renderTimeline();camHudSync(true);};
   addEventListener('mousemove',move);addEventListener('mouseup',up);
   e.preventDefault();
 }
@@ -10518,7 +10860,113 @@ function camToolWheel(e){
   if(c.type==='free'){camSet('ex',V.ex-C.fwd.x*d);camSet('ey',V.ey-C.fwd.y*d);camSet('ez',V.ez-C.fwd.z*d);}
   else camSet('dist',clamp(V.dist+d,-(C.fv*0.9),M*6));
   _camUiKey='';seekDirty=true;try{syncCamUI();}catch(x){}
+  clearTimeout(camToolWheel._t);camToolWheel._t=setTimeout(()=>{renderTimeline();camHudSync(true);},250);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎥 TIMELINE'DA KAMERA QATORI — ◆ nuqtalar ko'rinadi, bosish = o'sha vaqtga o'tish,
+   surish = vaqtini o'zgartirish, 2× bosish = yangi ◆, o'ng tugma / Delete = o'chirish
+   ═══════════════════════════════════════════════════════════════════════════ */
+let camSelKf=null;
+function camFocusPanel(){
+  state.selected=null;state.multi=[];
+  try{if(typeof trSel!=='undefined')trSel=null;}catch(e){}
+  try{secState['🎥 Sahna kamerasi (3D)']=true;}catch(e){}
+  if(view3D)v3Sel='cam';
+  renderLayers();renderProps();renderTimeline();seekDirty=true;
+  setTimeout(()=>{const el=document.getElementById('cmOn');if(el)el.scrollIntoView({block:'start',behavior:'smooth'});},30);
+}
+function camTimelineRow(rows,names,W){
+  const c=getCam();
+  if(!c.on)return;
+  const D=Math.max(0.01,state.duration);
+  const K=(c.kfs||[]).slice().sort((a,b)=>a.t-b.t);
+  const nm=document.createElement('div');nm.className='nm cam-nm';
+  nm.title='Kamera — bosing: kamera paneli';
+  nm.innerHTML=`<span class="nmtxt">🎥 Kamera <span style="opacity:.6">${K.length?K.length+' ◆':''}</span></span><span class="rowadd" style="display:flex"><button class="ra" title="Playhead joyiga kamera ◆ qo'yish">◆</button></span>`;
+  nm.querySelector('.ra').onclick=ev=>{ev.stopPropagation();saveHistory();const t=camAddKf();_camUiKey='';camSelKf=t;renderProps();renderTimeline();seekDirty=true;toast('◆ Kamera keyframe — '+t.toFixed(2)+'s');};
+  nm.addEventListener('click',()=>camFocusPanel());
+  names.appendChild(nm);
+  const row=document.createElement('div');row.className='tl-row tl-camrow';
+  const bar=document.createElement('div');bar.className='tl-bar cambar';
+  bar.style.left='0px';bar.style.width=W+'px';
+  bar.innerHTML=K.length>=2?'':`<span class="camlab">🎥 ${K.length?'Yana 1 ta ◆ qo\'ying (boshqa vaqtda) — shunda kamera harakatlanadi · 2× bosish = shu yerga ◆':'Kamera harakatsiz — 2× bosing: shu vaqtga ◆ qo\'yiladi'}</span>`;
+  for(let i=0;i<K.length-1;i++){
+    const sg=document.createElement('i');sg.className='camseg';
+    sg.style.left=(K[i].t/D*W)+'px';sg.style.width=Math.max(1,(K[i+1].t-K[i].t)/D*W)+'px';
+    bar.appendChild(sg);
+  }
+  K.forEach(k=>{
+    const d=document.createElement('div');
+    d.className='kfd camkf'+(camSelKf!==null&&Math.abs(camSelKf-k.t)<1e-3?' selk':'');
+    d.style.left=`calc(${k.t/D*W}px - 5px)`;
+    d.title='◆ '+k.t.toFixed(2)+'s — bosing: o\'tish · surish: vaqtini o\'zgartirish · o\'ng tugma: o\'chirish';
+    d.addEventListener('mousedown',ev=>{
+      if(ev.button!==0)return;
+      ev.stopPropagation();ev.preventDefault();
+      const x0=ev.clientX,t0=k.t;let moved=false;
+      const move=mv=>{
+        const dt=(mv.clientX-x0)/W*D;
+        if(!moved&&Math.abs(mv.clientX-x0)>3){moved=true;historyMaybe();}
+        if(!moved)return;
+        let nt=+clamp(t0+dt,0,D).toFixed(3);
+        // boshqa ◆ ustiga tushmasin
+        if((c.kfs||[]).some(o=>o!==k&&Math.abs(o.t-nt)<0.05))return;
+        k.t=nt;d.style.left=`calc(${nt/D*W}px - 5px)`;d.title='◆ '+nt.toFixed(2)+'s';
+        camPathDirty();seekDirty=true;
+      };
+      const up=()=>{
+        removeEventListener('mousemove',move);removeEventListener('mouseup',up);
+        c.kfs.sort((a,b)=>a.t-b.t);
+        camSelKf=k.t;
+        if(!moved){camGoTime(k.t);camFocusPanel();}
+        else{_camUiKey='';renderProps();renderTimeline();toast('◆ Kamera keyframe → '+k.t.toFixed(2)+'s');}
+      };
+      addEventListener('mousemove',move);addEventListener('mouseup',up);
+    });
+    d.addEventListener('contextmenu',ev=>{
+      ev.preventDefault();ev.stopPropagation();
+      saveHistory();c.kfs=c.kfs.filter(x=>x!==k);camSelKf=null;camClearPend();
+      _camUiKey='';renderProps();renderTimeline();seekDirty=true;toast('✕ Kamera keyframe o\'chirildi ('+k.t.toFixed(2)+'s)');
+    });
+    bar.appendChild(d);
+  });
+  const tAt=ev=>{const r=bar.getBoundingClientRect();return clamp((ev.clientX-r.left)/Math.max(1,r.width)*D,0,D);};
+  bar.addEventListener('mousedown',ev=>{
+    if(ev.target.classList.contains('camkf'))return;
+    ev.stopPropagation();ev.preventDefault();
+    camSelKf=null;
+    state.time=tAt(ev);camClearPend();seekDirty=true;syncTimeUI(true);
+    camFocusPanel();
+  });
+  bar.addEventListener('dblclick',ev=>{
+    if(ev.target.classList.contains('camkf'))return;
+    ev.stopPropagation();ev.preventDefault();
+    state.time=+tAt(ev).toFixed(3);camClearPend();syncTimeUI(true);
+    saveHistory();const t=camAddKf();camSelKf=t;_camUiKey='';renderProps();renderTimeline();seekDirty=true;
+    toast('◆ Kamera keyframe — '+t.toFixed(2)+'s · endi kamerani o\'zgartiring');
+  });
+  row.appendChild(bar);
+  rows.appendChild(row);
+}
+function camPathDirty(){try{v3PathKey='';}catch(e){}}
+addEventListener('keydown',e=>{
+  if(camSelKf===null||state.selected)return;
+  if(e.key!=='Delete'&&e.key!=='Backspace')return;
+  const tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'||tg.isContentEditable))return;
+  const c=getCam();const k=(c.kfs||[]).find(x=>Math.abs(x.t-camSelKf)<1e-3);
+  if(!k)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  saveHistory();c.kfs=c.kfs.filter(x=>x!==k);camSelKf=null;camClearPend();
+  _camUiKey='';renderProps();renderTimeline();seekDirty=true;toast('✕ Kamera keyframe o\'chirildi');
+},true);
+/* Esc — kamera asbobidan chiqish (elementlarni tanlashga qaytish) */
+addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||!camToolOn)return;
+  const tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'||tg.isContentEditable))return;
+  setCamTool(false);
+});
+addEventListener('resize',()=>{try{if(camToolOn)camHudSync(true);}catch(e){}});
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ✂️ OVERFLOW: HIDDEN — CSS'dagi kabi "ichidagilar chegaradan chiqmasin"
@@ -15300,7 +15748,7 @@ function nowMs_idleGrainCheck(){
 function loop(now){
   const dt=(now-lastT)/1000;lastT=now;
   // fonda kompilyatsiya bo'lgan effekt tayyor bo'ldi → kadr yangilanadi
-  try{if(PFX.poll())seekDirty=true;}catch(e){}
+  try{if(PFX.poll()){seekDirty=true;_visEpoch++;}}catch(e){}
   if(state.playing&&!__holdTime){
     state.time+=dt;
     if(state.time>=state.duration){
@@ -15319,7 +15767,7 @@ function loop(now){
   let hasLive=false;
   if(!state.playing&&!exporting&&nowMs_idleGrainCheck()){hasLive=true;}
   if(document.hidden&&!exporting){setTimeout(()=>requestAnimationFrame(loop),500);return;}
-  const calm=!state.playing&&!exporting&&(nowMs-lastInput>400)&&!seekDirty;
+  const calm=!state.playing&&!exporting&&(nowMs-lastInput>400)&&!seekDirty&&!(view3D&&__v3More);
   // ⚡ Bo'sh turganda: jonli element bo'lsa 24fps, bo'lmasa 3fps —
   // protsessor deyarli bo'shaydi, qurilma qizimaydi
   const liveGap=IS_TOUCH_DEV?100:66;
@@ -15343,6 +15791,8 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+addEventListener('mousedown',e=>{try{if(camSelKf!==null&&!(e.target.closest&&e.target.closest('.tl-camrow')))camSelKf=null;}catch(x){}},true);
+setTimeout(()=>{try{camHudSync(true);}catch(e){}},200);
 /* ⚡ Ilova ochilgach bo'sh vaqtda barcha effekt shaderlari fonda tayyorlab qo'yiladi
    (parallel kompilyatsiya qo'llansa) — keyin effekt qo'shilganda kutish ham bo'lmaydi */
 setTimeout(function preFx(){
@@ -19712,6 +20162,7 @@ function renderTimeline(){
     rows.appendChild(row);
   }
   try{trTimelineRow(rows,tlNames,W);}catch(e){console.warn('o\'tishlar qatori',e);}
+  try{camTimelineRow(rows,tlNames,W);}catch(e){console.warn('kamera qatori',e);}
   // 📜 Scrollni aynan o'z joyiga qaytaramiz (sakrash yo'q)
   if(_wrap){
     const maxT=Math.max(0,_wrap.scrollHeight-_wrap.clientHeight);
