@@ -589,6 +589,70 @@
   /* ═══ 7.5 — 🧊 3D sahna ish maydoni + 🎥 kamera asbobi ═══ */
   #btnCamTool{position:absolute; top:44px; left:46px; z-index:6; padding:5px 11px; font-size:12px;}
   #btnCamTool.on{background:#0e7490; border-color:#22d3ee; color:#fff; font-weight:600;}
+  /* ═══ 8.1 — 🎬 Sahna quruvchi ═══ */
+  .sc-addbtn{background:linear-gradient(90deg,#0e7490,#7c3aed)!important;border-color:transparent!important;color:#fff!important;font-weight:700;}
+  #scOv{position:fixed;inset:0;z-index:95;background:rgba(5,6,10,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:14px;}
+  #scOv .sc-box{width:min(860px,100%);max-height:calc(100vh - 28px);overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px 16px 14px;box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  #scOv .sc-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;}
+  #scOv .sc-head b{font-size:16px;}
+  #scOv .sc-head span{font-size:12px;color:var(--muted);flex:1;}
+  #scOv .sc-empty{font-size:12px;line-height:1.5;padding:8px 10px;border-radius:9px;background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.25);margin-bottom:10px;}
+  #scOv .sc-mapwrap{overflow:auto;max-height:min(520px,52vh);padding:6px;border-radius:12px;background:repeating-conic-gradient(rgba(255,255,255,.025) 0 25%,transparent 0 50%) 0 0/22px 22px;border:1px solid var(--border);display:flex;justify-content:center;}
+  #scOv .sc-map{display:grid;gap:8px;}
+  #scOv .sc-cell{position:relative;border-radius:9px;overflow:hidden;min-width:0;}
+  #scOv .sc-f{cursor:pointer;background:#0b0c12;border:2px solid rgba(255,255,255,.14);display:flex;align-items:flex-end;}
+  #scOv .sc-f img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  #scOv .sc-f b{position:relative;z-index:1;font-size:11px;margin:4px;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.6);max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #scOv .sc-f .sc-main{position:absolute;top:4px;left:4px;z-index:1;font-style:normal;font-size:9.5px;padding:1px 6px;border-radius:99px;background:rgba(139,92,246,.85);color:#fff;}
+  #scOv .sc-f em{position:absolute;top:4px;right:4px;z-index:1;font-style:normal;font-weight:800;font-size:12px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#22d3ee;color:#04252e;}
+  #scOv .sc-f.sel{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.25);}
+  #scOv .sc-add{border:2px dashed rgba(167,139,250,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(139,92,246,.05);}
+  #scOv .sc-add span{font-size:16px;opacity:.8;}
+  #scOv .sc-add button{font-size:10.5px;padding:3px 7px;min-width:0;width:80%;justify-content:center;}
+  #scOv .sc-act,#scOv .sc-path{margin-top:10px;padding:10px;border-radius:11px;background:var(--panel2);border:1px solid var(--border);}
+  #scOv .sc-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:6px;}
+  #scOv .sc-row:first-child{margin-top:0;}
+  #scOv input{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font:inherit;font-size:12.5px;}
+  #scOv select{font-size:12.5px;}
+  #scOv .sc-row input#scName{flex:1;min-width:120px;}
+  #scOv .sc-row input[type=color]{width:42px;height:32px;padding:2px;}
+  #scOv .sc-row input[type=number]{width:62px;}
+  #scOv .sc-row label{font-size:12px;display:flex;align-items:center;gap:5px;}
+  #scOv .sc-row button{font-size:12px;}
+  #scOv .pri{background:linear-gradient(180deg,var(--accent),#6d28d9);border-color:var(--accent);color:#fff;font-weight:700;}
+  #scOv .dang{color:#f87171;}
+  #scOv button.on{background:#0e7490;border-color:#22d3ee;color:#fff;}
+  #scOv .sc-lab{font-size:12.5px;font-weight:700;}
+  #scOv .sc-lab span{font-weight:400;color:var(--muted);font-size:11.5px;}
+  #scOv .sc-hint{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.45;}
+  #scOv .sc-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+  #boxEditHint{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 12px;border-radius:11px;
+    background:rgba(8,47,73,.9);border:1px solid rgba(34,211,238,.5);color:#cffafe;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:calc(100% - 24px);}
+  #boxEditHint button{padding:5px 12px;font-size:12px;background:#0891b2;border-color:#22d3ee;color:#fff;font-weight:700;flex:0 0 auto;}
+  /* ═══ 8.1 — ⬇ Eksport oynasi ═══ */
+  #expOv,#expProg{position:fixed;inset:0;z-index:100;background:rgba(5,6,10,.62);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;}
+  #expOv .exp-card,#expProg .exp-card{width:min(470px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px 18px 16px;box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .exp-h{font-size:17px;font-weight:800;margin-bottom:3px;}
+  .exp-sub{font-size:12px;color:var(--muted);margin-bottom:12px;font-family:"JetBrains Mono",monospace;}
+  .exp-lab{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px;}
+  .exp-q{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+  .exp-q button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 10px;text-align:left;border-radius:11px;min-width:0;}
+  .exp-q button b{font-size:12.5px;}
+  .exp-q button span{font-size:10.5px;color:var(--muted);line-height:1.3;}
+  .exp-q button i{font-style:normal;font-size:11px;font-family:"JetBrains Mono",monospace;color:#c4b5fd;margin-top:3px;}
+  .exp-q button.on,.exp-f button.on{background:rgba(139,92,246,.2);border-color:var(--accent);}
+  .exp-f{display:flex;gap:6px;}
+  .exp-f button{flex:1;justify-content:center;padding:8px 0;}
+  .exp-note{font-size:11.8px;line-height:1.55;margin-top:12px;padding:9px 11px;border-radius:10px;background:rgba(16,185,129,.08);border:1px solid rgba(52,211,153,.3);}
+  .exp-b{display:flex;gap:8px;margin-top:14px;}
+  .exp-b button{flex:1;justify-content:center;padding:10px 0;}
+  .exp-b .pri{background:linear-gradient(180deg,var(--accent),#6d28d9);border-color:var(--accent);color:#fff;font-weight:800;}
+  .exp-thumb{display:block;margin:8px auto 10px;max-width:100%;max-height:260px;border-radius:8px;background:#000;}
+  .exp-stage{font-size:12.5px;font-weight:600;margin-bottom:7px;}
+  .exp-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;}
+  .exp-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8b5cf6,#22d3ee);border-radius:99px;transition:width .2s;}
+  .exp-meta{font-size:11.5px;color:var(--muted);margin-top:7px;font-family:"JetBrains Mono",monospace;min-height:16px;}
+  @media (max-width:520px){.exp-q{grid-template-columns:1fr;}}
   /* ═══ 8.0 — 🎥 Kamera: tushunarli panel, sahna asbobi, timeline qatori, 3D yordam ═══ */
   .cam-switch{display:flex;align-items:center;gap:9px;padding:9px 11px;margin:2px 0 8px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);cursor:pointer;user-select:none;}
   .cam-switch input{accent-color:var(--accent);width:17px;height:17px;margin:0;}
@@ -661,7 +725,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.0</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.1</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -713,6 +777,7 @@
       <button id="btnAddTimer" title="Taymer — 16 xil dizayn (butun video yoki aniq soniya)">⏱ Taymer</button>
       <button id="btnKit" class="primary" title="Motion Kit — referens reel'dagi barcha elementlar + ketma-ketlik (retsept)" style="grid-column:1/-1;justify-content:center">🎬 Motion Kit</button>
       <button id="btnTrans" class="tr-addbtn" title="Premium o'tishlar — suv, blob, elastik (25 ta, jonli galereya)" style="grid-column:1/-1;justify-content:center">🌊 Premium o'tishlar</button>
+      <button id="btnScene" class="sc-addbtn" title="Sahna quruvchi — kadrning tepasi, pasti, chap va o'ngiga yangi kadrlar; kamera ular orasida uchadi" style="grid-column:1/-1;justify-content:center">🎬 Sahna (kadrlar + kamera)</button>
       <select id="tplSelect2" title="Tayyor shablonlar">
         <option value="">🧩 Shablon</option>
         <option value="carousel">🎠 3D Karusel</option>
@@ -836,6 +901,9 @@
 
 <div class="toast" id="toast"></div>
 
+<script>/*! mp4-muxer 5.2.2 — MIT License (c) 2023 Vanilagy — https://github.com/Vanilagy/mp4-muxer */
+"use strict";var Mp4Muxer=(()=>{var e=Object.defineProperty,t=Object.getOwnPropertyDescriptor,i=Object.getOwnPropertyNames,s=Object.prototype.hasOwnProperty,a=(e,t,i)=>{if(!t.has(e))throw TypeError("Cannot "+i)},r=(e,t,i)=>(a(e,t,"read from private field"),i?i.call(e):t.get(e)),n=(e,t,i)=>{if(t.has(e))throw TypeError("Cannot add the same private member more than once");t instanceof WeakSet?t.add(e):t.set(e,i)},o=(e,t,i,s)=>(a(e,t,"write to private field"),s?s.call(e,i):t.set(e,i),i),h=(e,t,i)=>(a(e,t,"access private method"),i),l={};((t,i)=>{for(var s in i)e(t,s,{get:i[s],enumerable:!0})})(l,{ArrayBufferTarget:()=>Me,FileSystemWritableFileStreamTarget:()=>Oe,Muxer:()=>Rt,StreamTarget:()=>We});var d,f,u,m,p,c,w,g,b=new Uint8Array(8),y=new DataView(b.buffer),k=e=>[(e%256+256)%256],T=e=>(y.setUint16(0,e,!1),[b[0],b[1]]),C=e=>(y.setUint32(0,e,!1),[b[1],b[2],b[3]]),v=e=>(y.setUint32(0,e,!1),[b[0],b[1],b[2],b[3]]),S=e=>(y.setUint32(0,Math.floor(e/2**32),!1),y.setUint32(4,e,!1),[b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7]]),x=e=>(y.setInt16(0,256*e,!1),[b[0],b[1]]),z=e=>(y.setInt32(0,65536*e,!1),[b[0],b[1],b[2],b[3]]),E=e=>(y.setInt32(0,2**30*e,!1),[b[0],b[1],b[2],b[3]]),A=(e,t=!1)=>{let i=Array(e.length).fill(null).map(((t,i)=>e.charCodeAt(i)));return t&&i.push(0),i},M=e=>e&&e[e.length-1],W=e=>{let t;for(let i of e)(!t||i.presentationTimestamp>t.presentationTimestamp)&&(t=i);return t},O=(e,t,i=!0)=>{let s=e*t;return i?Math.round(s):s},B=e=>{let t=e*(Math.PI/180),i=Math.cos(t),s=Math.sin(t);return[i,s,0,-s,i,0,0,0,1]},U=B(0),D=e=>[z(e[0]),z(e[1]),E(e[2]),z(e[3]),z(e[4]),E(e[5]),z(e[6]),z(e[7]),E(e[8])],j=e=>e?"object"!=typeof e?e:Array.isArray(e)?e.map(j):Object.fromEntries(Object.entries(e).map((([e,t])=>[e,j(t)]))):e,R=e=>e>=0&&e<2**32,I=(e,t,i)=>({type:e,contents:t&&new Uint8Array(t.flat(10)),children:i}),N=(e,t,i,s,a)=>I(e,[k(t),C(i),s??[]],a),V=e=>({type:"mdat",largeSize:e}),F=(e,t,i=!1)=>I("moov",null,[L(t,e),...e.map((e=>$(e,t))),i?me(e):null]),L=(e,t)=>{let i=O(Math.max(0,...t.filter((e=>e.samples.length>0)).map((e=>{const t=W(e.samples);return t.presentationTimestamp+t.duration}))),Bt),s=Math.max(...t.map((e=>e.id)))+1,a=!R(e)||!R(i),r=a?S:v;return N("mvhd",+a,0,[r(e),r(e),v(Bt),r(i),z(1),x(1),Array(10).fill(0),D(U),Array(24).fill(0),v(s)])},$=(e,t)=>I("trak",null,[P(e,t),H(e,t)]),P=(e,t)=>{let i,s=W(e.samples),a=O(s?s.presentationTimestamp+s.duration:0,Bt),r=!R(t)||!R(a),n=r?S:v;return i="video"===e.info.type?"number"==typeof e.info.rotation?B(e.info.rotation):e.info.rotation:U,N("tkhd",+r,3,[n(t),n(t),v(e.id),v(0),n(a),Array(8).fill(0),T(0),T(0),x("audio"===e.info.type?1:0),T(0),D(i),z("video"===e.info.type?e.info.width:0),z("video"===e.info.type?e.info.height:0)])},H=(e,t)=>I("mdia",null,[_(e,t),q("video"===e.info.type?"vide":"soun"),G(e)]),_=(e,t)=>{let i=W(e.samples),s=O(i?i.presentationTimestamp+i.duration:0,e.timescale),a=!R(t)||!R(s),r=a?S:v;return N("mdhd",+a,0,[r(t),r(t),v(e.timescale),r(s),T(21956),T(0)])},q=e=>N("hdlr",0,0,[A("mhlr"),A(e),v(0),v(0),v(0),A("mp4-muxer-hdlr",!0)]),G=e=>I("minf",null,["video"===e.info.type?J():K(),Q(),Z(e)]),J=()=>N("vmhd",0,1,[T(0),T(0),T(0),T(0)]),K=()=>N("smhd",0,0,[T(0),T(0)]),Q=()=>I("dinf",null,[X()]),X=()=>N("dref",0,0,[v(1)],[Y()]),Y=()=>N("url ",0,1),Z=e=>{const t=e.compositionTimeOffsetTable.length>1||e.compositionTimeOffsetTable.some((e=>0!==e.sampleCompositionTimeOffset));return I("stbl",null,[ee(e),oe(e),he(e),le(e),de(e),fe(e),t?ue(e):null])},ee=e=>N("stsd",0,0,[v(1)],["video"===e.info.type?te(Se[e.info.codec],e):ne(ze[e.info.codec],e)]),te=(e,t)=>{return I(e,[Array(6).fill(0),T(1),T(0),T(0),Array(12).fill(0),T(t.info.width),T(t.info.height),v(4718592),v(4718592),v(0),T(1),Array(32).fill(0),T(24),(i=65535,y.setInt16(0,i,!1),[b[0],b[1]])],[xe[t.info.codec](t),t.info.decoderConfig.colorSpace?re(t):null]);var i},ie={bt709:1,bt470bg:5,smpte170m:6},se={bt709:1,smpte170m:6,"iec61966-2-1":13},ae={rgb:0,bt709:1,bt470bg:5,smpte170m:6},re=e=>I("colr",[A("nclx"),T(ie[e.info.decoderConfig.colorSpace.primaries]),T(se[e.info.decoderConfig.colorSpace.transfer]),T(ae[e.info.decoderConfig.colorSpace.matrix]),k((e.info.decoderConfig.colorSpace.fullRange?1:0)<<7)]),ne=(e,t)=>I(e,[Array(6).fill(0),T(1),T(0),T(0),v(0),T(t.info.numberOfChannels),T(16),T(0),T(0),z(t.info.sampleRate)],[Ee[t.info.codec](t)]),oe=e=>N("stts",0,0,[v(e.timeToSampleTable.length),e.timeToSampleTable.map((e=>[v(e.sampleCount),v(e.sampleDelta)]))]),he=e=>{if(e.samples.every((e=>"key"===e.type)))return null;let t=[...e.samples.entries()].filter((([,e])=>"key"===e.type));return N("stss",0,0,[v(t.length),t.map((([e])=>v(e+1)))])},le=e=>N("stsc",0,0,[v(e.compactlyCodedChunkTable.length),e.compactlyCodedChunkTable.map((e=>[v(e.firstChunk),v(e.samplesPerChunk),v(1)]))]),de=e=>N("stsz",0,0,[v(0),v(e.samples.length),e.samples.map((e=>v(e.size)))]),fe=e=>e.finalizedChunks.length>0&&M(e.finalizedChunks).offset>=2**32?N("co64",0,0,[v(e.finalizedChunks.length),e.finalizedChunks.map((e=>S(e.offset)))]):N("stco",0,0,[v(e.finalizedChunks.length),e.finalizedChunks.map((e=>v(e.offset)))]),ue=e=>N("ctts",0,0,[v(e.compositionTimeOffsetTable.length),e.compositionTimeOffsetTable.map((e=>[v(e.sampleCount),v(e.sampleCompositionTimeOffset)]))]),me=e=>I("mvex",null,e.map(pe)),pe=e=>N("trex",0,0,[v(e.id),v(1),v(0),v(0),v(0)]),ce=(e,t)=>I("moof",null,[we(e),...t.map(be)]),we=e=>N("mfhd",0,0,[v(e)]),ge=e=>{let t=0,i=0,s="delta"===e.type;return i|=+s,t|=s?1:2,t<<24|i<<16},be=e=>I("traf",null,[ye(e),ke(e),Te(e)]),ye=e=>{let t=0;t|=8,t|=16,t|=32,t|=131072;let i=e.currentChunk.samples[1]??e.currentChunk.samples[0],s={duration:i.timescaleUnitsToNextSample,size:i.size,flags:ge(i)};return N("tfhd",0,131128,[v(e.id),v(s.duration),v(s.size),v(s.flags)])},ke=e=>N("tfdt",1,0,[S(O(e.currentChunk.startTimestamp,e.timescale))]),Te=e=>{let t=e.currentChunk.samples.map((e=>e.timescaleUnitsToNextSample)),i=e.currentChunk.samples.map((e=>e.size)),s=e.currentChunk.samples.map(ge),a=e.currentChunk.samples.map((t=>O(t.presentationTimestamp-t.decodeTimestamp,e.timescale))),r=new Set(t),n=new Set(i),o=new Set(s),h=new Set(a),l=2===o.size&&s[0]!==s[1],d=r.size>1,f=n.size>1,u=!l&&o.size>1,m=h.size>1||[...h].some((e=>0!==e)),p=0;return p|=1,p|=4*+l,p|=256*+d,p|=512*+f,p|=1024*+u,p|=2048*+m,N("trun",1,p,[v(e.currentChunk.samples.length),v(e.currentChunk.offset-e.currentChunk.moofOffset||0),l?v(s[0]):[],e.currentChunk.samples.map(((e,r)=>{return[d?v(t[r]):[],f?v(i[r]):[],u?v(s[r]):[],m?(n=a[r],y.setInt32(0,n,!1),[b[0],b[1],b[2],b[3]]):[]];var n}))])},Ce=(e,t)=>N("tfra",1,0,[v(e.id),v(63),v(e.finalizedChunks.length),e.finalizedChunks.map((i=>[S(O(i.startTimestamp,e.timescale)),S(i.moofOffset),v(t+1),v(1),v(1)]))]),ve=()=>N("mfro",0,0,[v(0)]),Se={avc:"avc1",hevc:"hvc1",vp9:"vp09",av1:"av01"},xe={avc:e=>e.info.decoderConfig&&I("avcC",[...new Uint8Array(e.info.decoderConfig.description)]),hevc:e=>e.info.decoderConfig&&I("hvcC",[...new Uint8Array(e.info.decoderConfig.description)]),vp9:e=>{if(!e.info.decoderConfig)return null;let t=e.info.decoderConfig;if(!t.colorSpace)throw new Error("'colorSpace' is required in the decoder config for VP9.");let i=t.codec.split("."),s=Number(i[1]),a=Number(i[2]),r=0+(Number(i[3])<<4)+Number(t.colorSpace.fullRange);return N("vpcC",1,0,[k(s),k(a),k(r),k(2),k(2),k(2),T(0)])},av1:()=>I("av1C",[129,0,0,0])},ze={aac:"mp4a",opus:"Opus"},Ee={aac:e=>{let t=new Uint8Array(e.info.decoderConfig.description);return N("esds",0,0,[v(58753152),k(32+t.byteLength),T(1),k(0),v(75530368),k(18+t.byteLength),k(64),k(21),C(0),v(130071),v(130071),v(92307584),k(t.byteLength),...t,v(109084800),k(1),k(2)])},opus:e=>{let t=3840,i=0;const s=e.info.decoderConfig?.description;if(s){if(s.byteLength<18)throw new TypeError("Invalid decoder description provided for Opus; must be at least 18 bytes long.");const e=ArrayBuffer.isView(s)?new DataView(s.buffer,s.byteOffset,s.byteLength):new DataView(s);t=e.getUint16(10,!0),i=e.getInt16(14,!0)}return I("dOps",[k(0),k(e.info.numberOfChannels),T(t),v(e.info.sampleRate),x(i),k(0)])}},Ae=(Symbol("isTarget"),class{}),Me=class extends Ae{constructor(){super(...arguments),this.buffer=null}},We=class extends Ae{constructor(e){if(super(),this.options=e,"object"!=typeof e)throw new TypeError("StreamTarget requires an options object to be passed to its constructor.");if(e.onData){if("function"!=typeof e.onData)throw new TypeError("options.onData, when provided, must be a function.");if(e.onData.length<2)throw new TypeError("options.onData, when provided, must be a function that takes in at least two arguments (data and position). Ignoring the position argument, which specifies the byte offset at which the data is to be written, can lead to broken outputs.")}if(void 0!==e.chunked&&"boolean"!=typeof e.chunked)throw new TypeError("options.chunked, when provided, must be a boolean.");if(void 0!==e.chunkSize&&(!Number.isInteger(e.chunkSize)||e.chunkSize<1024))throw new TypeError("options.chunkSize, when provided, must be an integer and not smaller than 1024.")}},Oe=class extends Ae{constructor(e,t){if(super(),this.stream=e,this.options=t,!(e instanceof FileSystemWritableFileStream))throw new TypeError("FileSystemWritableFileStreamTarget requires a FileSystemWritableFileStream instance.");if(void 0!==t&&"object"!=typeof t)throw new TypeError("FileSystemWritableFileStreamTarget's options, when provided, must be an object.");if(t&&void 0!==t.chunkSize&&(!Number.isInteger(t.chunkSize)||t.chunkSize<=0))throw new TypeError("options.chunkSize, when provided, must be a positive integer")}},Be=class{constructor(){this.pos=0,n(this,d,new Uint8Array(8)),n(this,f,new DataView(r(this,d).buffer)),this.offsets=new WeakMap}seek(e){this.pos=e}writeU32(e){r(this,f).setUint32(0,e,!1),this.write(r(this,d).subarray(0,4))}writeU64(e){r(this,f).setUint32(0,Math.floor(e/2**32),!1),r(this,f).setUint32(4,e,!1),this.write(r(this,d).subarray(0,8))}writeAscii(e){for(let t=0;t<e.length;t++)r(this,f).setUint8(t%8,e.charCodeAt(t)),t%8==7&&this.write(r(this,d));e.length%8!=0&&this.write(r(this,d).subarray(0,e.length%8))}writeBox(e){if(this.offsets.set(e,this.pos),e.contents&&!e.children)this.writeBoxHeader(e,e.size??e.contents.byteLength+8),this.write(e.contents);else{let t=this.pos;if(this.writeBoxHeader(e,0),e.contents&&this.write(e.contents),e.children)for(let t of e.children)t&&this.writeBox(t);let i=this.pos,s=e.size??i-t;this.seek(t),this.writeBoxHeader(e,s),this.seek(i)}}writeBoxHeader(e,t){this.writeU32(e.largeSize?1:t),this.writeAscii(e.type),e.largeSize&&this.writeU64(t)}measureBoxHeader(e){return 8+(e.largeSize?8:0)}patchBox(e){let t=this.pos;this.seek(this.offsets.get(e)),this.writeBox(e),this.seek(t)}measureBox(e){if(e.contents&&!e.children){return this.measureBoxHeader(e)+e.contents.byteLength}{let t=this.measureBoxHeader(e);if(e.contents&&(t+=e.contents.byteLength),e.children)for(let i of e.children)i&&(t+=this.measureBox(i));return t}}};d=new WeakMap,f=new WeakMap;var Ue=class extends Be{constructor(e){super(),n(this,w),n(this,u,void 0),n(this,m,new ArrayBuffer(65536)),n(this,p,new Uint8Array(r(this,m))),n(this,c,0),o(this,u,e)}write(e){h(this,w,g).call(this,this.pos+e.byteLength),r(this,p).set(e,this.pos),this.pos+=e.byteLength,o(this,c,Math.max(r(this,c),this.pos))}finalize(){h(this,w,g).call(this,this.pos),r(this,u).buffer=r(this,m).slice(0,Math.max(r(this,c),this.pos))}};u=new WeakMap,m=new WeakMap,p=new WeakMap,c=new WeakMap,w=new WeakSet,g=function(e){let t=r(this,m).byteLength;for(;t<e;)t*=2;if(t===r(this,m).byteLength)return;let i=new ArrayBuffer(t),s=new Uint8Array(i);s.set(r(this,p),0),o(this,m,i),o(this,p,s)};var De,je,Re,Ie,Ne,Ve,Fe,Le,$e,Pe,He,_e,qe,Ge=class extends Be{constructor(e){super(),n(this,Ve),n(this,Le),n(this,Pe),n(this,_e),n(this,De,void 0),n(this,je,[]),n(this,Re,void 0),n(this,Ie,void 0),n(this,Ne,[]),o(this,De,e),o(this,Re,e.options?.chunked??!1),o(this,Ie,e.options?.chunkSize??16777216)}write(e){r(this,je).push({data:e.slice(),start:this.pos}),this.pos+=e.byteLength}flush(){if(0===r(this,je).length)return;let e=[],t=[...r(this,je)].sort(((e,t)=>e.start-t.start));e.push({start:t[0].start,size:t[0].data.byteLength});for(let i=1;i<t.length;i++){let s=e[e.length-1],a=t[i];a.start<=s.start+s.size?s.size=Math.max(s.size,a.start+a.data.byteLength-s.start):e.push({start:a.start,size:a.data.byteLength})}for(let t of e){t.data=new Uint8Array(t.size);for(let e of r(this,je))t.start<=e.start&&e.start<t.start+t.size&&t.data.set(e.data,e.start-t.start);r(this,Re)?(h(this,Ve,Fe).call(this,t.data,t.start),h(this,_e,qe).call(this)):r(this,De).options.onData?.(t.data,t.start)}r(this,je).length=0}finalize(){r(this,Re)&&h(this,_e,qe).call(this,!0)}};De=new WeakMap,je=new WeakMap,Re=new WeakMap,Ie=new WeakMap,Ne=new WeakMap,Ve=new WeakSet,Fe=function(e,t){let i=r(this,Ne).findIndex((e=>e.start<=t&&t<e.start+r(this,Ie)));-1===i&&(i=h(this,Pe,He).call(this,t));let s=r(this,Ne)[i],a=t-s.start,n=e.subarray(0,Math.min(r(this,Ie)-a,e.byteLength));s.data.set(n,a);let o={start:a,end:a+n.byteLength};if(h(this,Le,$e).call(this,s,o),0===s.written[0].start&&s.written[0].end===r(this,Ie)&&(s.shouldFlush=!0),r(this,Ne).length>2){for(let e=0;e<r(this,Ne).length-1;e++)r(this,Ne)[e].shouldFlush=!0;h(this,_e,qe).call(this)}n.byteLength<e.byteLength&&h(this,Ve,Fe).call(this,e.subarray(n.byteLength),t+n.byteLength)},Le=new WeakSet,$e=function(e,t){let i=0,s=e.written.length-1,a=-1;for(;i<=s;){let r=Math.floor(i+(s-i+1)/2);e.written[r].start<=t.start?(i=r+1,a=r):s=r-1}for(e.written.splice(a+1,0,t),(-1===a||e.written[a].end<t.start)&&a++;a<e.written.length-1&&e.written[a].end>=e.written[a+1].start;)e.written[a].end=Math.max(e.written[a].end,e.written[a+1].end),e.written.splice(a+1,1)},Pe=new WeakSet,He=function(e){let t={start:Math.floor(e/r(this,Ie))*r(this,Ie),data:new Uint8Array(r(this,Ie)),written:[],shouldFlush:!1};return r(this,Ne).push(t),r(this,Ne).sort(((e,t)=>e.start-t.start)),r(this,Ne).indexOf(t)},_e=new WeakSet,qe=function(e=!1){for(let t=0;t<r(this,Ne).length;t++){let i=r(this,Ne)[t];if(i.shouldFlush||e){for(let e of i.written)r(this,De).options.onData?.(i.data.subarray(e.start,e.end),i.start+e.start);r(this,Ne).splice(t--,1)}}};var Je,Ke,Qe,Xe,Ye,Ze,et,tt,it,st,at,rt,nt,ot,ht,lt,dt,ft,ut,mt,pt,ct,wt,gt,bt,yt,kt,Tt,Ct,vt,St,xt,zt,Et,At,Mt,Wt,Ot=class extends Ge{constructor(e){super(new We({onData:(t,i)=>e.stream.write({type:"write",data:t,position:i}),chunked:!0,chunkSize:e.options?.chunkSize}))}},Bt=1e3,Ut=["avc","hevc","vp9","av1"],Dt=["aac","opus"],jt=["strict","offset","cross-track-offset"],Rt=class{constructor(e){if(n(this,nt),n(this,ht),n(this,dt),n(this,ut),n(this,pt),n(this,wt),n(this,bt),n(this,kt),n(this,Ct),n(this,St),n(this,zt),n(this,At),n(this,Je,void 0),n(this,Ke,void 0),n(this,Qe,void 0),n(this,Xe,void 0),n(this,Ye,null),n(this,Ze,null),n(this,et,Math.floor(Date.now()/1e3)+2082844800),n(this,tt,[]),n(this,it,1),n(this,st,[]),n(this,at,[]),n(this,rt,!1),h(this,nt,ot).call(this,e),e.video=j(e.video),e.audio=j(e.audio),e.fastStart=j(e.fastStart),this.target=e.target,o(this,Je,{firstTimestampBehavior:"strict",...e}),e.target instanceof Me)o(this,Ke,new Ue(e.target));else if(e.target instanceof We)o(this,Ke,new Ge(e.target));else{if(!(e.target instanceof Oe))throw new Error(`Invalid target: ${e.target}`);o(this,Ke,new Ot(e.target))}h(this,ut,mt).call(this),h(this,ht,lt).call(this)}addVideoChunk(e,t,i,s){if(!(e instanceof EncodedVideoChunk))throw new TypeError("addVideoChunk's first argument (sample) must be of type EncodedVideoChunk.");if(t&&"object"!=typeof t)throw new TypeError("addVideoChunk's second argument (meta), when provided, must be an object.");if(void 0!==i&&(!Number.isFinite(i)||i<0))throw new TypeError("addVideoChunk's third argument (timestamp), when provided, must be a non-negative real number.");if(void 0!==s&&!Number.isFinite(s))throw new TypeError("addVideoChunk's fourth argument (compositionTimeOffset), when provided, must be a real number.");let a=new Uint8Array(e.byteLength);e.copyTo(a),this.addVideoChunkRaw(a,e.type,i??e.timestamp,e.duration,t,s)}addVideoChunkRaw(e,t,i,s,a,n){if(!(e instanceof Uint8Array))throw new TypeError("addVideoChunkRaw's first argument (data) must be an instance of Uint8Array.");if("key"!==t&&"delta"!==t)throw new TypeError("addVideoChunkRaw's second argument (type) must be either 'key' or 'delta'.");if(!Number.isFinite(i)||i<0)throw new TypeError("addVideoChunkRaw's third argument (timestamp) must be a non-negative real number.");if(!Number.isFinite(s)||s<0)throw new TypeError("addVideoChunkRaw's fourth argument (duration) must be a non-negative real number.");if(a&&"object"!=typeof a)throw new TypeError("addVideoChunkRaw's fifth argument (meta), when provided, must be an object.");if(void 0!==n&&!Number.isFinite(n))throw new TypeError("addVideoChunkRaw's sixth argument (compositionTimeOffset), when provided, must be a real number.");if(h(this,At,Mt).call(this),!r(this,Je).video)throw new Error("No video track declared.");if("object"==typeof r(this,Je).fastStart&&r(this,Ye).samples.length===r(this,Je).fastStart.expectedVideoChunks)throw new Error(`Cannot add more video chunks than specified in 'fastStart' (${r(this,Je).fastStart.expectedVideoChunks}).`);let o=h(this,wt,gt).call(this,r(this,Ye),e,t,i,s,a,n);if("fragmented"===r(this,Je).fastStart&&r(this,Ze)){for(;r(this,at).length>0&&r(this,at)[0].decodeTimestamp<=o.decodeTimestamp;){let e=r(this,at).shift();h(this,bt,yt).call(this,r(this,Ze),e)}o.decodeTimestamp<=r(this,Ze).lastDecodeTimestamp?h(this,bt,yt).call(this,r(this,Ye),o):r(this,st).push(o)}else h(this,bt,yt).call(this,r(this,Ye),o)}addAudioChunk(e,t,i){if(!(e instanceof EncodedAudioChunk))throw new TypeError("addAudioChunk's first argument (sample) must be of type EncodedAudioChunk.");if(t&&"object"!=typeof t)throw new TypeError("addAudioChunk's second argument (meta), when provided, must be an object.");if(void 0!==i&&(!Number.isFinite(i)||i<0))throw new TypeError("addAudioChunk's third argument (timestamp), when provided, must be a non-negative real number.");let s=new Uint8Array(e.byteLength);e.copyTo(s),this.addAudioChunkRaw(s,e.type,i??e.timestamp,e.duration,t)}addAudioChunkRaw(e,t,i,s,a){if(!(e instanceof Uint8Array))throw new TypeError("addAudioChunkRaw's first argument (data) must be an instance of Uint8Array.");if("key"!==t&&"delta"!==t)throw new TypeError("addAudioChunkRaw's second argument (type) must be either 'key' or 'delta'.");if(!Number.isFinite(i)||i<0)throw new TypeError("addAudioChunkRaw's third argument (timestamp) must be a non-negative real number.");if(!Number.isFinite(s)||s<0)throw new TypeError("addAudioChunkRaw's fourth argument (duration) must be a non-negative real number.");if(a&&"object"!=typeof a)throw new TypeError("addAudioChunkRaw's fifth argument (meta), when provided, must be an object.");if(h(this,At,Mt).call(this),!r(this,Je).audio)throw new Error("No audio track declared.");if("object"==typeof r(this,Je).fastStart&&r(this,Ze).samples.length===r(this,Je).fastStart.expectedAudioChunks)throw new Error(`Cannot add more audio chunks than specified in 'fastStart' (${r(this,Je).fastStart.expectedAudioChunks}).`);let n=h(this,wt,gt).call(this,r(this,Ze),e,t,i,s,a);if("fragmented"===r(this,Je).fastStart&&r(this,Ye)){for(;r(this,st).length>0&&r(this,st)[0].decodeTimestamp<=n.decodeTimestamp;){let e=r(this,st).shift();h(this,bt,yt).call(this,r(this,Ye),e)}n.decodeTimestamp<=r(this,Ye).lastDecodeTimestamp?h(this,bt,yt).call(this,r(this,Ze),n):r(this,at).push(n)}else h(this,bt,yt).call(this,r(this,Ze),n)}finalize(){if(r(this,rt))throw new Error("Cannot finalize a muxer more than once.");if("fragmented"===r(this,Je).fastStart){for(let e of r(this,st))h(this,bt,yt).call(this,r(this,Ye),e);for(let e of r(this,at))h(this,bt,yt).call(this,r(this,Ze),e);h(this,St,xt).call(this,!1)}else r(this,Ye)&&h(this,Ct,vt).call(this,r(this,Ye)),r(this,Ze)&&h(this,Ct,vt).call(this,r(this,Ze));let e=[r(this,Ye),r(this,Ze)].filter(Boolean);if("in-memory"===r(this,Je).fastStart){let t;for(let i=0;i<2;i++){let i=F(e,r(this,et)),s=r(this,Ke).measureBox(i);t=r(this,Ke).measureBox(r(this,Xe));let a=r(this,Ke).pos+s+t;for(let e of r(this,tt)){e.offset=a;for(let{data:i}of e.samples)a+=i.byteLength,t+=i.byteLength}if(a<2**32)break;t>=2**32&&(r(this,Xe).largeSize=!0)}let i=F(e,r(this,et));r(this,Ke).writeBox(i),r(this,Xe).size=t,r(this,Ke).writeBox(r(this,Xe));for(let e of r(this,tt))for(let t of e.samples)r(this,Ke).write(t.data),t.data=null}else if("fragmented"===r(this,Je).fastStart){let t=r(this,Ke).pos,i=(e=>I("mfra",null,[...e.map(Ce),ve()]))(e);r(this,Ke).writeBox(i);let s=r(this,Ke).pos-t;r(this,Ke).seek(r(this,Ke).pos-4),r(this,Ke).writeU32(s)}else{let t=r(this,Ke).offsets.get(r(this,Xe)),i=r(this,Ke).pos-t;r(this,Xe).size=i,r(this,Xe).largeSize=i>=2**32,r(this,Ke).patchBox(r(this,Xe));let s=F(e,r(this,et));if("object"==typeof r(this,Je).fastStart){r(this,Ke).seek(r(this,Qe)),r(this,Ke).writeBox(s);let e=t-r(this,Ke).pos;r(this,Ke).writeBox({type:"free",size:e})}else r(this,Ke).writeBox(s)}h(this,zt,Et).call(this),r(this,Ke).finalize(),o(this,rt,!0)}};return Je=new WeakMap,Ke=new WeakMap,Qe=new WeakMap,Xe=new WeakMap,Ye=new WeakMap,Ze=new WeakMap,et=new WeakMap,tt=new WeakMap,it=new WeakMap,st=new WeakMap,at=new WeakMap,rt=new WeakMap,nt=new WeakSet,ot=function(e){if("object"!=typeof e)throw new TypeError("The muxer requires an options object to be passed to its constructor.");if(!(e.target instanceof Ae))throw new TypeError("The target must be provided and an instance of Target.");if(e.video){if(!Ut.includes(e.video.codec))throw new TypeError(`Unsupported video codec: ${e.video.codec}`);if(!Number.isInteger(e.video.width)||e.video.width<=0)throw new TypeError(`Invalid video width: ${e.video.width}. Must be a positive integer.`);if(!Number.isInteger(e.video.height)||e.video.height<=0)throw new TypeError(`Invalid video height: ${e.video.height}. Must be a positive integer.`);const t=e.video.rotation;if("number"==typeof t&&![0,90,180,270].includes(t))throw new TypeError(`Invalid video rotation: ${t}. Has to be 0, 90, 180 or 270.`);if(Array.isArray(t)&&(9!==t.length||t.some((e=>"number"!=typeof e))))throw new TypeError(`Invalid video transformation matrix: ${t.join()}`);if(void 0!==e.video.frameRate&&(!Number.isInteger(e.video.frameRate)||e.video.frameRate<=0))throw new TypeError(`Invalid video frame rate: ${e.video.frameRate}. Must be a positive integer.`)}if(e.audio){if(!Dt.includes(e.audio.codec))throw new TypeError(`Unsupported audio codec: ${e.audio.codec}`);if(!Number.isInteger(e.audio.numberOfChannels)||e.audio.numberOfChannels<=0)throw new TypeError(`Invalid number of audio channels: ${e.audio.numberOfChannels}. Must be a positive integer.`);if(!Number.isInteger(e.audio.sampleRate)||e.audio.sampleRate<=0)throw new TypeError(`Invalid audio sample rate: ${e.audio.sampleRate}. Must be a positive integer.`)}if(e.firstTimestampBehavior&&!jt.includes(e.firstTimestampBehavior))throw new TypeError(`Invalid first timestamp behavior: ${e.firstTimestampBehavior}`);if("object"==typeof e.fastStart){if(e.video){if(void 0===e.fastStart.expectedVideoChunks)throw new TypeError("'fastStart' is an object but is missing property 'expectedVideoChunks'.");if(!Number.isInteger(e.fastStart.expectedVideoChunks)||e.fastStart.expectedVideoChunks<0)throw new TypeError("'expectedVideoChunks' must be a non-negative integer.")}if(e.audio){if(void 0===e.fastStart.expectedAudioChunks)throw new TypeError("'fastStart' is an object but is missing property 'expectedAudioChunks'.");if(!Number.isInteger(e.fastStart.expectedAudioChunks)||e.fastStart.expectedAudioChunks<0)throw new TypeError("'expectedAudioChunks' must be a non-negative integer.")}}else if(![!1,"in-memory","fragmented"].includes(e.fastStart))throw new TypeError("'fastStart' option must be false, 'in-memory', 'fragmented' or an object.");if(void 0!==e.minFragmentDuration&&(!Number.isFinite(e.minFragmentDuration)||e.minFragmentDuration<0))throw new TypeError("'minFragmentDuration' must be a non-negative number.")},ht=new WeakSet,lt=function(){var e;if(r(this,Ke).writeBox((e={holdsAvc:"avc"===r(this,Je).video?.codec,fragmented:"fragmented"===r(this,Je).fastStart}).fragmented?I("ftyp",[A("iso5"),v(512),A("iso5"),A("iso6"),A("mp41")]):I("ftyp",[A("isom"),v(512),A("isom"),e.holdsAvc?A("avc1"):[],A("mp41")])),o(this,Qe,r(this,Ke).pos),"in-memory"===r(this,Je).fastStart)o(this,Xe,V(!1));else if("fragmented"===r(this,Je).fastStart);else{if("object"==typeof r(this,Je).fastStart){let e=h(this,dt,ft).call(this);r(this,Ke).seek(r(this,Ke).pos+e)}o(this,Xe,V(!0)),r(this,Ke).writeBox(r(this,Xe))}h(this,zt,Et).call(this)},dt=new WeakSet,ft=function(){if("object"!=typeof r(this,Je).fastStart)return;let e=0,t=[r(this,Je).fastStart.expectedVideoChunks,r(this,Je).fastStart.expectedAudioChunks];for(let i of t)i&&(e+=8*Math.ceil(2/3*i),e+=4*i,e+=12*Math.ceil(2/3*i),e+=4*i,e+=8*i);return e+=4096,e},ut=new WeakSet,mt=function(){if(r(this,Je).video&&o(this,Ye,{id:1,info:{type:"video",codec:r(this,Je).video.codec,width:r(this,Je).video.width,height:r(this,Je).video.height,rotation:r(this,Je).video.rotation??0,decoderConfig:null},timescale:r(this,Je).video.frameRate??57600,samples:[],finalizedChunks:[],currentChunk:null,firstDecodeTimestamp:void 0,lastDecodeTimestamp:-1,timeToSampleTable:[],compositionTimeOffsetTable:[],lastTimescaleUnits:null,lastSample:null,compactlyCodedChunkTable:[]}),r(this,Je).audio&&(o(this,Ze,{id:r(this,Je).video?2:1,info:{type:"audio",codec:r(this,Je).audio.codec,numberOfChannels:r(this,Je).audio.numberOfChannels,sampleRate:r(this,Je).audio.sampleRate,decoderConfig:null},timescale:r(this,Je).audio.sampleRate,samples:[],finalizedChunks:[],currentChunk:null,firstDecodeTimestamp:void 0,lastDecodeTimestamp:-1,timeToSampleTable:[],compositionTimeOffsetTable:[],lastTimescaleUnits:null,lastSample:null,compactlyCodedChunkTable:[]}),"aac"===r(this,Je).audio.codec)){let e=h(this,pt,ct).call(this,2,r(this,Je).audio.sampleRate,r(this,Je).audio.numberOfChannels);r(this,Ze).info.decoderConfig={codec:r(this,Je).audio.codec,description:e,numberOfChannels:r(this,Je).audio.numberOfChannels,sampleRate:r(this,Je).audio.sampleRate}}},pt=new WeakSet,ct=function(e,t,i){let s=[96e3,88200,64e3,48e3,44100,32e3,24e3,22050,16e3,12e3,11025,8e3,7350].indexOf(t),a=i,r="";r+=e.toString(2).padStart(5,"0"),r+=s.toString(2).padStart(4,"0"),15===s&&(r+=t.toString(2).padStart(24,"0")),r+=a.toString(2).padStart(4,"0");let n=8*Math.ceil(r.length/8);r=r.padEnd(n,"0");let o=new Uint8Array(r.length/8);for(let e=0;e<r.length;e+=8)o[e/8]=parseInt(r.slice(e,e+8),2);return o},wt=new WeakSet,gt=function(e,t,i,s,a,r,n){let o=s/1e6,l=(s-(n??0))/1e6,d=a/1e6,f=h(this,kt,Tt).call(this,o,l,e);return o=f.presentationTimestamp,l=f.decodeTimestamp,r?.decoderConfig&&(null===e.info.decoderConfig?e.info.decoderConfig=r.decoderConfig:Object.assign(e.info.decoderConfig,r.decoderConfig)),{presentationTimestamp:o,decodeTimestamp:l,duration:d,data:t,size:t.byteLength,type:i,timescaleUnitsToNextSample:O(d,e.timescale)}},bt=new WeakSet,yt=function(e,t){"fragmented"!==r(this,Je).fastStart&&e.samples.push(t);const i=O(t.presentationTimestamp-t.decodeTimestamp,e.timescale);if(null!==e.lastTimescaleUnits){let s=O(t.decodeTimestamp,e.timescale,!1),a=Math.round(s-e.lastTimescaleUnits);if(e.lastTimescaleUnits+=a,e.lastSample.timescaleUnitsToNextSample=a,"fragmented"!==r(this,Je).fastStart){let t=M(e.timeToSampleTable);1===t.sampleCount?(t.sampleDelta=a,t.sampleCount++):t.sampleDelta===a?t.sampleCount++:(t.sampleCount--,e.timeToSampleTable.push({sampleCount:2,sampleDelta:a}));const s=M(e.compositionTimeOffsetTable);s.sampleCompositionTimeOffset===i?s.sampleCount++:e.compositionTimeOffsetTable.push({sampleCount:1,sampleCompositionTimeOffset:i})}}else e.lastTimescaleUnits=0,"fragmented"!==r(this,Je).fastStart&&(e.timeToSampleTable.push({sampleCount:1,sampleDelta:O(t.duration,e.timescale)}),e.compositionTimeOffsetTable.push({sampleCount:1,sampleCompositionTimeOffset:i}));e.lastSample=t;let s=!1;if(e.currentChunk){let i=t.presentationTimestamp-e.currentChunk.startTimestamp;if("fragmented"===r(this,Je).fastStart){let a=r(this,Ye)??r(this,Ze);const n=r(this,Je).minFragmentDuration??1;e===a&&"key"===t.type&&i>=n&&(s=!0,h(this,St,xt).call(this))}else s=i>=.5}else s=!0;s&&(e.currentChunk&&h(this,Ct,vt).call(this,e),e.currentChunk={startTimestamp:t.presentationTimestamp,samples:[]}),e.currentChunk.samples.push(t)},kt=new WeakSet,Tt=function(e,t,i){const s="strict"===r(this,Je).firstTimestampBehavior,a=-1===i.lastDecodeTimestamp;if(s&&a&&0!==t)throw new Error(`The first chunk for your media track must have a timestamp of 0 (received DTS=${t}).Non-zero first timestamps are often caused by directly piping frames or audio data from a MediaStreamTrack into the encoder. Their timestamps are typically relative to the age of thedocument, which is probably what you want.\n\nIf you want to offset all timestamps of a track such that the first one is zero, set firstTimestampBehavior: 'offset' in the options.\n`);if("offset"===r(this,Je).firstTimestampBehavior||"cross-track-offset"===r(this,Je).firstTimestampBehavior){let s;void 0===i.firstDecodeTimestamp&&(i.firstDecodeTimestamp=t),s="offset"===r(this,Je).firstTimestampBehavior?i.firstDecodeTimestamp:Math.min(r(this,Ye)?.firstDecodeTimestamp??1/0,r(this,Ze)?.firstDecodeTimestamp??1/0),t-=s,e-=s}if(t<i.lastDecodeTimestamp)throw new Error(`Timestamps must be monotonically increasing (DTS went from ${1e6*i.lastDecodeTimestamp} to ${1e6*t}).`);return i.lastDecodeTimestamp=t,{presentationTimestamp:e,decodeTimestamp:t}},Ct=new WeakSet,vt=function(e){if("fragmented"===r(this,Je).fastStart)throw new Error("Can't finalize individual chunks if 'fastStart' is set to 'fragmented'.");if(e.currentChunk)if(e.finalizedChunks.push(e.currentChunk),r(this,tt).push(e.currentChunk),0!==e.compactlyCodedChunkTable.length&&M(e.compactlyCodedChunkTable).samplesPerChunk===e.currentChunk.samples.length||e.compactlyCodedChunkTable.push({firstChunk:e.finalizedChunks.length,samplesPerChunk:e.currentChunk.samples.length}),"in-memory"!==r(this,Je).fastStart){e.currentChunk.offset=r(this,Ke).pos;for(let t of e.currentChunk.samples)r(this,Ke).write(t.data),t.data=null;h(this,zt,Et).call(this)}else e.currentChunk.offset=0},St=new WeakSet,xt=function(e=!0){if("fragmented"!==r(this,Je).fastStart)throw new Error("Can't finalize a fragment unless 'fastStart' is set to 'fragmented'.");let t=[r(this,Ye),r(this,Ze)].filter((e=>e&&e.currentChunk));if(0===t.length)return;let i=(s=this,a=it,{set _(e){o(s,a,e,n)},get _(){return r(s,a,l)}})._++;var s,a,n,l;if(1===i){let e=F(t,r(this,et),!0);r(this,Ke).writeBox(e)}let d=r(this,Ke).pos,f=ce(i,t);r(this,Ke).writeBox(f);{let e=V(!1),i=0;for(let e of t)for(let t of e.currentChunk.samples)i+=t.size;let s=r(this,Ke).measureBox(e)+i;s>=2**32&&(e.largeSize=!0,s=r(this,Ke).measureBox(e)+i),e.size=s,r(this,Ke).writeBox(e)}for(let e of t){e.currentChunk.offset=r(this,Ke).pos,e.currentChunk.moofOffset=d;for(let t of e.currentChunk.samples)r(this,Ke).write(t.data),t.data=null}let u=r(this,Ke).pos;r(this,Ke).seek(r(this,Ke).offsets.get(f));let m=ce(i,t);r(this,Ke).writeBox(m),r(this,Ke).seek(u);for(let e of t)e.finalizedChunks.push(e.currentChunk),r(this,tt).push(e.currentChunk),e.currentChunk=null;e&&h(this,zt,Et).call(this)},zt=new WeakSet,Et=function(){r(this,Ke)instanceof Ge&&r(this,Ke).flush()},At=new WeakSet,Mt=function(){if(r(this,rt))throw new Error("Cannot add new video or audio chunks after the file has been finalized.")},Wt=l,((a,r,n,o)=>{if(r&&"object"==typeof r||"function"==typeof r)for(let h of i(r))s.call(a,h)||h===n||e(a,h,{get:()=>r[h],enumerable:!(o=t(r,h))||o.enumerable});return a})(e({},"__esModule",{value:!0}),Wt)})();"object"==typeof module&&"object"==typeof module.exports&&Object.assign(module.exports,Mp4Muxer);
+</script>
 <script>
 /* ================= HOLAT ================= */
 let uid = 1, trackSeq = 0;
@@ -1463,6 +1531,73 @@ let _scenePad=0;
 const perspCv=document.createElement('canvas');
 const pctx=perspCv.getContext('2d');
 let __expTrack=null; // (ishlatilmaydi — CFR rejim uchun qoldirildi)
+var boxEdit=null;   // 📦 quti ichini tahrirlash rejimidagi qatlam id
+/* 📦 Quti geometriyasi (qatlamning o'z koordinatalarida): quti va ichki video to'rtburchagi */
+function boxGeom(L){
+  const B=getSelBox(L), T=B.T, m=mediaBox(L);
+  const ix=(T.innerX!==undefined?T.innerX:L.innerX)||0, iy=(T.innerY!==undefined?T.innerY:L.innerY)||0;
+  const bw=(T.maskW!==undefined?T.maskW:L.maskW)||m.w, bh=(T.maskH!==undefined?T.maskH:L.maskH)||m.h;
+  const a=(T.rotDeg||0)*Math.PI/180, s=Math.max(0.01,T.scale||1), ca=Math.cos(a), sa=Math.sin(a);
+  return {B,T,m,ix,iy,bw,bh,a,s,
+    cw:m.w,ch:m.h,
+    toLocal:(x,y)=>{const dx=x-T.x,dy=y-T.y;return {x:(dx*ca+dy*sa)/s,y:(-dx*sa+dy*ca)/s};},
+    toWorld:(x,y)=>({x:T.x+(x*ca-y*sa)*s,y:T.y+(x*sa+y*ca)*s})};
+}
+/* 📦 Tahrir rejimi ko'rinishi: qutidan tashqaridagi qism xira "arvoh" bo'lib ko'rinadi,
+   ichki videoning chegarasi va burchak nuqtalari (kattalashtirish uchun) chiziladi */
+function drawBoxEdit(L){
+  const G=boxGeom(L), T=G.T, m=G.m, el=L.el;
+  if(!el)return;
+  ctx.save();
+  ctx.translate(T.x,T.y);ctx.rotate(G.a);ctx.scale(G.s,G.s);
+  const lw=Math.max(1.5,state.W/900)/G.s;
+  const x0=G.ix-G.cw/2, y0=G.iy-G.ch/2;
+  ctx.save();
+  ctx.beginPath();ctx.rect(-1e5,-1e5,2e5,2e5);ctx.rect(-G.bw/2,-G.bh/2,G.bw,G.bh);
+  ctx.clip('evenodd');
+  ctx.globalAlpha=0.45;
+  try{const c=L.crop||{l:0,t:0,r:0,b:0};
+    ctx.drawImage(el,m.nw*c.l,m.nh*c.t,m.nw*(1-c.l-c.r),m.nh*(1-c.t-c.b),x0,y0,G.cw,G.ch);}catch(e){}
+  ctx.globalAlpha=1;ctx.fillStyle='rgba(8,8,14,.28)';ctx.fillRect(x0,y0,G.cw,G.ch);
+  ctx.restore();
+  ctx.strokeStyle='#22d3ee';ctx.lineWidth=lw;ctx.setLineDash([9/G.s,6/G.s]);ctx.strokeRect(x0,y0,G.cw,G.ch);ctx.setLineDash([]);
+  pathRound4(ctx,-G.bw/2,-G.bh/2,G.bw,G.bh,cornerRads(L));
+  ctx.strokeStyle='#a78bfa';ctx.lineWidth=lw*1.8;ctx.stroke();
+  const r=Math.max(7,state.W*0.0075)/G.s;
+  for(const [x,y] of [[x0,y0],[x0+G.cw,y0],[x0+G.cw,y0+G.ch],[x0,y0+G.ch]]){
+    ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#0891b2';ctx.lineWidth=lw*1.2;ctx.stroke();
+  }
+  const rb=r*0.8;
+  for(const [x,y] of [[-G.bw/2,-G.bh/2],[G.bw/2,-G.bh/2],[G.bw/2,G.bh/2],[-G.bw/2,G.bh/2]]){
+    ctx.fillStyle='#fff';ctx.fillRect(x-rb,y-rb,rb*2,rb*2);ctx.strokeStyle='#7c3aed';ctx.lineWidth=lw*1.2;ctx.strokeRect(x-rb,y-rb,rb*2,rb*2);
+  }
+  const k=r*1.4;ctx.strokeStyle='rgba(34,211,238,.9)';ctx.lineWidth=lw;
+  ctx.beginPath();ctx.moveTo(G.ix-k,G.iy);ctx.lineTo(G.ix+k,G.iy);ctx.moveTo(G.ix,G.iy-k);ctx.lineTo(G.ix,G.iy+k);ctx.stroke();
+  ctx.restore();
+}
+function boxEditOn(L){
+  if(!L||!(L.type==='video'||L.type==='image')||!maskActiveAt(L,clamp(state.time-L.start,0,L.dur)))return false;
+  boxEdit=L.id;state.selected=L.id;state.multi=[];
+  boxEditHint(true);seekDirty=true;
+  try{renderLayers();renderProps();}catch(e){}
+  return true;
+}
+function boxEditOff(){
+  if(boxEdit==null)return;
+  boxEdit=null;boxEditHint(false);seekDirty=true;
+  try{renderProps();}catch(e){}
+}
+function boxEditHint(on){
+  let el=document.getElementById('boxEditHint');
+  if(!on){if(el)el.remove();return;}
+  if(!el){
+    el=document.createElement('div');el.id='boxEditHint';
+    el.innerHTML='<span>📦 <b>Quti ichi tahrirlanmoqda</b> — suring: videoni siljitish · burchak nuqtasi yoki g\'ildirak: kattalashtirish</span><button>✓ Tayyor</button>';
+    el.querySelector('button').onclick=e=>{e.stopPropagation();boxEditOff();};
+    el.addEventListener('mousedown',e=>e.stopPropagation());
+    document.getElementById('stageWrap').appendChild(el);
+  }
+}
 let __holdTime=false;  // eksport boshida vaqtni ushlab turish (audio bilan bir vaqtda start)
 let _rndMs=16;         // o'rtacha render vaqti (ms) — eksport fps'ini tanlash uchun
 /* ⚡ ADAPTIV SIFAT: kadr chizish vaqti oshib ketsa — og'ir effektlar (shisha blur,
@@ -3637,18 +3772,24 @@ function applyWalls(L,fx,bw,bh,local){
   const hw=bw/2*sc*(fx.scale||1)*(fx.sx||1);
   const hh=bh/2*sc*(fx.scale||1)*(fx.sy||1);
   let cx=_de+(fx.dx||0)*sc, cy=_df+(fx.dy||0)*sc;
-  const lo=pad+hw, hi=state.W-pad-hw;
+  // 🎬 Sahna: devor — element turgan KADR chegarasi (asosiy kadr uchun avvalgidek 0..W)
+  let ox=0,oy=0;
+  {const g=Math.max(0,+(state.sceneGap||0)),sxs=state.W+g,sys=state.H+g;
+   const cc=Math.floor((_de+g/2)/sxs), cr=Math.floor((_df+g/2)/sys);
+   // faqat shu joyda sahna kadri bo'lsa — aks holda (oddiy loyiha) avvalgidek asosiy kadr
+   if((cc||cr)&&typeof sceneFrameAt==='function'&&sceneFrameAt(cc,cr)){ox=cc*sxs;oy=cr*sys;}}
+  const lo=ox+pad+hw, hi=ox+state.W-pad-hw;
   if(hi>lo){
     if(cx<lo)cx=lo+(lo-cx)*0.4;
     if(cx>hi)cx=hi-(cx-hi)*0.4;
     cx=clamp(cx,lo,hi);
-  }else cx=state.W/2;
-  const to=pad+hh, bo=state.H-pad-hh;
+  }else cx=ox+state.W/2;
+  const to=oy+pad+hh, bo=oy+state.H-pad-hh;
   if(bo>to){
     if(cy<to)cy=to+(to-cy)*0.4;
     if(cy>bo)cy=bo-(cy-bo)*0.4;
     cy=clamp(cy,to,bo);
-  }else cy=state.H/2;
+  }else cy=oy+state.H/2;
   fx.dx=(cx-_de)/sc;
   fx.dy=(cy-_df)/sc;
   // Kirish davrida asl qiymat bilan aralashtirish
@@ -4590,18 +4731,20 @@ function drawProgress(L,local,t,baseAlpha){
   if(st==='segmented'){
     const n=Math.max(6,Math.round(bw/(barH*1.6)));
     const gap=barH*0.42, sw=(bw-gap*(n-1))/n;
-    for(let i=0;i<n;i++){
-      const on=(i+1)/n<=pct+0.001;
-      pathRound(ctx,bx+i*(sw+gap),barTop,sw,barH,Math.min(br,sw/2));
-      if(on){
+    // ⚡ yongan / yonmagan bo'laklar ikkita yo'lga yig'iladi — soya BIR marta (avval har bo'lakda)
+    const _rr=(x,y,w2,h2,r)=>{r=Math.max(0,Math.min(r,w2/2,h2/2));ctx.moveTo(x+r,y);ctx.arcTo(x+w2,y,x+w2,y+h2,r);ctx.arcTo(x+w2,y+h2,x,y+h2,r);ctx.arcTo(x,y+h2,x,y,r);ctx.arcTo(x,y,x+w2,y,r);ctx.closePath();};
+    for(const pass of [0,1]){
+      ctx.beginPath();let any=false;
+      for(let i=0;i<n;i++){
+        const on=(i+1)/n<=pct+0.001;if((pass===1)!==on)continue;
+        _rr(bx+i*(sw+gap),barTop,sw,barH,Math.min(br,sw/2));any=true;
+      }
+      if(!any)continue;
+      if(pass){
         const g=ctx.createLinearGradient(bx,0,bx+bw,0);
         g.addColorStop(0,L.pcolor1);g.addColorStop(1,L.pcolor2);
-        ctx.fillStyle=g;
-        ctx.shadowColor=hexA(L.pcolor2,0.5);ctx.shadowBlur=barH*0.6;
-      }else{
-        ctx.fillStyle='rgba(255,255,255,.14)';
-        ctx.shadowBlur=0;
-      }
+        ctx.fillStyle=g;ctx.shadowColor=hexA(L.pcolor2,0.5);ctx.shadowBlur=barH*0.6;
+      }else{ctx.fillStyle='rgba(255,255,255,.14)';ctx.shadowBlur=0;}
       ctx.fill();
       ctx.shadowBlur=0;
     }
@@ -5843,16 +5986,18 @@ function cnSeg(c,dw,dh,d,on,off,glow){
   const S={a:[0,-dh/2+t/2,L1,0],g:[0,0,L1,0],d:[0,dh/2-t/2,L1,0],
     f:[-dw/2+t/2,-dh/4,L2,1],b:[dw/2-t/2,-dh/4,L2,1],e:[-dw/2+t/2,dh/4,L2,1],c:[dw/2-t/2,dh/4,L2,1]};
   const act=SEG7[d]||'';
-  for(const k in S){
-    const [x,y,len,v]=S[k];
-    const isOn=act.includes(k);
-    c.save();
-    c.fillStyle=isOn?on:off;
-    if(isOn&&glow){c.shadowColor=on;c.shadowBlur=t*1.1;}
-    // vertikal segment: markazga siljitilgan bo'lgani uchun poly() ichida burilgan
-    c.translate(x,y);if(v)c.rotate(Math.PI/2);
-    c.beginPath();c.moveTo(-len/2,0);c.lineTo(-len/2+t/2,-t/2);c.lineTo(len/2-t/2,-t/2);c.lineTo(len/2,0);
-    c.lineTo(len/2-t/2,t/2);c.lineTo(-len/2+t/2,t/2);c.closePath();c.fill();
+  // ⚡ yonmagan va yongan segmentlar ikkita yo'lga yig'iladi — nur (shadowBlur) har segmentga emas, BIR marta
+  for(const pass of [0,1]){
+    c.save();c.beginPath();let any=false;
+    for(const k in S){
+      const isOn=act.includes(k);if((pass===1)!==isOn)continue;
+      const [x,y,len,v]=S[k];
+      c.save();c.translate(x,y);if(v)c.rotate(Math.PI/2);
+      c.moveTo(-len/2,0);c.lineTo(-len/2+t/2,-t/2);c.lineTo(len/2-t/2,-t/2);c.lineTo(len/2,0);
+      c.lineTo(len/2-t/2,t/2);c.lineTo(-len/2+t/2,t/2);c.closePath();
+      c.restore();any=true;
+    }
+    if(any){c.fillStyle=pass?on:off;if(pass&&glow){c.shadowColor=on;c.shadowBlur=t*1.1;}c.fill();}
     c.restore();
   }
 }
@@ -7648,9 +7793,8 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
     capW=Math.max(capW,W);capH=Math.max(capH,H);
     capW=Math.min(capW,maxTex);capH=Math.min(capH,maxTex);
     cvs.width=capW;cvs.height=capH;
-    inCv.width=capW;inCv.height=capH;
     if(srcTex)gl.deleteTexture(srcTex);
-    srcTex=mkTex(0,0);
+    srcTex=mkTex(capW,capH);   // ⚡ to'liq sig'imda bir marta ajratiladi — har kadr faqat kerakli qism yuklanadi
     for(const f of fbs){gl.deleteTexture(f.tex);gl.deleteFramebuffer(f.fb);}
     fbs.length=0;
     for(let i=0;i<3;i++){
@@ -7690,13 +7834,18 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
     if(missing)return null;
     try{
       ensure(w,h);
+      /* ⚡ Faqat effekt hududi (w×h, 64 ga yaxlitlangan) yuklanadi. Avval butun sig'im
+         (eng katta hudud o'lchami — ko'pincha to'liq kadrdan ham katta) har kadrda GPU'ga
+         yuborilardi: kichik element uchun ham ~13 MB/kadr — og'irlikning yashirin sababi. */
+      const iw=Math.min(capW,Math.ceil((w+4)/64)*64), ih=Math.min(capH,Math.ceil((h+4)/64)*64);
+      if(inCv.width!==iw||inCv.height!==ih){inCv.width=iw;inCv.height=ih;}
       ictx.setTransform(1,0,0,1,0,0);
       ictx.globalCompositeOperation='source-over';ictx.globalAlpha=1;ictx.filter='none';
-      ictx.clearRect(0,0,Math.min(capW,w+4),Math.min(capH,h+4));
+      ictx.clearRect(0,0,iw,ih);
       if(ds<1){ictx.imageSmoothingEnabled=true;ictx.imageSmoothingQuality='medium';}
       ictx.drawImage(src,reg.x0,reg.y0,w0,h0,0,0,w,h);
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,srcTex);
-      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,inCv);
+      gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,inCv);
       const C={...common,w,h};
       let cur=srcTex;
       for(const passes of chain){
@@ -7723,7 +7872,10 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
       gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,cur);
       gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,cur);
       setU(B,C,null);
+      // ⚡ faqat kerakli (chap-yuqori w×h) piksellar chiziladi — qolgan sig'im hisoblanmaydi
+      gl.enable(gl.SCISSOR_TEST);gl.scissor(0,capH-h,w,h);
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      gl.disable(gl.SCISSOR_TEST);
       cvs._w=w;cvs._h=h;
       return cvs;
     }catch(e){console.warn('PFX process:',e);return null;}
@@ -8218,6 +8370,54 @@ function glowDot(x,y,r,col,a){
   ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);ctx.restore();
 }
 /* Yo'lni oynalar bo'yicha chizish. G — geometriya, P — reja */
+/* ⚡ NUR (glow) — BITTA o'tishda.
+   Avval har bir segment (egri chiziqda 100–250 ta) o'z shadowBlur'i bilan chizilardi.
+   Mac/Windows'da kanvas GPU'da ishlaydi va har bir soyali chizish ALOHIDA blur o'tishi —
+   shu sabab "egri chiziq" qo'shilganda butun dastur qotib qolardi. Endi segmentlar
+   soyasiz yordamchi kanvasga chiziladi, nur esa faqat chiziq turgan kichik hududga
+   BIR marta qo'shiladi (natija ko'rinishi bir xil, yuk ~100 baravar kam). */
+const _glwCv=document.createElement('canvas'),_glwX=_glwCv.getContext('2d');
+function glowBegin(polys,padLocal,padDev){
+  const main=ctx;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const pl of polys)for(const q of pl.pts){if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1];}
+  if(!(x1>=x0))return null;
+  x0-=padLocal;y0-=padLocal;x1+=padLocal;y1+=padLocal;
+  const T=main.getTransform();
+  let X0=1e9,Y0=1e9,X1=-1e9,Y1=-1e9;
+  for(const [x,y] of [[x0,y0],[x1,y0],[x0,y1],[x1,y1]]){const X=T.a*x+T.c*y+T.e,Y=T.b*x+T.d*y+T.f;if(X<X0)X0=X;if(X>X1)X1=X;if(Y<Y0)Y0=Y;if(Y>Y1)Y1=Y;}
+  const cw=main.canvas.width,ch=main.canvas.height;
+  X0=Math.max(0,Math.floor(X0-padDev));Y0=Math.max(0,Math.floor(Y0-padDev));X1=Math.min(cw,Math.ceil(X1+padDev));Y1=Math.min(ch,Math.ceil(Y1+padDev));
+  const w=X1-X0,h=Y1-Y0;
+  if(w<1||h<1)return {skip:true,main};
+  if(_glwCv.width<w||_glwCv.height<h){_glwCv.width=Math.max(_glwCv.width,Math.ceil(w/64)*64);_glwCv.height=Math.max(_glwCv.height,Math.ceil(h/64)*64);}
+  const g=_glwX;
+  g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.filter='none';g.shadowBlur=0;g.shadowColor='rgba(0,0,0,0)';
+  g.clearRect(0,0,w,h);
+  g.setTransform(T.a,T.b,T.c,T.d,T.e-X0,T.f-Y0);
+  g.globalAlpha=main.globalAlpha;g.strokeStyle=main.strokeStyle;g.fillStyle=main.fillStyle;g.lineWidth=main.lineWidth;
+  g.lineCap=main.lineCap;g.lineJoin=main.lineJoin;g.setLineDash(main.getLineDash());g.lineDashOffset=main.lineDashOffset;
+  g.font=main.font;g.textAlign=main.textAlign;g.textBaseline=main.textBaseline;try{g.letterSpacing=main.letterSpacing;}catch(e){}
+  ctx=g;
+  return {main,X0,Y0,w,h};
+}
+function glowEnd(S,blur,col,extra){
+  if(!S)return;
+  ctx=S.main;
+  if(S.skip)return;
+  ctx.save();
+  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
+  if(blur>0.5){
+    ctx.shadowColor=col;ctx.shadowBlur=blur;
+    // qo'shimcha faqat-nur o'tishlari (tasvir kadrdan tashqarida, soyasi joyida) — eski
+    // ko'p qatlamli nur kuchini beradi, lekin 1–2 blur bilan
+    const OFF=Math.max(S.w,S.h)+4000;
+    for(let i=0;i<(extra||0);i++){ctx.shadowOffsetX=OFF;ctx.drawImage(_glwCv,0,0,S.w,S.h,S.X0-OFF,S.Y0,S.w,S.h);}
+    ctx.shadowOffsetX=0;
+  }
+  ctx.drawImage(_glwCv,0,0,S.w,S.h,S.X0,S.Y0,S.w,S.h);
+  ctx.restore();
+}
 function strokePlanned(L,G,P,col,lw,t,opt){
   opt=opt||{};
   let polys=G.polys;
@@ -8236,7 +8436,8 @@ function strokePlanned(L,G,P,col,lw,t,opt){
   ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=W;
   ctx.lineCap=opt.cap||G.cap||'round';ctx.lineJoin=G.join||'round';
   const glowAmt=Math.max((L.drawGlow??0)/100,P.neon*1.2,P.electric?0.8:0);
-  if(glowAmt>0.01){ctx.shadowColor=col;ctx.shadowBlur=W*(1.5+3*glowAmt);}
+  const glowB=glowAmt>0.01?W*(1.5+3*glowAmt):0;
+  const GS=glowB?glowBegin(polys,W*2,glowB*2.2):null;
   // chiziq uslubi (uzuq/nuqta) + yuruvchi chiziqchalar
   let dash=opt.dash||[];
   if(P.dotsOnly||P.dotsFirst)dash=[0.1,W*2.2];
@@ -8271,25 +8472,31 @@ function strokePlanned(L,G,P,col,lw,t,opt){
     }
     ctx.globalAlpha=clamp(P.alpha*(G.alpha??1),0,1)*(opt.baseA??1);ctx.strokeStyle=col;
   }
+  if(GS)glowEnd(GS,glowB,col,taper?2:0);
   ctx.shadowBlur=0;ctx.setLineDash([]);
   // oqim impulsi
   if(P.flow!=null){
     const u1=P.flow,u0=u1-0.16;
     const S=pmSamples(M,Math.max(0,u0),Math.min(1,u1),3);
-    ctx.save();ctx.lineCap='round';ctx.shadowColor=col;ctx.shadowBlur=W*3;
-    for(let i=1;i<S.length;i++){const k=clamp((S[i].u-u0)/0.16,0,1);ctx.globalAlpha=clamp(k,0,1)*0.95;
+    const FG=S.length>1?glowBegin([{pts:S.map(q=>[q.x,q.y])}],W*2,W*6.6):null;
+    ctx.save();ctx.lineCap='round';
+    const _fa=ctx.globalAlpha;
+    for(let i=1;i<S.length;i++){const k=clamp((S[i].u-u0)/0.16,0,1);ctx.globalAlpha=_fa*clamp(k,0,1)*0.95;
       ctx.strokeStyle=tMix(col,'#ffffff',0.65*k);ctx.lineWidth=W*(0.6+0.7*k);
       ctx.beginPath();ctx.moveTo(S[i-1].x,S[i-1].y);ctx.lineTo(S[i].x,S[i].y);ctx.stroke();}
     ctx.restore();
+    if(FG)glowEnd(FG,W*3,col,2);
     if(u1<=1)glowDot(pmPoint(M,u1).x,pmPoint(M,u1).y,W*3.2,col,0.9);
   }
   // yuruvchi nuqtalar
   if(P.dots!=null){
     const N=Math.max(3,Math.round(M.total/(W*7)));
-    ctx.save();ctx.shadowColor=col;ctx.shadowBlur=W*1.5;ctx.fillStyle=tMix(col,'#ffffff',0.35);
+    const DG=glowBegin(polys,W*2,W*3.3);
+    ctx.save();ctx.fillStyle=tMix(col,'#ffffff',0.35);ctx.beginPath();
     for(let k=0;k<N;k++){const u=((k/N+P.dots*0.12)%1+1)%1;let inW=false;for(const [a,b] of wins)if(u>=a&&u<=b)inW=true;if(!inW)continue;
-      const q=pmPoint(M,u);ctx.beginPath();ctx.arc(q.x,q.y,W*0.85,0,7);ctx.fill();}
-    ctx.restore();
+      const q=pmPoint(M,u);ctx.moveTo(q.x+W*0.85,q.y);ctx.arc(q.x,q.y,W*0.85,0,7);}
+    ctx.fill();ctx.restore();
+    if(DG)glowEnd(DG,W*1.5,col);
   }
   // uchlar va bezaklar
   if(wins.length){
@@ -10546,6 +10753,7 @@ function camSection(){
       </ol>
       <p>🧱 <b>3D chuqurlik:</b> elementning <b>Chuqurlik Z</b> qiymati (element panelida) uni kameradan uzoqlashtiradi (+) yoki yaqinlashtiradi (−). Kamera harakatlanganda yaqin narsalar tez, uzoqdagilar sekin siljiydi — haqiqiy 3D hissi.</p>
       <p>🧊 <b>3D sahna</b> — hammasini yondan ko'rish: oq ramka = kadr, ko'k piramida = kamera ko'rayotgan hudud, yashil chiziq = kamera yo'li.</p>
+      <p>🎬 <b>Sahna quruvchi</b> — kadrning tepasi, pasti va yonlariga yangi kadrlar qo'shing (bo'sh yoki nusxa), so'ng "Yo'lni yaratish" — kamera ular orasida o'zi uchadi.</p>
       <p>⚡ Eng oson boshlash — pastdagi <b>🎬 Tayyor harakatlar</b>dan birini bosing.</p>
     </div></details>`;
   const presets=`<div class="field cam-pre"><label>🎬 Tayyor harakatlar — 1 bosishda</label>
@@ -10582,6 +10790,7 @@ function camSection(){
         <select id="cmEase">${CAM_EASES.map(([v2,nm])=>`<option value="${v2}" ${(c.ease||'spline')===v2?'selected':''}>${nm}</option>`).join('')}</select></div>
     </div>`:''}
     ${presets}
+    <button id="cmScene" style="width:100%;justify-content:center;margin-top:2px" title="Kadrning tepasi, pasti va yonlariga yangi kadrlar — kamera ular orasida uchadi">🎬 Sahna quruvchi (kadrlar)</button>
     <button id="cmBring" style="width:100%;justify-content:center;margin-top:2px" ${state.selected?'':'disabled'} title="Tanlangan elementni kamera hozir qarab turgan joyga ko'chiradi (keyframe bo'lsa — shu vaqtga yoziladi)">📍 Tanlangan elementni kamera ko'rinishiga keltirish</button>
     <div class="hintline">📍 Kamera boshqa joyga surilgan vaqtda qo'shilgan <b>yangi element o'zi kamera qaragan joyga</b> qo'yiladi; tanlash, surish va dastaklar ham kamera ko'rinishida aniq ishlaydi.</div>
     <details class="sec" ${camSubOpen('pro')?'open':''} data-cs="pro"><summary>⚙ Qo'shimcha: turi, nishon, chuqurlik${c.tgt?' · 🎯':''}</summary><div class="inner">
@@ -10722,6 +10931,7 @@ function bindCam(){
   if(pr)pr.querySelectorAll('button').forEach(b=>b.onclick=()=>{saveHistory();camPreset(b.dataset.p);_camUiKey='';renderProps();renderTimeline();seekDirty=true;});
   const b3=g('cm3D');if(b3)b3.onclick=()=>setView3D(!view3D);
   const cbr=g('cmBring');if(cbr)cbr.onclick=()=>camBringSelected();
+  const csc=g('cmScene');if(csc)csc.onclick=()=>sceneOpen();
   const bt=g('cmTool');if(bt)bt.onclick=()=>setCamTool(!camToolOn);
 }
 /* 🎬 Tayyor harakatlar — sahna chuqurligiga moslanadi */
@@ -11565,7 +11775,8 @@ function ckCPU(L,src,w,h){
 /* Kalitlangan kadr manbai (drawMedia uchun) */
 function ckSource(L,m){
   const el=L.el;
-  const cap=L.type==='video'?1920:2400;
+  // ⚡ ijro paytida 1280 gacha (ko'z farqni sezmaydi, GPU yuki ~2× kam); pauza va eksportda — to'liq
+  const cap=L.type==='video'?((state.playing&&!exporting)?1280:1920):2400;
   const s=Math.min(1,cap/Math.max(m.nw,m.nh));
   const w=Math.max(2,Math.round(m.nw*s)),h=Math.max(2,Math.round(m.nh*s));
   let out=null;
@@ -13610,6 +13821,703 @@ function neRunDefaults(){
   });
 })();
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⬇ VIDEO EKSPORT 2.0 — KADRMA-KADR (offline) MP4
+   ───────────────────────────────────────────────────────────────────────────
+   Avvalgi usul (MediaRecorder + captureStream) videoni REAL VAQTDA yozardi: kompyuter
+   biror kadrni ulgurmay qolsa — kadr tushib qolar yoki takrorlanar, tasvir "oldinga
+   sakrar / orqada qolar", fayl esa o'zgaruvchan kadr tezligi (VFR) va juda katta
+   bitreyt (40 Mbit/s) bilan chiqardi — Telegram'da qotish va qorayishlar shundan.
+   Endi:
+   • har bir kadr alohida, aniq vaqtida chiziladi (video aynan shu kadrga seek qilinib,
+     kadr tayyor bo'lgani kutiladi) — hech qanday tushish/sakrash yo'q, qora kadr yo'q;
+   • WebCodecs H.264 (High) kodlovchi, doimiy kadr tezligi (CFR), har 2 s da keyframe;
+   • ovoz oldindan OFFLINE aralashtiriladi (ovoz balandligi, keyframe'lar, tezlik —
+     ohang saqlanadi) va AAC bilan kodlanadi — tasvir bilan namunagacha sinxron;
+   • MP4 "fast start" (moov boshida) — Telegram, iPhone, Instagram darhol o'ynatadi;
+   • oqilona bitreyt: 1080p30 ≈ 6–16 Mbit/s (tanlov bo'yicha) — fayl kichik, sifat yuqori.
+   WebCodecs bo'lmagan brauzerda eski usul ishlaydi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+var __offExp=false;
+const EXP_Q={small:{n:'📱 Kichik hajm',d:'Telegram / Instagram uchun',mb:6},mid:{n:'⚖️ Muvozanat',d:'Tavsiya — sifat va hajm',mb:10},high:{n:'💎 Yuqori sifat',d:'YouTube / arxiv',mb:16}};
+const EXP={fps:30,q:'mid'};
+try{const j=JSON.parse(localStorage.getItem('gm_exp')||'null');if(j){if([24,25,30,60].includes(j.fps))EXP.fps=j.fps;if(EXP_Q[j.q])EXP.q=j.q;}}catch(e){}
+function expSave(){try{localStorage.setItem('gm_exp',JSON.stringify(EXP));}catch(e){}}
+function expEnd(){
+  return state.layers.length?Math.min(state.duration,Math.max(...state.layers.map(l=>l.start+l.dur))):state.duration;
+}
+function expDims(){
+  // to'liq sifatdagi o'lcham (ko'rish sifati pasaytirilgan bo'lsa ham)
+  const [aw,ah]=ASPECTS[state.aspect];
+  const short=Math.max(240,Math.round(state.quality));
+  let W,H;if(aw>=ah){H=short;W=Math.round(short*aw/ah);}else{W=short;H=Math.round(short*ah/aw);}
+  return {W,H};
+}
+function expBitrate(W,H,fps,q){
+  const k=(W*H)/(1920*1080), base=(EXP_Q[q]||EXP_Q.mid).mb*1e6;
+  return Math.round(base*Math.pow(Math.max(0.15,k),0.75)*Math.pow(fps/30,0.6));
+}
+function expAvcCodecs(W,H,fps){
+  const mb=Math.ceil(W/16)*Math.ceil(H/16), mbps=mb*fps;
+  const lv=[[0x28,8192,245760],[0x2a,8704,522240],[0x32,22080,589824],[0x33,36864,983040],[0x34,36864,2073600],[0x3c,139264,4177920]];
+  const L=(lv.find(([,a,b])=>mb<=a&&mbps<=b)||lv[lv.length-1])[0].toString(16).padStart(2,'0');
+  return ['avc1.6400'+L,'avc1.4d00'+L,'avc1.42e0'+L];
+}
+/* Kodlovchini tanlash: H.264 (MP4 standarti) → yo'q bo'lsa VP9/AV1 (MP4 ichida) */
+async function expPickVideo(W,H,fps,bitrate){
+  if(typeof VideoEncoder!=='function')return null;
+  const tries=[...expAvcCodecs(W,H,fps).map(c=>[c,'avc']),['vp09.00.41.08','vp9'],['av01.0.08M.08','av1']];
+  for(const [codec,mux] of tries){
+    for(const hw of ['no-preference','prefer-software']){
+      const cfg={codec,width:W,height:H,bitrate,framerate:fps,latencyMode:'quality',bitrateMode:'variable',hardwareAcceleration:hw};
+      if(mux==='avc')cfg.avc={format:'avc'};
+      try{const s=await VideoEncoder.isConfigSupported(cfg);if(s&&s.supported)return {cfg:s.config||cfg,mux};}catch(e){}
+    }
+  }
+  return null;
+}
+async function expPickAudio(sr,ch){
+  if(typeof AudioEncoder!=='function')return null;
+  for(const [codec,mux,br] of [['mp4a.40.2','aac',192000],['opus','opus',160000]]){
+    const cfg={codec,sampleRate:sr,numberOfChannels:ch,bitrate:br};
+    try{const s=await AudioEncoder.isConfigSupported(cfg);if(s&&s.supported)return {cfg:s.config||cfg,mux};}catch(e){}
+  }
+  return null;
+}
+
+/* ── 🔊 OVOZNI OFFLINE ARALASHTIRISH ── */
+const _expAudCache=new Map();
+async function expDecode(L){
+  const url=L.srcUrl;if(!url)return null;
+  if(_expAudCache.has(url))return _expAudCache.get(url);
+  let ab=null;
+  try{
+    const blob=await (await fetch(url)).blob();
+    if(blob.size>700e6){toast('⚠️ "'+layerName(L)+'" juda katta — ovozi eksportga qo\'shilmadi',5000);_expAudCache.set(url,null);return null;}
+    const AC=window.AudioContext||window.webkitAudioContext;const ac=new AC();
+    try{ab=await ac.decodeAudioData(await blob.arrayBuffer());}finally{try{ac.close();}catch(e){}}
+  }catch(e){ab=null;}   // ovozsiz video — normal holat
+  _expAudCache.set(url,ab);
+  return ab;
+}
+/* Tezlik o'zgarganda ohang saqlanadi (WSOLA vaqt cho'zish) — tomoshabin eshitgani bilan bir xil */
+function expStretch(buf,t0,t1,rate){
+  const chs=buf.numberOfChannels, sr=buf.sampleRate;
+  const s0=Math.max(0,Math.floor(t0*sr)), s1=Math.min(buf.length,Math.ceil(t1*sr));
+  const inLen=s1-s0;
+  const N=1024, Hs=N/2, TOL=Math.round(sr*0.010);
+  if(inLen<N*2)return null;
+  const src=[];for(let c=0;c<chs;c++)src.push(buf.getChannelData(c).subarray(s0,s1));
+  const mono=new Float32Array(inLen);
+  for(let c=0;c<chs;c++){const d=src[c];for(let i=0;i<inLen;i++)mono[i]+=d[i]/chs;}
+  const win=new Float32Array(N);for(let i=0;i<N;i++)win[i]=0.5-0.5*Math.cos(2*Math.PI*i/N);
+  const oLen=Math.max(N,Math.round(inLen/rate));
+  const out=[];for(let c=0;c<chs;c++)out.push(new Float32Array(oLen+N));
+  let prev=0;
+  for(let o=0;o<oLen;o+=Hs){
+    const ideal=Math.round(o*rate);
+    if(ideal+N>inLen)break;
+    let best=ideal;
+    if(o>0){
+      // WSOLA: oldingi bo'lakning tabiiy davomiga eng o'xshash joy — ohang va ritm saqlanadi
+      const nat=prev+Hs;let bv=-1e18;
+      const lo=Math.max(0,ideal-TOL),hi=Math.min(inLen-N,ideal+TOL);
+      for(let p=lo;p<=hi;p+=2){let sc=0;for(let i=0;i<256;i+=2){const q=nat+i;sc+=(q<inLen?mono[q]:0)*mono[p+i];}if(sc>bv){bv=sc;best=p;}}
+    }
+    for(let c=0;c<chs;c++){const d=src[c],r=out[c];for(let i=0;i<N;i++)r[o+i]+=d[best+i]*win[i];}
+    prev=best;
+  }
+  const ab=new AudioBuffer({length:oLen,numberOfChannels:chs,sampleRate:sr});
+  for(let c=0;c<chs;c++)ab.copyToChannel(out[c].subarray(0,oLen),c);
+  return ab;
+}
+async function expMixAudio(dur,sr,onProg){
+  const items=state.layers.filter(L=>(L.type==='video'||L.type==='audio')&&L.el&&!L.muted&&L.srcUrl&&L.start<dur&&L.dur>0);
+  if(!items.length)return null;
+  const len=Math.max(1,Math.ceil(dur*sr));
+  const oc=new OfflineAudioContext(2,len,sr);
+  let any=false,i=0;
+  for(const L of items){
+    i++;onProg&&onProg(i/items.length);
+    const buf=await expDecode(L);
+    if(!buf)continue;
+    const vd=buf.duration, sp=clamp(L.speed||1,0.0625,16);
+    const g=oc.createGain();g.connect(oc.destination);
+    // ovoz balandligi (keyframe'lar bilan) — 50 Hz bilan avtomatlashtiriladi
+    const volAt=lt=>{let v=L.volume??1;if(L.kfs&&L.kfs.length){try{const T=kfValue(L,clamp(lt,0,L.dur));if(T.volume!==undefined)v=T.volume;}catch(e){}}return clamp(+v||0,0,4);};
+    const st=Math.max(0,L.start), en=Math.min(dur,L.start+L.dur);
+    g.gain.setValueAtTime(volAt(st-L.start),st);
+    const hasVk=L.kfs&&L.kfs.some(k=>k.volume!==undefined);
+    if(hasVk)for(let tt=st+0.02;tt<en;tt+=0.02)g.gain.linearRampToValueAtTime(volAt(tt-L.start),tt);
+    // yumshoq chekkalar (klik bo'lmasin)
+    const fadeIn=oc.createGain(),FD=0.006;fadeIn.connect(g);
+    fadeIn.gain.setValueAtTime(0,st);fadeIn.gain.linearRampToValueAtTime(1,st+FD);
+    fadeIn.gain.setValueAtTime(1,Math.max(st+FD,en-FD));fadeIn.gain.linearRampToValueAtTime(0,en);
+    if(L.type==='video'&&L.curveOn&&L.speedKfs&&L.speedKfs.length>=2){
+      // tezlik egri chizig'i — kichik bo'laklar bilan
+      const CH=0.05;
+      for(let t0=st;t0<en-1e-4;t0+=CH){
+        const loc=t0-L.start, rate=clamp(curveV(L,loc/Math.max(L.dur,0.001)),0.0625,10);
+        const off=clamp((L.trim||0)+lutOffset(L,loc),0,Math.max(0,vd-0.01));
+        const s=oc.createBufferSource();s.buffer=buf;s.playbackRate.value=rate;s.connect(fadeIn);
+        s.start(t0,off,Math.min(CH,en-t0)*rate+0.004);
+      }
+      any=true;continue;
+    }
+    const off=clamp((L.trim||0)+(st-L.start)*sp,0,vd);
+    const need=(en-st)*sp;
+    if(off>=vd-0.01)continue;
+    if(Math.abs(sp-1)<0.001){
+      const s=oc.createBufferSource();s.buffer=buf;s.connect(fadeIn);s.start(st,off,Math.min(need,vd-off));
+    }else{
+      const ab=expStretch(buf,off,Math.min(vd,off+need),sp);
+      if(!ab)continue;
+      const s=oc.createBufferSource();s.buffer=ab;s.connect(fadeIn);s.start(st,0,Math.min(ab.duration,en-st));
+    }
+    any=true;
+  }
+  if(!any)return null;
+  return await oc.startRendering();
+}
+
+/* ── 🎞 Videolarni aniq kadrga keltirish ── */
+let _expRvfc=0;   // rVFC ishlamasa (yashirin element) — kutmaymiz
+function expSeek(el,t){
+  return new Promise(res=>{
+    if(!el.paused)try{el.pause();}catch(e){}
+    if(Math.abs((el.currentTime||0)-t)<1e-4&&el.readyState>=2&&!el.seeking){res(true);return;}
+    let done=false;
+    const fin=ok=>{if(done)return;done=true;el.removeEventListener('seeked',on);clearTimeout(to);res(ok);};
+    const on=()=>{
+      if(el.requestVideoFrameCallback&&_expRvfc<3){
+        let f=false;
+        const t2=setTimeout(()=>{if(!f){f=true;_expRvfc++;fin(true);}},120);
+        try{el.requestVideoFrameCallback(()=>{if(!f){f=true;clearTimeout(t2);_expRvfc=0;fin(true);}});}catch(e){f=true;clearTimeout(t2);fin(true);}
+      }else fin(true);
+    };
+    el.addEventListener('seeked',on);
+    const to=setTimeout(()=>fin(el.readyState>=2),5000);
+    try{el.currentTime=t;}catch(e){fin(false);}
+  });
+}
+async function expPrepMedia(t){
+  const ps=[];
+  for(const L of state.layers){
+    if(L.type!=='video'||!L.el)continue;
+    if(t<L.start-0.001||t>L.start+L.dur+0.001)continue;
+    const el=L.el, vd=el.duration||9999, loc=clamp(t-L.start,0,L.dur);
+    let target;
+    if(L.curveOn&&L.speedKfs&&L.speedKfs.length>=2)target=clamp((L.trim||0)+lutOffset(L,loc),0,Math.max(0,vd-0.012));
+    else target=clamp((L.trim||0)+loc*(L.speed||1),0,Math.max(0,vd-0.012));
+    // +4 ms: kadr chegarasidagi yaxlitlash (0.1666… < 0.167) oldingi kadrni ko'rsatmasin
+    target=Math.min(Math.max(0,vd-0.012),target+0.004);
+    ps.push(expSeek(el,target).then(async ok=>{
+      if(!ok||el.readyState<2){try{if(el.readyState<1)el.load();}catch(e){}await expSeek(el,target);}
+    }));
+  }
+  if(ps.length)await Promise.all(ps);
+}
+
+/* ── 🪟 Oyna ── */
+function expFmtMB(b){return b>=1e9?(b/1e9).toFixed(2)+' GB':(b/1e6).toFixed(b<1e7?1:0)+' MB';}
+function expDialog(){
+  if(exporting)return;
+  let ov=document.getElementById('expOv');if(ov)ov.remove();
+  ov=document.createElement('div');ov.id='expOv';
+  const draw=()=>{
+    const {W,H}=expDims(), dur=expEnd(), br=expBitrate(W,H,EXP.fps,EXP.q);
+    const hasAud=state.layers.some(L=>(L.type==='video'||L.type==='audio')&&!L.muted);
+    const size=(br+(hasAud?192000:0))/8*dur;
+    const wc=typeof VideoEncoder==='function';
+    ov.innerHTML=`<div class="exp-card">
+      <div class="exp-h">⬇ Videoni yuklab olish</div>
+      <div class="exp-sub">MP4 · H.264${hasAud?' + AAC ovoz':''} · ${W}×${H} · ${dur.toFixed(1)} s</div>
+      <div class="exp-lab">Sifat va hajm</div>
+      <div class="exp-q">${Object.entries(EXP_Q).map(([k,v])=>`<button data-q="${k}" class="${EXP.q===k?'on':''}"><b>${v.n}</b><span>${v.d}</span><i>${expFmtMB((expBitrate(W,H,EXP.fps,k)+(hasAud?192000:0))/8*dur)}</i></button>`).join('')}</div>
+      <div class="exp-lab">Kadr tezligi</div>
+      <div class="exp-f">${[24,25,30,60].map(f=>`<button data-f="${f}" class="${EXP.fps===f?'on':''}">${f} fps${f===30?' ✓':''}</button>`).join('')}</div>
+      <div class="exp-note">${wc?`✅ Kadrma-kadr yoziladi: tushib qolish, sakrash, qora kadr yo'q · doimiy ${EXP.fps} fps · ovoz aniq sinxron · Telegram/iPhone'da silliq o'ynaydi.<br>Taxminiy hajm: <b>${expFmtMB(size)}</b>`:'⚠️ Brauzeringiz WebCodecs ni qo\'llamaydi — eski (real vaqtli) usul ishlatiladi. Eng yaxshi natija uchun Chrome yoki Edge\'ning yangi versiyasini ishlating.'}</div>
+      <div class="exp-b"><button data-a="cancel">Bekor</button><button data-a="go" class="pri">⬇ Yuklab olish (MP4)</button></div>
+    </div>`;
+  };
+  draw();
+  ov.addEventListener('click',e=>{
+    if(e.target===ov){ov.remove();return;}
+    const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.q){EXP.q=b.dataset.q;expSave();draw();}
+    else if(b.dataset.f){EXP.fps=+b.dataset.f;expSave();draw();}
+    else if(b.dataset.a==='cancel')ov.remove();
+    else if(b.dataset.a==='go'){ov.remove();expStart();}
+  });
+  document.body.appendChild(ov);
+}
+let _expCancel=false;
+function expProgressUI(){
+  let ov=document.getElementById('expProg');if(ov)ov.remove();
+  ov=document.createElement('div');ov.id='expProg';
+  ov.innerHTML=`<div class="exp-card">
+    <div class="exp-h">⏳ Video tayyorlanmoqda</div>
+    <canvas class="exp-thumb" width="320" height="180"></canvas>
+    <div class="exp-stage">Tayyorlanmoqda…</div>
+    <div class="exp-bar"><i></i></div>
+    <div class="exp-meta"></div>
+    <div class="exp-b"><button data-a="stop">✕ To'xtatish</button></div>
+  </div>`;
+  ov.querySelector('[data-a="stop"]').onclick=()=>{_expCancel=true;ov.querySelector('.exp-stage').textContent='To\'xtatilmoqda…';};
+  document.body.appendChild(ov);
+  const th=ov.querySelector('.exp-thumb');
+  return {
+    stage(s){ov.querySelector('.exp-stage').textContent=s;},
+    prog(p,meta){ov.querySelector('.exp-bar i').style.width=(clamp(p,0,1)*100).toFixed(1)+'%';if(meta!=null)ov.querySelector('.exp-meta').textContent=meta;},
+    thumb(){try{const a=cv.width/cv.height;th.height=Math.round(320/a);if(th.height>320){th.height=320;th.width=Math.round(320*a);}else th.width=320;th.getContext('2d').drawImage(cv,0,0,th.width,th.height);}catch(e){}},
+    close(){ov.remove();}
+  };
+}
+async function expStart(){
+  if(exporting)return;
+  if(typeof VideoEncoder!=='function'||typeof VideoFrame!=='function'){legacyExport();return;}
+  const fps=EXP.fps, dur=expEnd();
+  if(!(dur>0.05)){toast('Eksport qilish uchun hech narsa yo\'q');return;}
+  const {W:W0,H:H0}=expDims();
+  const W=W0+(W0&1), H=H0+(H0&1);   // H.264 juft o'lcham talab qiladi
+  const bitrate=expBitrate(W,H,fps,EXP.q);
+  const vSel=await expPickVideo(W,H,fps,bitrate);
+  if(!vSel){toast('⚠️ Video kodlovchi topilmadi — eski usul ishlatiladi',4000);legacyExport();return;}
+  const UI=expProgressUI();
+  _expCancel=false;
+  exporting=true;__offExp=true;
+  const keep={t:state.time,sel:state.selected,multi:state.multi,playing:state.playing,pv:previewDiv};
+  setPlaying(false);
+  for(const L of state.layers){if(L.el)try{L.el.pause();}catch(e){}}
+  state.selected=null;state.multi=[];dragInfo='';guides.length=0;measures.length=0;
+  if(keep.pv!==1){
+    const _texts=state.layers.filter(l=>l.type==='text'&&l.szFull!=null);
+    previewDiv=1;applyFormat();_texts.forEach(l=>{l.size=l.szFull;});
+  }
+  let ok=false,err=null,outBlob=null;
+  const t0=performance.now();
+  try{
+    // 1) AI niqoblar, shriftlar
+    if(state.layers.some(l=>segOn(l))){
+      UI.stage('🎯 AI tahlil yakunlanmoqda…');
+      await segEnsureAll(L=>{const s=L._seg;if(s&&s.total)UI.prog(s.done/s.total*0.2);});
+    }
+    try{await document.fonts.ready;}catch(e){}
+    if(_expCancel)throw new Error('cancel');
+    // 2) Ovoz
+    const SR=48000;
+    UI.stage('🔊 Ovoz aralashtirilmoqda…');
+    let mix=null;try{mix=await expMixAudio(dur,SR,p=>UI.prog(p*0.15));}catch(e){console.warn('audio mix',e);mix=null;}
+    if(_expCancel)throw new Error('cancel');
+    const aSel=mix?await expPickAudio(SR,2):null;
+    if(mix&&!aSel)toast('⚠️ Brauzer ovoz kodlovchisini qo\'llamadi — video ovozsiz chiqadi',5000);
+    else if(aSel&&aSel.mux==='opus')toast('ℹ️ Ovoz Opus formatida (AAC mavjud emas)',4000);
+    // 3) Multiplekser
+    const target=new Mp4Muxer.ArrayBufferTarget();
+    const mx=new Mp4Muxer.Muxer({target,
+      video:{codec:vSel.mux,width:W,height:H,frameRate:fps},
+      audio:aSel?{codec:aSel.mux,sampleRate:SR,numberOfChannels:2}:undefined,
+      fastStart:'in-memory',firstTimestampBehavior:'offset'});
+    let encErr=null;
+    // 4) Ovozni kodlash
+    if(aSel){
+      UI.stage('🔊 Ovoz kodlanmoqda…');
+      const ae=new AudioEncoder({output:(c,m)=>mx.addAudioChunk(c,m),error:e=>{encErr=e;}});
+      ae.configure(aSel.cfg);
+      const L0=mix.getChannelData(0),R0=mix.numberOfChannels>1?mix.getChannelData(1):L0;
+      const FR=1024*4;
+      for(let s=0;s<mix.length;s+=FR){
+        const n=Math.min(FR,mix.length-s);
+        const data=new Float32Array(n*2);data.set(L0.subarray(s,s+n),0);data.set(R0.subarray(s,s+n),n);
+        const ad=new AudioData({format:'f32-planar',sampleRate:SR,numberOfFrames:n,numberOfChannels:2,timestamp:Math.round(s/SR*1e6),data});
+        ae.encode(ad);ad.close();
+        if(ae.encodeQueueSize>16)await new Promise(r=>setTimeout(r,0));
+      }
+      await ae.flush();ae.close();
+      if(encErr)throw encErr;
+    }
+    // 5) Kadrlar
+    const N=Math.max(1,Math.round(dur*fps));
+    const ve=new VideoEncoder({output:(c,m)=>mx.addVideoChunk(c,m),error:e=>{encErr=e;}});
+    ve.configure(vSel.cfg);
+    let evenCv=null,evenCtx=null;
+    if(W!==cv.width||H!==cv.height){evenCv=document.createElement('canvas');evenCv.width=W;evenCv.height=H;evenCtx=evenCv.getContext('2d');}
+    const KI=Math.max(1,Math.round(fps*2));
+    let lastUI=0;
+    for(let i=0;i<N;i++){
+      if(_expCancel)throw new Error('cancel');
+      if(encErr)throw encErr;
+      const t=Math.min(dur,i/fps);
+      state.time=t;
+      await expPrepMedia(t);
+      render();
+      let src=cv;
+      if(evenCv){evenCtx.fillStyle='#000';evenCtx.fillRect(0,0,W,H);evenCtx.drawImage(cv,0,0);src=evenCv;}
+      const vf=new VideoFrame(src,{timestamp:Math.round(i*1e6/fps),duration:Math.round(1e6/fps)});
+      ve.encode(vf,{keyFrame:i%KI===0});
+      vf.close();
+      while(ve.encodeQueueSize>4)await new Promise(r=>setTimeout(r,2));
+      const now=performance.now();
+      if(now-lastUI>220||i===N-1){
+        lastUI=now;
+        const done=(i+1)/N, el=(now-t0)/1000, eta=el/Math.max(0.01,done)*(1-done);
+        UI.stage('🎞 Kadrlar yozilmoqda — '+(i+1)+' / '+N);
+        UI.prog(0.15+done*0.83,`${(t).toFixed(1)} / ${dur.toFixed(1)} s · ${((i+1)/el).toFixed(1)} kadr/s · qoldi ≈ ${Math.ceil(eta)} s`);
+        UI.thumb();
+        await new Promise(r=>setTimeout(r,0));   // interfeys nafas olsin
+      }
+    }
+    UI.stage('📦 Fayl yig\'ilmoqda…');
+    await ve.flush();ve.close();
+    if(encErr)throw encErr;
+    mx.finalize();
+    outBlob=new Blob([target.buffer],{type:'video/mp4'});
+    ok=true;
+  }catch(e){err=e;}
+  finally{
+    exporting=false;__offExp=false;
+    _expAudCache.clear();   // dekodlangan ovoz xotirada qolmasin
+    if(keep.pv!==1){state.layers.forEach(L=>{if(L.type==='text')L.szFull=L.size;});previewDiv=keep.pv;applyFormat();}
+    state.time=keep.t;state.selected=keep.sel;state.multi=keep.multi||[];
+    seekDirty=true;
+    try{renderAll();}catch(e){}
+    syncTimeUI(true);
+    UI.close();
+  }
+  if(ok&&outBlob){
+    const nm=(String(curProjName||'getmotion').replace(/[^\wЀ-ӿ\- ]+/g,'').trim().replace(/\s+/g,'-')||'getmotion');
+    const a=document.createElement('a');a.download=nm+'.mp4';a.href=URL.createObjectURL(outBlob);
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+    const sec=((performance.now()-t0)/1000).toFixed(0);
+    toast(`✅ MP4 tayyor — ${expFmtMB(outBlob.size)} · ${W}×${H} · ${fps} fps · ${sec} s da`,6000);
+  }else if(err&&String(err.message)==='cancel'){toast('Eksport to\'xtatildi');}
+  else if(err){console.error('eksport',err);toast('❌ Eksportda xato: '+(err.message||err)+' — eski usul bilan urinib ko\'ring',6000);}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎬 SAHNA QURUVCHI — bir kadrning tepasi, pasti, chap va o'ng tomoniga yangi kadrlar
+   ───────────────────────────────────────────────────────────────────────────
+   Fusion / Prezi g'oyasi: katta "sahna" — yonma-yon kadrlar to'ri. Har kadr — o'z foni
+   va elementlari bo'lgan alohida joy. Kamera ular orasida uchadi (◆ keyframe'lar).
+   • Har kadr oddiy qatlam (kadr o'lchamidagi fon plastinasi) — shuning uchun render,
+     3D sahna, eksport, undo — hammasi avtomatik ishlaydi.
+   • Kadr qo'shish: bo'sh yoki joriy kadrdan NUSXA (barcha elementlari bilan).
+   • 🎥 "Kamerani shu kadrga" — playhead joyiga aniq ramkalovchi ◆ yoziladi.
+   • 🎬 Avtomatik yo'l: har kadrda N s turib, M s da keyingisiga o'tadi (3 uslub).
+   • Kadrdan tashqaridagi elementlar chizilmaydi (culling) — sahna katta bo'lsa ham yengil.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function sceneFrames(){return state.layers.filter(L=>L.sceneFrame);}
+function sceneGap(){return Math.max(0,+(state.sceneGap||0));}
+function sceneStep(){const g=sceneGap();return {x:cv.width+g,y:cv.height+g};}
+function sceneCenter(c,r){const s=sceneStep();return {x:cv.width/2+c*s.x,y:cv.height/2+r*s.y};}
+function sceneFrameAt(c,r){return sceneFrames().find(L=>L.sceneFrame.c===c&&L.sceneFrame.r===r)||null;}
+function sceneBottomIndex(){let i=0;while(i<state.layers.length&&state.layers[i].sceneFrame)i++;return i;}
+/* Yangi kadr plastinasi */
+function sceneMakePlate(c,r,name,col){
+  const L=newShape();
+  delete L._new;
+  const p=sceneCenter(c,r);
+  Object.assign(L,{shape:'rect',w:cv.width,h:cv.height,x:p.x,y:p.y,radius:0,fill:'color',fillColor:col||'#141420',fillA:1,
+    border:false,shadow:false,blur:0,tintA:0,start:0,dur:state.duration,animIn:'none',animOut:'none',motion:'none',
+    customName:name,sceneFrame:{c,r}});
+  if(state.bgGrad&&!col){L.fill='gradient';L.fillColor=state.bgGrad[0];L.grad2=state.bgGrad[1];L.gradAng=90;}
+  else if(!col)L.fillColor=state.bg||'#141420';
+  return L;
+}
+/* Sahnani boshlash: asosiy kadr ham plastinaga aylanadi (har kadrning o'z foni bo'lsin) */
+function sceneEnsure(){
+  if(sceneFrames().length)return;
+  const L=sceneMakePlate(0,0,'Kadr 1',null);
+  state.layers.unshift(L);
+}
+function sceneSyncDur(){
+  for(const L of sceneFrames()){L.start=0;L.dur=state.duration;}
+}
+/* Kadr ichidagi elementlar (markazi shu kadr to'rtburchagida) */
+function sceneMembers(F){
+  const c=F.sceneFrame, ctr=sceneCenter(c.c,c.r), hw=cv.width/2, hh=cv.height/2;
+  return state.layers.filter(L=>{
+    if(L.sceneFrame||L.type==='audio')return false;
+    let T;try{T=kfValue(L,0);}catch(e){return false;}
+    let x=T.x,y=T.y;
+    if(L.linkTo){const P=state.layers.find(z=>z.id===L.linkTo);if(P&&!isGroupHolder(P))return false;}
+    return Math.abs(x-ctr.x)<=hw&&Math.abs(y-ctr.y)<=hh;
+  });
+}
+function sceneClone(L,dx,dy){
+  const c={};for(const k in L){if(k==='el'||k[0]==='_')continue;c[k]=L[k];}
+  const N=JSON.parse(JSON.stringify(c));
+  N.id=uid++;
+  N.x=(N.x||0)+dx;N.y=(N.y||0)+dy;
+  if(N.kfs)for(const k of N.kfs){if(k.x!==undefined)k.x+=dx;if(k.y!==undefined)k.y+=dy;}
+  if(N.gox!==undefined){N.gox+=dx;N.goy+=dy;}
+  N.track=trackSeq++;
+  if(N.type==='video'||N.type==='audio')N.el=makeMediaEl(N.type,N.srcUrl,()=>{hookAudio(N);seekDirty=true;});
+  else if(N.type==='image'){const img=new Image();img.src=N.srcUrl;N.el=img;}
+  return N;
+}
+function sceneAdd(fromF,dc,dr,copy){
+  sceneEnsure();
+  const F=fromF||sceneFrames()[0];
+  const c=F.sceneFrame.c+dc, r=F.sceneFrame.r+dr;
+  if(sceneFrameAt(c,r)){toast('Bu joyda kadr allaqachon bor');return null;}
+  saveHistory();
+  const n=sceneFrames().length+1;
+  const s=sceneStep(), dx=dc*s.x, dy=dr*s.y;
+  let P;
+  if(copy){
+    P=sceneClone(F,dx,dy);P.sceneFrame={c,r};P.customName='Kadr '+n;
+    // elementlar nusxasi (guruh a'zolari ham — bog'lanishlar yangi id'larga ko'chadi)
+    const mem=sceneMembers(F), ids=new Set(mem.map(L=>L.id));
+    for(const K of state.layers)if(K.linkTo!=null&&ids.has(K.linkTo)&&!ids.has(K.id)){mem.push(K);ids.add(K.id);}
+    const map=new Map(), clones=[];
+    for(const L of state.layers)if(ids.has(L.id)){const N=sceneClone(L,dx,dy);map.set(L.id,N.id);clones.push(N);}
+    for(const N of clones)if(N.linkTo!=null&&map.has(N.linkTo))N.linkTo=map.get(N.linkTo);
+    state.layers.push(...clones);
+    toast('⧉ Kadr '+n+' — '+clones.length+' ta element bilan nusxalandi');
+  }else{
+    P=sceneMakePlate(c,r,'Kadr '+n,F.fillColor);
+    if(F.fill==='gradient'){P.fill='gradient';P.fillColor=F.fillColor;P.grad2=F.grad2;P.gradAng=F.gradAng;}
+    toast('▢ Kadr '+n+' qo\'shildi — 🎥 bilan kamerani unga yuboring');
+  }
+  state.layers.splice(sceneBottomIndex(),0,P);
+  seekDirty=true;renderAll();
+  return P;
+}
+function sceneDelete(F){
+  if(!F)return;
+  const mem=sceneMembers(F);
+  saveHistory();
+  state.layers=state.layers.filter(L=>L!==F);
+  if(state.selected===F.id)state.selected=null;
+  seekDirty=true;renderAll();
+  toast('🗑 '+(F.customName||'Kadr')+' o\'chirildi'+(mem.length?' — ichidagi '+mem.length+' ta element joyida qoldi':''));
+}
+/* Kamera aynan shu kadrni ramkaga oladigan qiymatlar */
+function sceneCamVals(F,extra){
+  const s=sceneStep();
+  return Object.assign({x:F.sceneFrame.c*s.x,y:F.sceneFrame.r*s.y,z:0,dist:0,sw:0,ti:0,roll:0,zoom:1},extra||{});
+}
+function sceneCamPrep(){
+  const c=getCam();
+  if(!c.on)c.on=true;
+  if(c.type!=='orbit'){try{camConvert('orbit');}catch(e){c.type='orbit';}}
+  return c;
+}
+/* 🎥 Playhead joyiga: kamera shu kadrga qaraydi (◆) */
+function sceneCamTo(F){
+  if(!F)return;
+  saveHistory();
+  const c=sceneCamPrep();
+  camClearPend();
+  const t=+state.time.toFixed(3);
+  const v=sceneCamVals(F);
+  const base=camRaw(state.time);
+  const rec={t};for(const k of CAM_KEYS)rec[k]=base[k];Object.assign(rec,v);
+  c.kfs=c.kfs||[];
+  const i=c.kfs.findIndex(k=>Math.abs(k.t-t)<0.05);
+  if(i>=0)Object.assign(c.kfs[i],rec);else c.kfs.push(rec);
+  c.kfs.sort((a,b)=>a.t-b.t);
+  if(c.kfs.length===1)Object.assign(c,v);
+  if(!c.ease||c.ease==='spline')c.ease='smooth';
+  _camUiKey='';seekDirty=true;renderProps();renderTimeline();
+  toast('🎥 '+t.toFixed(2)+'s — kamera "'+(F.customName||'kadr')+'"ga qaraydi (◆)');
+}
+/* Shu kadrni tahrirlash: kamera unga qaragan vaqtga o'tish (bo'lmasa — playheadda ◆) */
+function sceneEdit(F){
+  const c=getCam(), v=sceneCamVals(F);
+  const k=(c.on?(c.kfs||[]):[]).find(k=>Math.abs((k.x||0)-v.x)<1&&Math.abs((k.y||0)-v.y)<1&&Math.abs(k.dist||0)<1&&Math.abs(k.sw||0)<0.1);
+  if(k){state.time=clamp(k.t,0,state.duration);camClearPend();seekDirty=true;syncTimeUI(true);renderProps();toast('✏ '+(F.customName||'Kadr')+' — endi shu yerga element qo\'shsangiz, aynan shu kadrga tushadi');}
+  else sceneCamTo(F);
+}
+/* 🎬 Avtomatik kamera yo'li */
+function scenePath(order,hold,move,style){
+  const Fs=order.filter(Boolean);
+  if(Fs.length<2){toast('Yo\'l uchun kamida 2 ta kadr kerak');return;}
+  saveHistory();
+  const c=sceneCamPrep();
+  const s=sceneStep();
+  const kfs=[];let t=0;
+  const add=(tt,v)=>{const r={t:+tt.toFixed(3),fl:c.fl||CAM_FL_DEF,fd:0,ap:0,shk:0,ex:0,ey:0,ez:0};Object.assign(r,v);kfs.push(r);};
+  Fs.forEach((F,i)=>{
+    const v=sceneCamVals(F);
+    add(t,v);
+    if(hold>0.01){t+=hold;add(t,v);}
+    if(i<Fs.length-1){
+      const N=sceneCamVals(Fs[i+1]);
+      if(style==='zoom'){
+        const d=Math.hypot(N.x-v.x,N.y-v.y), D=Math.max(cv.width,cv.height);
+        add(t+move/2,{x:(v.x+N.x)/2,y:(v.y+N.y)/2,z:0,dist:Math.round(Math.min(D*2.4,d*0.9+D*0.25)),sw:0,ti:0,roll:0,zoom:1});
+      }else if(style==='swing'){
+        const dir=Math.sign((N.x-v.x)||(N.y-v.y))||1;
+        add(t+move/2,{x:(v.x+N.x)/2,y:(v.y+N.y)/2,z:0,dist:Math.round(Math.max(cv.width,cv.height)*0.35),sw:-14*dir*(N.x!==v.x?1:0),ti:10*dir*(N.y!==v.y?1:0),roll:-3*dir,zoom:1});
+      }
+      t+=move;
+    }
+  });
+  c.kfs=kfs;c.ease='smooth';
+  Object.assign(c,sceneCamVals(Fs[0]));
+  camClearPend();
+  if(t>state.duration-0.01){state.duration=Math.min(300,Math.ceil(t*10)/10+0.1);const di=document.getElementById('inDuration');if(di)di.value=state.duration;}
+  sceneSyncDur();
+  state.time=0;_camUiKey='';seekDirty=true;syncTimeUI(true);renderAll();
+  toast('🎬 Kamera yo\'li tayyor: '+Fs.length+' kadr · '+t.toFixed(1)+' s — ▶ bosing',4500);
+}
+/* ── 🗺 Sahna xaritasi oynasi ── */
+let _scSel=null, _scOrder=null;
+const SC_UI={hold:2,move:0.9,style:'pan'};
+try{const j=JSON.parse(localStorage.getItem('gm_scene')||'null');if(j)Object.assign(SC_UI,j);}catch(e){}
+function sceneThumbs(Fs,w){
+  // har kadrning kichik ko'rinishi: kamera vaqtincha shu kadrga qo'yilib chiziladi
+  const out=new Map();
+  const keepCam=state.cam, keepT=state.time, keepSel=state.selected, keepMul=state.multi;
+  const h=Math.round(w*cv.height/cv.width);
+  try{
+    state.selected=null;state.multi=[];
+    for(const F of Fs){
+      const v=sceneCamVals(F);
+      state.cam=Object.assign(camDefaults(),{on:true,type:'orbit'},v,{kfs:[]});
+      camClearPend();
+      try{renderComp(true);}catch(e){}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(cv,0,0,w,h);
+      out.set(F.id,c.toDataURL('image/jpeg',0.72));
+    }
+  }finally{state.cam=keepCam;state.time=keepT;state.selected=keepSel;state.multi=keepMul;seekDirty=true;}
+  return out;
+}
+function sceneOpen(){
+  let ov=document.getElementById('scOv');if(ov)ov.remove();
+  ov=document.createElement('div');ov.id='scOv';
+  document.body.appendChild(ov);
+  sceneDraw(true);
+}
+function sceneDraw(fresh){
+  const ov=document.getElementById('scOv');if(!ov)return;
+  const Fs=sceneFrames();
+  if(!_scSel||!Fs.includes(_scSel))_scSel=Fs.find(F=>F.sceneFrame.c===0&&F.sceneFrame.r===0)||Fs[0]||null;
+  if(!_scOrder||fresh)_scOrder=null;
+  let c0=0,c1=0,r0=0,r1=0;
+  for(const F of Fs){c0=Math.min(c0,F.sceneFrame.c);c1=Math.max(c1,F.sceneFrame.c);r0=Math.min(r0,F.sceneFrame.r);r1=Math.max(r1,F.sceneFrame.r);}
+  // faqat tanlangan kadr yonidagi "+" joylar uchun chegara kengayadi (bo'sh qator/ustun yo'q)
+  if(_scSel){const sc=_scSel.sceneFrame;c0=Math.min(c0,sc.c-1);c1=Math.max(c1,sc.c+1);r0=Math.min(r0,sc.r-1);r1=Math.max(r1,sc.r+1);}
+  else{c0--;c1++;r0--;r1++;}
+  const cols=c1-c0+1, rows=r1-r0+1;
+  const ar=cv.width/cv.height;
+  const maxW=Math.min(800,innerWidth-80), maxH=Math.min(470,innerHeight*0.5);
+  let cw=Math.min(170,(maxW-cols*8)/cols), ch=cw/ar;
+  if(ch>165){ch=165;cw=ch*ar;}
+  if(ch*rows+rows*8>maxH*1.6){ch=Math.max(70,(maxH*1.6-rows*8)/rows);cw=ch*ar;}
+  const th=Fs.length?(ov._th&&!fresh?ov._th:sceneThumbs(Fs,Math.round(cw*1.5))):new Map();
+  ov._th=th;
+  const cam=getCam();
+  const cells=[];
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+    const F=Fs.find(L=>L.sceneFrame.c===c&&L.sceneFrame.r===r);
+    if(F){
+      const ord=(_scOrder||[]).indexOf(F);
+      cells.push(`<div class="sc-cell sc-f ${F===_scSel?'sel':''}" data-id="${F.id}" style="grid-column:${c-c0+1};grid-row:${r-r0+1}">
+        ${th.get(F.id)?`<img src="${th.get(F.id)}" alt="">`:''}<b>${escapeHtml(F.customName||'Kadr')}</b>${c===0&&r===0?'<i class="sc-main">asosiy</i>':''}${ord>=0?`<em>${ord+1}</em>`:''}</div>`);
+    }else if(_scSel&&Math.abs(c-_scSel.sceneFrame.c)+Math.abs(r-_scSel.sceneFrame.r)===1){
+      const dc=c-_scSel.sceneFrame.c, dr=r-_scSel.sceneFrame.r;
+      const arw=dc===1?'➡':dc===-1?'⬅':dr===1?'⬇':'⬆';
+      cells.push(`<div class="sc-cell sc-add" style="grid-column:${c-c0+1};grid-row:${r-r0+1}" data-dc="${dc}" data-dr="${dr}">
+        <span>${arw}</span><button data-add="copy" title="Tanlangan kadrni barcha elementlari bilan shu tomonga nusxalash">⧉ Nusxa</button><button data-add="empty" title="Shu tomonga bo'sh kadr">▢ Bo'sh</button></div>`);
+    }
+  }
+  const sel=_scSel;
+  ov.innerHTML=`<div class="sc-box">
+    <div class="sc-head"><b>🎬 Sahna quruvchi</b><span>Kadrning tepasi, pasti va yonlariga yangi kadrlar — kamera ular orasida uchadi</span><button data-a="x">✕</button></div>
+    ${Fs.length?'':`<div class="sc-empty">Hozircha bitta kadr bor. Pastdagi <b>⬅ ⬆ ➡ ⬇</b> bilan yonma-yon kadr qo'shing — <b>⧉ Nusxa</b> joriy kadrni barcha elementlari bilan takrorlaydi, <b>▢ Bo'sh</b> — toza kadr.</div>`}
+    <div class="sc-mapwrap"><div class="sc-map" style="grid-template-columns:repeat(${cols},${cw.toFixed(0)}px);grid-template-rows:repeat(${rows},${ch.toFixed(0)}px)">${Fs.length?cells.join(''):`<div class="sc-cell sc-f sel" style="grid-column:2;grid-row:2"><b>Kadr 1</b><i class="sc-main">asosiy</i></div>
+      ${[[1,0,'➡',3,2],[-1,0,'⬅',1,2],[0,1,'⬇',2,3],[0,-1,'⬆',2,1]].map(([dc,dr,a,gc,gr])=>`<div class="sc-cell sc-add" style="grid-column:${gc};grid-row:${gr}" data-dc="${dc}" data-dr="${dr}"><span>${a}</span><button data-add="copy">⧉ Nusxa</button><button data-add="empty">▢ Bo'sh</button></div>`).join('')}`}</div></div>
+    ${sel?`<div class="sc-act">
+      <div class="sc-row"><input id="scName" value="${escapeHtml(sel.customName||'')}" maxlength="40" title="Kadr nomi"><input type="color" id="scCol" value="${sel.fillColor||'#141420'}" title="Kadr foni rangi">
+        <button data-a="bgimg" title="Shu kadrga to'liq fon rasm/video qo'yish">🖼 Fon (rasm/video)</button></div>
+      <div class="sc-row">
+        <button data-a="cam" class="pri" title="Playhead joyiga kamera keyframe — kamera aynan shu kadrni ko'rsatadi">🎥 Kamera shu kadrga (◆ ${state.time.toFixed(2)}s)</button>
+        <button data-a="edit" title="Kamera shu kadrga qaragan vaqtga o'tib, shu kadrni tahrirlash">✏ Shu kadrni tahrirlash</button>
+        ${sel.sceneFrame.c||sel.sceneFrame.r?`<button data-a="del" class="dang" title="Kadr plastinasini o'chirish">🗑</button>`:''}
+      </div>
+    </div>`:''}
+    <div class="sc-path">
+      <div class="sc-lab">🎬 Avtomatik kamera yo'li ${_scOrder?`<span>— tartib: ${_scOrder.map(F=>escapeHtml(F.customName||'?')).join(' → ')}</span>`:'<span>— kadrlar ro\'yxat tartibida (o\'zgartirish: "Tartib tanlash")</span>'}</div>
+      <div class="sc-row">
+        <label>Har kadrda <input type="number" id="scHold" min="0" max="30" step="0.1" value="${SC_UI.hold}"> s</label>
+        <label>O'tish <input type="number" id="scMove" min="0.2" max="10" step="0.1" value="${SC_UI.move}"> s</label>
+        <select id="scStyle"><option value="pan" ${SC_UI.style==='pan'?'selected':''}>➡ Silliq surilish</option><option value="zoom" ${SC_UI.style==='zoom'?'selected':''}>🔭 Uzoqlashib o'tish</option><option value="swing" ${SC_UI.style==='swing'?'selected':''}>🌀 3D burilib o'tish</option></select>
+      </div>
+      <div class="sc-row">
+        <button data-a="order" class="${_scOrder?'on':''}">${_scOrder?'✓ Tartib tanlanmoqda — kadrlarni bosing':'🔢 Tartib tanlash'}</button>
+        <button data-a="path" class="pri">🎬 Yo'lni yaratish</button>
+      </div>
+      <div class="sc-hint">Yo'l kamera ◆ larini qayta yozadi. Keyin har bir ◆ ni timeline'dagi 🎥 Kamera qatorida surib vaqtini o'zgartirish mumkin.</div>
+    </div>
+    <div class="sc-foot"><button data-a="3d">🗺 Butun sahnani 3D da ko'rish</button><button data-a="x">Yopish</button></div>
+  </div>`;
+  ov.onclick=e=>{
+    if(e.target===ov){ov.remove();return;}
+    const add=e.target.closest('[data-add]');
+    if(add){const cell=add.closest('.sc-add');const P=sceneAdd(_scSel,+cell.dataset.dc,+cell.dataset.dr,add.dataset.add==='copy');if(P)_scSel=P;sceneDraw(true);return;}
+    const f=e.target.closest('.sc-f');
+    if(f&&f.dataset.id){
+      const F=sceneFrames().find(L=>String(L.id)===f.dataset.id);
+      if(_scOrder){const i=_scOrder.indexOf(F);if(i>=0)_scOrder.splice(i,1);else _scOrder.push(F);}
+      else _scSel=F;
+      sceneDraw(false);return;
+    }
+    const b=e.target.closest('button[data-a]');if(!b)return;
+    const a=b.dataset.a;
+    if(a==='x'){ov.remove();return;}
+    if(a==='cam'){sceneCamTo(_scSel);sceneDraw(false);return;}
+    if(a==='edit'){ov.remove();sceneEdit(_scSel);return;}
+    if(a==='del'){sceneDelete(_scSel);_scSel=null;sceneDraw(true);return;}
+    if(a==='bgimg'){sceneBgPick(_scSel);return;}
+    if(a==='order'){_scOrder=_scOrder?null:[];sceneDraw(false);return;}
+    if(a==='path'){
+      const order=(_scOrder&&_scOrder.length>=2)?_scOrder:sceneFrames().slice().sort((p,q)=>(p.id-q.id));
+      scenePath(order,SC_UI.hold,SC_UI.move,SC_UI.style);_scOrder=null;sceneDraw(true);return;
+    }
+    if(a==='3d'){ov.remove();setView3D(true);try{v3SetView('front');v3BarSync();}catch(x){}return;}
+  };
+  const q=s=>ov.querySelector(s);
+  {const se=ov.querySelector('.sc-f.sel');if(se)try{se.scrollIntoView({block:'nearest',inline:'nearest'});}catch(e){}}
+  const nm=q('#scName');if(nm)nm.onchange=()=>{saveHistory();_scSel.customName=nm.value.trim()||_scSel.customName;renderAll();sceneDraw(false);};
+  const col=q('#scCol');if(col)col.oninput=()=>{_scSel.fill='color';_scSel.fillColor=col.value;seekDirty=true;};
+  if(col)col.onchange=()=>{saveHistory();sceneDraw(true);};
+  const sv=()=>{try{localStorage.setItem('gm_scene',JSON.stringify(SC_UI));}catch(e){}};
+  const ho=q('#scHold');if(ho)ho.onchange=()=>{SC_UI.hold=clamp(+ho.value||0,0,30);sv();};
+  const mo=q('#scMove');if(mo)mo.onchange=()=>{SC_UI.move=clamp(+mo.value||0.9,0.2,10);sv();};
+  const st=q('#scStyle');if(st)st.onchange=()=>{SC_UI.style=st.value;sv();};
+}
+/* Kadrga fon rasm/video: kadrni to'liq qoplaydi, plastinaning ustida turadi */
+function sceneBgPick(F){
+  if(!F)return;
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*,video/*';
+  inp.onchange=()=>{
+    const f=inp.files&&inp.files[0];if(!f)return;
+    const isV=/^video\//.test(f.type);
+    const ctr={x:F.x,y:F.y};
+    if(isV)addVideoFile(f,0);else addImageFile(f,0);
+    const L=state.layers.find(x=>x.id===state.selected);
+    if(!L)return;
+    delete L._new;
+    L.x=ctr.x;L.y=ctr.y;L.start=0;L.dur=state.duration;L.radius=0;L.animIn='none';L.animOut='none';
+    L.customName=(F.customName||'Kadr')+' foni';
+    // plastinaning ustiga (sahna fonlari bloki tepasida)
+    state.layers=state.layers.filter(x=>x!==L);
+    state.layers.splice(sceneBottomIndex(),0,L);
+    const fit=()=>{const sc=coverScale(L,'cover');if(sc)L.scale=clamp(sc,0.02,8);L.x=ctr.x;L.y=ctr.y;seekDirty=true;};
+    if(isV){const el=L.el;const h=()=>{fit();if(L.el&&L.el.duration)L.dur=Math.min(state.duration,L.el.duration/(L.speed||1));};if(el.readyState>=1)h();else el.addEventListener('loadedmetadata',h,{once:true});}
+    else{const img=L.el;if(img.complete&&img.naturalWidth)fit();else img.addEventListener('load',fit,{once:true});}
+    renderAll();
+    toast('🖼 '+(F.customName||'Kadr')+' foni qo\'yildi — kadrni to\'liq qoplaydi');
+    setTimeout(()=>{if(document.getElementById('scOv'))sceneDraw(true);},400);
+  };
+  inp.click();
+}
+
 function drawShape(L,local,t,baseAlpha){
   const fx=objectFX(L,local,t);
   applyWalls(L,fx,L.w,L.h,local);
@@ -13833,7 +14741,9 @@ function fitToFrame(L,mode){
   const sc=coverScale(L,mode);
   if(!sc)return false;
   setAnimProp(L,'mscale',clamp(sc,0.02,8));
-  setTransformProp(L,{x:state.W/2,y:state.H/2});
+  // kamera boshqa kadrga qarab turgan bo'lsa — o'sha kadrni to'ldiradi
+  let _c={x:state.W/2,y:state.H/2};try{if(camActive())_c=camViewCenter();}catch(e){}
+  setTransformProp(L,{x:Math.round(_c.x),y:Math.round(_c.y)});
   seekDirty=true;
   return true;
 }
@@ -14118,7 +15028,7 @@ function drawText(L,local,t,baseAlpha){
   if(_hasDeco){ctx.save();ctx.translate(ofx.dx||0,ofx.dy||0);ctx.scale(ofx.scale||1,ofx.scale||1);drawTextDecoBack(L,local,t,_bwAll,blockH,_dA);ctx.restore();}
   let _crX,_crY=-blockH/2+lineH*0.5;
   {const _l0=measW(_fs,lines[0]||'');_crX=L.align==='left'?-blockW/2:(L.align==='right'?blockW/2-_l0:-_l0/2);}
-  let gi=0, widx=0;
+  let gi=0, widx=0, _tg=null, _tgMax=0;
   lines.forEach((line,li)=>{
     const lw=measW(_fs,line);
     let cx=L.align==='left'?-blockW/2:(L.align==='right'?blockW/2-lw:-lw/2);
@@ -14146,6 +15056,11 @@ function drawText(L,local,t,baseAlpha){
         fx=letterFX(L.animIn,p,t,gi);
       }
       if(fx.visible&&fx.alpha>0.005){
+        // ⚡ porlayotgan harflar yordamchi kanvasga — nur oxirida BIR marta qo'shiladi (har harfga blur emas)
+        const _glowCh=fx.glow>0.5;
+        if(_glowCh&&!_tg){const _p=L.size*2.5;_tg=glowBegin([{pts:[[-_bwAll/2-_p,-blockH/2-_p],[_bwAll/2+_p,blockH/2+_p]]}],0,fx.glow*2.5);if(_tg)ctx=_tg.main;}
+        const _mainC=ctx;
+        if(_glowCh&&_tg&&!_tg.skip){ctx=_glwX;if(fx.glow>_tgMax)_tgMax=fx.glow;}
         _crX=cx+w;_crY=cy;
         let dx=fx.dx+(ofx.dx||0), dy=fx.dy;
         if(L.animIn==='maskUp')dy=fx.dy*lineH*1.1;
@@ -14163,7 +15078,6 @@ function drawText(L,local,t,baseAlpha){
           if(extrudeSteps)_tb=0;
           ctx.filter=_tb>=1?`blur(${Math.round(_tb)}px)`:'none';
         }
-        if(fx.glow>0.5){ctx.shadowColor=L.color;ctx.shadowBlur=fx.glow;}
         let fill=L.color;
         // 🌈 Matn gradienti: butun blok bo'ylab silliq o'tish (har harfda uzluksiz)
         if(L.tgrad){
@@ -14196,6 +15110,7 @@ function drawText(L,local,t,baseAlpha){
         ctx.fillStyle=fill;
         ctx.fillText(ch,-w/2,0);
         ctx.restore();
+        ctx=_mainC;
       }
       cx+=w;gi++;
       if(ch===' ')widx++;
@@ -14203,6 +15118,7 @@ function drawText(L,local,t,baseAlpha){
     if(isMask)ctx.restore();
     gi++;widx++;
   });
+  if(_tg)glowEnd(_tg,_tgMax,L.color);
   if(_hasDeco){ctx.save();ctx.translate(ofx.dx||0,ofx.dy||0);ctx.scale(ofx.scale||1,ofx.scale||1);drawTextDecoFront(L,local,t,_bwAll,blockH,_dA);ctx.restore();}
   if(L.caret)drawCaret(L,_crX+(ofx.dx||0),_crY,L.animIn==='typewriter'&&local<gi*Math.max(L.stagger,0.02),_dA,t);
   if(_liqWrap)ctx.restore();
@@ -14506,8 +15422,8 @@ function camLayerDepth(L){
   if(L.linkTo){const P=state.layers.find(x=>x.id===L.linkTo);if(P)z+=P.dist3||0;}
   return z;
 }
-function camViewAffine(L){
-  if(view3D||!camActive())return null;
+function camViewAffine(L,any3D){
+  if((view3D&&!any3D)||!camActive())return null;
   const c=getCam();
   let S,zoom;
   try{const v=camValues(state.time);S=camSolve(c,v,state.time,true);zoom=Math.max(0.05,v.zoom||1);}catch(e){return null;}
@@ -15138,6 +16054,43 @@ function drawTop(L,t,_CAML,sceneCtx){
       }
     }
 }
+/* ⚡ KO'RINMAS ELEMENTLARNI TASHLAB KETISH (culling)
+   Sahna (bir nechta kadr) va kamera bilan ishlaganda ko'p element kadrdan tashqarida
+   turadi. Ular baribir ko'rinmaydi, lekin har kadrda chizilar (video dekodlanar,
+   effektlar hisoblanar) edi. Endi kamera ko'rinishidan katta zaxira bilan ham
+   tashqarida bo'lgan element o'tkazib yuboriladi. Ishonchsiz holatlar (adjustment,
+   zarrachalar, takrorlash, iz/motion blur, portlash, farzandli qatlamlar) — doim chiziladi. */
+function cullPrep(){
+  const W=cv.width,H=cv.height;
+  const kids=new Set();for(const K of state.layers)if(K.linkTo!=null)kids.add(K.linkTo);
+  return {W,H,m:Math.max(W,H)*0.12,kids,cam:camActive()};
+}
+function cullOut(L,t,C){
+  if(L.adjust||(L.rep&&L.rep.on)||L.shape==='particles'||(L.echo&&L.echo.on)||L.mblur||(L.burst&&L.burst!=='none')||C.kids.has(L.id))return false;
+  let B;try{B=getSelBox(L);}catch(e){return false;}
+  // "Kadrdan chiqmasin" (devor) yoqiq element asosiy kadrga tortib olinadi — joyi oldindan
+  // noma'lum; faqat o'z sahna kadri bo'lsa (devor shu kadrga ushlaydi) kesish xavfsiz
+  if(L.wallBounce&&!L.linkTo){
+    const g=Math.max(0,+(state.sceneGap||0)),cc=Math.floor((B.T.x+g/2)/(C.W+g)),cr=Math.floor((B.T.y+g/2)/(C.H+g));
+    if(!(typeof sceneFrameAt==='function'&&sceneFrameAt(cc,cr)))return false;
+  }
+  let dx=0,dy=0,s=1,rot=0;
+  try{const fx=objectFX(L,t-L.start,t);if(fx){dx=fx.dx||0;dy=fx.dy||0;s=Math.max(1,(fx.scale||1)*Math.max(fx.sx||1,fx.sy||1));rot=fx.rot||0;}}catch(e){return false;}
+  if(!isFinite(B.T.x)||!isFinite(B.T.y)||!isFinite(B.bw)||!isFinite(B.bh))return false;
+  // aniq (burilgan) to'rtburchak burchaklari + chegara/soya zaxirasi
+  const pad=Math.max(L.borderW||0,0)*2+(L.shadow?40:0);
+  const hw=B.bw/2*s+pad, hh=B.bh/2*s+pad, a=(B.T.rotDeg||0)*Math.PI/180+rot, ca=Math.cos(a), sa=Math.sin(a);
+  const cx=B.T.x+dx, cy=B.T.y+dy;
+  let pts=[[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]].map(([x,y])=>[cx+x*ca-y*sa,cy+x*sa+y*ca]);
+  if(C.cam){
+    let A=null;try{A=camViewAffine(L,true);}catch(e){return false;}
+    if(A)pts=pts.map(([x,y])=>[A.a*x+A.c*y+A.e,A.b*x+A.d*y+A.f]);
+  }
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const [x,y] of pts){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
+  const m=C.m;
+  return x1<-m||x0>C.W+m||y1<-m||y0>C.H+m;
+}
 function render(){
   _lbCache=new Map();   // ⚡ har freymda bir marta hisoblanadi
   if(_newPending){try{camPlaceNew();}catch(e){}}
@@ -15250,6 +16203,7 @@ function renderComp(noOv){
   }
   ctx=sceneCtx;
   const _mSrc=matteSources();
+  const _cull=cullPrep();
   for(const L of state.layers){
     if(L.type==='audio')continue;
     if(t<L.start||t>L.start+L.dur)continue;
@@ -15257,6 +16211,8 @@ function renderComp(noOv){
     if(inFlatGroup(L))continue;
     // 🎭 Track matte manbasi — o'zi ko'rinmaydi (AE kabi)
     if(_mSrc.has(L.id)&&!L.matteShow)continue;
+    // ⚡ Kadrdan (kameradan) butunlay tashqaridagi element chizilmaydi
+    if(_cull&&cullOut(L,t,_cull))continue;
     // 🎞 Motion blur — harakatlanayotgan bo'lsa bir nechta namuna yig'iladi
     if(L.echo&&L.echo.on){try{drawEcho(L,t,_CAML,sceneCtx);}catch(e){console.warn('echo',e);}ctx=sceneCtx;}
     if(L.mblur){let _done=false;try{_done=drawMBlur(L,t,_CAML,sceneCtx);}catch(e){console.warn('mblur',e);}ctx=sceneCtx;if(_done)continue;}
@@ -15315,7 +16271,9 @@ function renderComp(noOv){
   }
   if(!state.playing&&!exporting){
     const L=state.layers.find(x=>x.id===state.selected);
-    if(L&&L.type!=='audio'&&t>=L.start&&t<=L.start+L.dur){
+    if(L&&L.type!=='audio'&&t>=L.start&&t<=L.start+L.dur&&boxEdit===L.id&&maskActiveAt(L,clamp(t-L.start,0,L.dur))){
+      try{drawBoxEdit(L);}catch(e){console.warn('quti tahriri',e);}
+    }else if(L&&L.type!=='audio'&&t>=L.start&&t<=L.start+L.dur){
       const {B,pts}=handlePoints(L);
       ctx.save();
       // Ramka element burchagi bilan birga chiziladi
@@ -15714,7 +16672,10 @@ function tickVideos(){
         // BARCHA videolar qayta pozitsiyalanardi — 2-3 ta katta video bo'lsa
         // dastur shundan qotib qolardi.
         if(state.time>=L.start-1.5&&state.time<=L.start+L.dur+1.5){
-          try{el.currentTime=target;}catch(e){}
+          // ⚡ joyida turgan videoni qayta "seek" qilmaymiz — har seek dekoderni oxirgi
+          // keyframe'dan qayta ishlatadi (iPhone/4K videoda yuzlab ms). Avval har qanday
+          // o'zgarish (slayder, element qo'shish) barcha videolarni qayta seek qilardi.
+          if(Math.abs((el.currentTime||0)-target)>0.0015||el.readyState<2){try{el.currentTime=target;}catch(e){}}
         }
       }
     }
@@ -15747,6 +16708,7 @@ function nowMs_idleGrainCheck(){
 }
 function loop(now){
   const dt=(now-lastT)/1000;lastT=now;
+  if(__offExp){requestAnimationFrame(loop);return;}   // kadrma-kadr eksport o'zi chizadi
   // fonda kompilyatsiya bo'lgan effekt tayyor bo'ldi → kadr yangilanadi
   try{if(PFX.poll()){seekDirty=true;_visEpoch++;}}catch(e){}
   if(state.playing&&!__holdTime){
@@ -15873,6 +16835,7 @@ document.addEventListener('keydown',e=>{
     }
   }
   if(e.code==='Space'){e.preventDefault();setPlaying(!state.playing);return;}
+  if(e.key==='Escape'&&boxEdit!=null){e.preventDefault();boxEditOff();return;}
   if(mod&&e.code==='KeyZ'){e.preventDefault();e.shiftKey?doRedo():doUndo();return;}
   if(mod&&e.code==='KeyY'){e.preventDefault();doRedo();return;}
   if(mod&&e.code==='KeyS'){e.preventDefault();flushSave();toast('💾 Proyekt saqlandi');return;}
@@ -16745,7 +17708,7 @@ function addVideoFile(f,startTime){
     hookAudio(L);
     seekDirty=true;renderAll();
   });
-  state.layers.unshift(L);
+  state.layers.splice(sceneBottomIndex(),0,L);   // 🎬 sahna kadrlari plastinalari doim eng pastda
   state.selected=L.id;
   renderAll();
 }
@@ -18700,6 +19663,10 @@ function renderProps(){
         <div class="hintline">Playhead turgan joydan boshlab video <b>asl to'liq holatidan</b> silliq <b>quti (karta)</b> holatiga keyframe orqali o'tadi. Avval qutini xohlagancha sozlab qo'ysangiz — o'tish aynan shu holatga boradi.</div>
         <label class="chk"><input type="checkbox" id="pMaskOn" ${L.maskOn?'checked':''}> Qutini yoqish</label>
         ${L.maskOn?`<div class="row2" style="margin-bottom:8px">
+          <button id="pBoxEdit" class="${boxEdit===L.id?'primary':''}" style="justify-content:center" title="Qutining ichidagi videoni sichqoncha bilan joylash va kattalashtirish (yoki videoni 2 marta bosing)">${boxEdit===L.id?'✓ Tayyor':'✋ Ichini joylash'}</button>
+          <button id="pBoxCenter" style="justify-content:center" title="Ichki videoni qutining markaziga qaytarish">⊙ Markazga</button>
+        </div>
+        <div class="row2" style="margin-bottom:8px">
           <button id="pFillBox" style="justify-content:center" title="Ichki video qutini to'liq qoplaydi (chetlari kesiladi)">↕↔ To'ldirish</button>
           <button id="pFitBox" style="justify-content:center" title="Ichki video qutiga to'liq sig'adi (bo'sh joy qolishi mumkin)">▣ Sig'dirish</button>
         </div>
@@ -18709,7 +19676,7 @@ function renderProps(){
           <button id="pMShPill" style="justify-content:center" title="Kapsulaga aylantirish">▭ Kapsula</button>
           <button id="pMShCirc" style="justify-content:center" title="Doiraga aylantirish">◯ Doira</button>
         </div>`:''}
-        <div class="hintline">Video faqat quti ichida ko'rinadi. <b>To'ldirish</b> = video qutini bir bosishda qoplaydi. Ichki video o'lchami — yuqoridagi slider yoki <b>Shift + burchak dastagi</b>. <b>Alt/o'ng tugma + surish</b> = ichki videoni siljitish. Burchak radiusi qutiga qo'llanadi.</div>
+        <div class="hintline">Video faqat quti ichida ko'rinadi. <b>To'ldirish</b> = video qutini bir bosishda qoplaydi. Ichki video o'lchami — yuqoridagi slider yoki <b>Shift + burchak dastagi</b>. <b>Shift + surish</b> (yoki Alt / o'ng tugma) = ichki videoni siljitish. <b>2 marta bosish</b> — ichini tahrirlash rejimi: qutidan tashqaridagi qism xira ko'rinadi, burchak nuqtalari va g'ildirak bilan kattalashtiriladi. Burchak radiusi qutiga qo'llanadi.</div>
         ${L.maskOn?`<div class="row2">
           <div class="field"><label>Quti yoqiladi (s, klip ichida)</label>
             <input type="number" id="pMaskFrom" min="0" step="0.1" value="${(L.maskFrom||0).toFixed(1)}"></div>
@@ -19235,6 +20202,8 @@ function renderProps(){
     }
     renderProps();
   });
+  on('pBoxEdit','onclick',()=>{if(boxEdit===L.id)boxEditOff();else if(!boxEditOn(L))toast('Quti shu vaqtda yoqilmagan — playheadni quti ishlaydigan joyga qo\'ying');});
+  on('pBoxCenter','onclick',()=>{saveHistory();setAnimProp(L,'innerX',0);setAnimProp(L,'innerY',0);seekDirty=true;renderProps();toast('⊙ Ichki video markazga qaytdi');});
   on('pFillBox','onclick',()=>{saveHistory();fitInnerVideo(L,'cover');});
   on('pFitBox','onclick',()=>{saveHistory();fitInnerVideo(L,'contain');});
   on('pMShRect','onclick',()=>{saveHistory();morphBoxTo(L,'rect');});
@@ -20259,6 +21228,7 @@ document.getElementById('inDuration').onchange=e=>{
     L.dur=clamp(L.dur,0.3,state.duration-L.start);
   });
   state.time=Math.min(state.time,state.duration);
+  try{sceneSyncDur();}catch(e){}
   seekDirty=true;renderTimeline();renderProps();
 };
 
@@ -20348,7 +21318,7 @@ document.getElementById('inDuration').onchange=e=>{
         if(Math.abs(p.x-B.T.x)<B.bw/2+20&&Math.abs(p.y-B.T.y)<B.bh/2+16){
           saveHistory();
           const cur=kfValue(sel,clamp(state.time-sel.start,0,sel.dur));
-          innerDrag={L:sel,startP:p,ix0:(cur.innerX??sel.innerX)||0,iy0:(cur.innerY??sel.innerY)||0};
+          innerDrag={L:sel,startP:p,ix0:(cur.innerX??sel.innerX)||0,iy0:(cur.innerY??sel.innerY)||0,G:boxGeom(sel)};
           cv.classList.add('grabbing');
         }
       }
@@ -20359,6 +21329,30 @@ document.getElementById('inDuration').onchange=e=>{
     if(sel&&sel.type==='shape'&&sel.shape==='pen'&&!state.playing&&state.time>=sel.start&&state.time<=sel.start+sel.dur){
       const pi=penHit(sel,p,hitRadius());
       if(pi>=0){saveHistory();penDragStart(sel,pi,toCanvas);e.preventDefault();return;}
+    }
+    // 📦 Quti ichini tahrirlash rejimi: oddiy surish = ichki video, burchak nuqtasi = o'lchami
+    if(boxEdit!=null){
+      const BL=state.layers.find(x=>x.id===boxEdit);
+      if(!BL||BL!==sel||!maskActiveAt(BL,clamp(state.time-BL.start,0,BL.dur)))boxEditOff();
+      else if(e.button===0){
+        const G=boxGeom(BL), q=G.toLocal(p.x,p.y), hr=hitRadius()/G.s;
+        const cx0=G.ix-G.cw/2,cy0=G.iy-G.ch/2,cx1=G.ix+G.cw/2,cy1=G.iy+G.ch/2;
+        // ichki video burchaklari (kadrdan tashqarida bo'lsa — quti burchaklari ham kattalashtiradi)
+        const corner=[[cx0,cy0],[cx1,cy0],[cx1,cy1],[cx0,cy1],[-G.bw/2,-G.bh/2],[G.bw/2,-G.bh/2],[G.bw/2,G.bh/2],[-G.bw/2,G.bh/2]].find(([x,y])=>Math.hypot(q.x-x,q.y-y)<hr*1.3);
+        if(corner){
+          saveHistory();
+          innerDrag={L:BL,scaleMode:true,G,d0:Math.max(1,Math.hypot(q.x-G.ix,q.y-G.iy)),s0:BL.scale};
+          e.preventDefault();return;
+        }
+        const inC=q.x>=cx0&&q.x<=cx1&&q.y>=cy0&&q.y<=cy1, inB=Math.abs(q.x)<=G.bw/2&&Math.abs(q.y)<=G.bh/2;
+        if(inC||inB){
+          saveHistory();
+          innerDrag={L:BL,startP:p,ix0:G.ix,iy0:G.iy,G};
+          cv.classList.add('grabbing');
+          e.preventDefault();return;
+        }
+        boxEditOff();
+      }
     }
     // 1) Resize dastagi?
     if(sel&&!state.playing&&state.time>=sel.start&&state.time<=sel.start+sel.dur){
@@ -20392,13 +21386,14 @@ document.getElementById('inDuration').onchange=e=>{
         return;
       }
     }
-    // 2) Alt + surish = quti ichidagi videoni siljitish
-    if(e.altKey&&sel&&maskActiveAt(sel,clamp(state.time-sel.start,0,sel.dur))){
-      const B=getSelBox(sel);
-      if(Math.abs(p.x-B.T.x)<B.bw/2+20&&Math.abs(p.y-B.T.y)<B.bh/2+16){
-        saveHistory();
-        const cur=kfValue(sel,clamp(state.time-sel.start,0,sel.dur));
-        innerDrag={L:sel,startP:p,ix0:(cur.innerX??sel.innerX)||0,iy0:(cur.innerY??sel.innerY)||0};
+    // 2) Shift yoki Alt + surish = quti ichidagi videoni siljitish
+    //    (Shift bilan surilmasdan qo'yib yuborilsa — odatdagidek ko'p tanlovga qo'shiladi)
+    if((e.altKey||e.shiftKey)&&sel&&(sel.type==='video'||sel.type==='image'||e.altKey)&&maskActiveAt(sel,clamp(state.time-sel.start,0,sel.dur))){
+      const G=boxGeom(sel), q=G.toLocal(p.x,p.y);
+      if(Math.abs(q.x)<=G.bw/2+12/G.s&&Math.abs(q.y)<=G.bh/2+12/G.s){
+        if(e.altKey)saveHistory();
+        innerDrag={L:sel,startP:p,ix0:G.ix,iy0:G.iy,G,shiftClick:e.shiftKey&&!e.altKey,moved:false,hist:!!e.altKey};
+        cv.classList.add('grabbing');
         e.preventDefault();
         return;
       }
@@ -20408,6 +21403,7 @@ document.getElementById('inDuration').onchange=e=>{
     for(let i=state.layers.length-1;i>=0;i--){
       const L=state.layers[i];
       if(L.type==='audio')continue;
+      if(L.sceneFrame&&L.id!==state.selected)continue;   // 🎬 kadr foni bosishni "o'g'irlamaydi"
       if(state.time<L.start||state.time>L.start+L.dur)continue;
       const B=getSelBox(L);
       // 🔗 Bog'langan bola: ota transformi qo'llangan HAQIQIY (ko'ringan) markazni hisoblaymiz
@@ -20555,6 +21551,22 @@ document.getElementById('inDuration').onchange=e=>{
   /* ✏️ Sahnadagi matnni IKKI MARTA bosib to'g'ridan-to'g'ri tahrirlash */
   cv.addEventListener('dblclick',e=>{
     const p=toCanvas(e);
+    // 📦 Qutidagi video/rasmni 2 marta bosish — ichini tahrirlash (Canva/Figma kabi)
+    {
+      for(let i=state.layers.length-1;i>=0;i--){
+        const K=state.layers[i];
+        if(!(K.type==='video'||K.type==='image'))continue;
+        if(state.time<K.start||state.time>K.start+K.dur)continue;
+        if(!maskActiveAt(K,clamp(state.time-K.start,0,K.dur)))continue;
+        const G=boxGeom(K), q=G.toLocal(p.x,p.y);
+        if(Math.abs(q.x)<=G.bw/2&&Math.abs(q.y)<=G.bh/2){
+          e.preventDefault();
+          if(boxEdit===K.id)boxEditOff();
+          else{boxEditOn(K);toast('📦 Quti ichi: suring — siljitish · burchak / g\'ildirak — kattalashtirish · Esc — tayyor',4200);}
+          return;
+        }
+      }
+    }
     // 🧩 Guruh ichiga kirish: 2 marta bosilgan a'zo tanlanadi (matn bo'lsa quyida tahrirlanadi)
     let kid=null;
     {
@@ -20638,11 +21650,25 @@ document.getElementById('inDuration').onchange=e=>{
     }
     if(innerDrag){
       const D=innerDrag;
-      const nx=Math.round(D.ix0+(p.x-D.startP.x));
-      const ny=Math.round(D.iy0+(p.y-D.startP.y));
+      if(D.scaleMode){
+        // burchak nuqtasi: ichki video markazi atrofida kattalashadi
+        const q=D.G.toLocal(p.x,p.y);
+        const f=Math.max(0.05,Math.hypot(q.x-D.G.ix,q.y-D.G.iy)/D.d0);
+        const ns=clamp(D.s0*f,0.02,8);
+        setAnimProp(D.L,'mscale',ns);
+        dragInfo=`Ichki video: ${Math.round(ns*100)}%`;
+        return;
+      }
+      let ddx=p.x-D.startP.x, ddy=p.y-D.startP.y;
+      if(!D.moved&&Math.hypot(ddx,ddy)<3)return;
+      if(!D.moved){D.moved=true;if(!D.hist){saveHistory();D.hist=true;}}
+      // burilgan / masshtablangan qutida ham sichqoncha yo'nalishida yuradi
+      if(D.G){const c=Math.cos(D.G.a),s=Math.sin(D.G.a);const lx=(ddx*c+ddy*s)/D.G.s, ly=(-ddx*s+ddy*c)/D.G.s;ddx=lx;ddy=ly;}
+      const nx=Math.round(D.ix0+ddx);
+      const ny=Math.round(D.iy0+ddy);
       setAnimProp(D.L,'innerX',nx);
       setAnimProp(D.L,'innerY',ny);
-      dragInfo=`Ichki: X ${nx}  Y ${ny} px`;
+      dragInfo=`Ichki video: X ${nx}  Y ${ny} px`;
       return;
     }
     if(resizing){
@@ -20816,8 +21842,16 @@ document.getElementById('inDuration').onchange=e=>{
   });
 
   addEventListener('mouseup',()=>{
+    if(innerDrag&&innerDrag.shiftClick&&!innerDrag.moved){
+      const L0=innerDrag.L;innerDrag=null;cv.classList.remove('grabbing');
+      state.multi=state.multi||[];
+      const ix=state.multi.indexOf(L0.id);if(ix>=0)state.multi.splice(ix,1);else state.multi.push(L0.id);
+      renderLayers();renderProps();renderTimeline();
+      return;
+    }
     if(dragging||resizing||innerDrag||rotating){
       const L=dragging||innerDrag?.L||resizing?.L||rotating?.L;
+      cv.classList.remove('grabbing');
       dragging=null;resizing=null;innerDrag=null;rotating=null;groupMove=null;
       guides.length=0;measures.length=0;dragInfo='';sGuides.length=0;
       cv.style.cursor='grab';
@@ -20841,6 +21875,23 @@ const stageWrapEl=document.getElementById('stageWrap');
 stageWrapEl.addEventListener('wheel',e=>{
   e.preventDefault();
   if(view3D){v3Wheel(e);return;}
+  if(boxEdit!=null&&!(e.ctrlKey||e.metaKey)){
+    const BL=state.layers.find(x=>x.id===boxEdit);
+    if(BL&&maskActiveAt(BL,clamp(state.time-BL.start,0,BL.dur))){
+      const r=cv.getBoundingClientRect();
+      let p={x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height};
+      try{const A=camViewAffine(BL);if(A)p=camUnmap(A,p.x,p.y);}catch(x){}
+      const G=boxGeom(BL), q=G.toLocal(p.x,p.y);
+      const f=Math.exp(-clamp(e.deltaY,-120,120)*0.0018);
+      const ns=clamp(BL.scale*f,0.02,8), k=ns/BL.scale;
+      historyMaybe();
+      setAnimProp(BL,'mscale',ns);
+      setAnimProp(BL,'innerX',Math.round(q.x-(q.x-G.ix)*k));
+      setAnimProp(BL,'innerY',Math.round(q.y-(q.y-G.iy)*k));
+      seekDirty=true;
+      return;
+    }
+  }
   if(camToolOn&&getCam().on&&!(e.ctrlKey||e.metaKey)){camToolWheel(e);return;}
   if(e.ctrlKey||e.metaKey){
     // Kursor atrofida zoom
@@ -21027,7 +22078,8 @@ async function exportWarmup(endT){
   const p90=m.length?m[Math.min(m.length-1,Math.floor(m.length*0.9))]:0;
   return {p90,max:m.length?m[m.length-1]:0,n:ms.length};
 }
-document.getElementById('btnExport').onclick=async()=>{
+document.getElementById('btnExport').onclick=()=>expDialog();
+async function legacyExport(){
   if(exporting)return;
   if(!('MediaRecorder'in window)){toast('Brauzeringiz video yozishni qo\'llamaydi');return;}
   const candidates=[
@@ -21133,7 +22185,7 @@ document.getElementById('btnExport').onclick=async()=>{
       },150);
     }
   },50);
-};
+}
 
 /* ═══════════ 📱 MOBIL INTERFEYS ═══════════ */
 const IS_MOB=matchMedia('(max-width:900px)').matches||matchMedia('(pointer:coarse)').matches;
