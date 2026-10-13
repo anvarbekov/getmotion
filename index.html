@@ -690,6 +690,8 @@
   #camHud .sep{width:1px;align-self:stretch;background:var(--border);margin:2px 2px;}
   #camHud .ch-tip{align-self:flex-start;font-size:11.5px;color:#cffafe;background:rgba(8,47,73,.78);border:1px solid rgba(34,211,238,.25);border-radius:8px;padding:4px 9px;}
   body.v3on #camHud{display:none !important;}
+  /* o'rta ekranlarda (MacBook 13") faqat tanlangan rejim nomi yoziladi — panel bir qatorga sig'adi */
+  @media (max-width:1440px){ #camHud button:not(.on):not(.kf) span{display:none;} }
   @media (max-width:820px){ #camHud{top:76px;left:10px;max-width:calc(100% - 20px);} #camHud button span{display:none;} }
   .tl-names .nm.cam-nm{color:#67e8f9;cursor:pointer;}
   .tl-row.tl-camrow{background:linear-gradient(90deg,rgba(8,145,178,.07),rgba(8,145,178,.02));}
@@ -725,7 +727,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.1</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.2</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -1527,7 +1529,7 @@ const fctx=featherCv.getContext('2d');
    barcha qatlamlar shu yerga chizilib, BIR MARTA proyeksiya qilinadi. */
 const camCv=document.createElement('canvas');
 const cctx=camCv.getContext('2d');
-let _scenePad=0;
+let _scenePad=0,_sceneBX=0,_sceneBY=0;   // yaxlit kamera buferi: zaxira va dunyo boshi
 const perspCv=document.createElement('canvas');
 const pctx=perspCv.getContext('2d');
 let __expTrack=null; // (ishlatilmaydi — CFR rejim uchun qoldirildi)
@@ -1622,13 +1624,20 @@ function snapSF(){return PERF.lvl===0?4:(PERF.lvl===1?6:9);}
    aks holda kamerani zoom qilganda elementlar joyidan siljib ketardi. */
 /* Joriy chizish maydonining tayanch siljishi: izolyatsiya kanvasi, yaxlit
    kamera buferi yoki asosiy kanvas — shisha fon shu bo'yicha joylashadi. */
-function sceneBase(){ if(typeof kidIsoCtx!=='undefined'&&ctx===kidIsoCtx)return __kidBase; if(v3lctx&&ctx===v3lctx)return __v3Pad; return (ctx===fctx)?(__isoPad||0):((ctx===cctx)?_scenePad:0); }
+/* 🌍 Kanvas "dunyo boshi" — chizish kanvasidagi (0,0) dunyo nuqtasining joyi.
+   X va Y ALOHIDA: kadrdan tashqaridagi element (kamera o'sha tomonga qaraganda)
+   uchun bufer o'sha joyga suriladi, siljish esa har o'q bo'yicha har xil. */
+function ctxBaseX(c){ if(typeof kidIsoCtx!=='undefined'&&c===kidIsoCtx)return __kidBase; if(v3lctx&&c===v3lctx)return __v3Pad; return (c===fctx)?((__isoPad||0)-__isoSX):((c===cctx)?_sceneBX:0); }
+function ctxBaseY(c){ if(typeof kidIsoCtx!=='undefined'&&c===kidIsoCtx)return __kidBaseY; if(v3lctx&&c===v3lctx)return __v3PadY; return (c===fctx)?((__isoPad||0)-__isoSY):((c===cctx)?_sceneBY:0); }
+function sceneBase(){ return ctxBaseX(ctx); }
+function sceneBaseY(){ return ctxBaseY(ctx); }
 let _fth3D=false;   // joriy qatlam 3D da chizilyaptimi (rangli feather chegarasi uchun)
 let _flatCam=null;
 /* Bir freymda nechta qatlam og'ir 3D quvuridan o'tayotgani. Tekstura byudjeti
    shu songa bo'linadi — 8 ta 3D qatlam bo'lsa ham umumiy yuk bir xil qoladi. */
 let _n3D=0,_n3Dprev=1;
 let __isoPad=0; // izolyatsiya kanvasidagi zaxira chekka (3D kattalashish kesilmasligi uchun)
+let __isoSX=0,__isoSY=0; // 🌍 izolyatsiya buferining dunyo bo'yicha siljishi (kadr tashqarisidagi 3D element)
 let __isoReg=null; // ⚡ faqat shu hudud tozalanadi/ko'chiriladi (butun kanvas emas)
 /* Elementning ekrandagi taxminiy qamrov hududi — dirty-rect optimizatsiyasi uchun.
    Ataylab saxiy olinadi: soya, nur, feather, 3D kattalashish hammasi sig'sin. */
@@ -1651,10 +1660,10 @@ function isoRegion(L,ecx,ecy,scale,pad3d){
     +((L.shOutA||0)>0?(L.shOutB||0)*1.4+Math.abs(L.shOutY||0)+Math.abs(L.shOutX||0)+Math.max(0,L.shOutS||0):0)
     +70;
   RW+=pad;RH+=pad;
-  const P=__isoPad;
+  const P=__isoPad, PX=P-__isoSX, PY=P-__isoSY;
   return {
-    x0:Math.max(0,Math.floor(ecx-RW)+P), y0:Math.max(0,Math.floor(ecy-RH)+P),
-    x1:Math.min(cv.width+P*2,Math.ceil(ecx+RW)+P), y1:Math.min(cv.height+P*2,Math.ceil(ecy+RH)+P)
+    x0:Math.max(0,Math.floor(ecx-RW)+PX), y0:Math.max(0,Math.floor(ecy-RH)+PY),
+    x1:Math.min(cv.width+P*2,Math.ceil(ecx+RW)+PX), y1:Math.min(cv.height+P*2,Math.ceil(ecy+RH)+PY)
   };
 }
 /* ═══════ 🧊 BASIC 3D — YENGIL rejim (vanilla-tilt / CSS perspective uslubi) ═══════
@@ -1799,10 +1808,10 @@ const GM3D=(function(){
        4) perspektiv proyeksiya
      zo — chuqurlik bo'yicha siljish (ekstruziya qatlami uchun). */
   function xf(gx,gy,zo,S){
-    const lx=gx-S.px, ly=gy-S.py, lz=zo;
+    const lx=gx-S.px, ly=gy-S.py, lz=zo;   // (bufer 1:1 masshtabda)
     const Y=ly*S.ct-lz*S.st, Z1=ly*S.st+lz*S.ct;         // Tilt (X o'q)
     const X=lx*S.cs+Z1*S.sn, Z0=-lx*S.sn+Z1*S.cs;        // Swivel (Y o'q)
-    let wx=X+(S.px-S.fcx), wy=Y+(S.py-S.fcy), wz=Z0+S.dist;
+    let wx=X+S.ox, wy=Y+S.oy, wz=Z0+S.dist;
     const C=S.cam;
     if(C){
       // 🎥 Kanonik kamera: nishon (x,y,z) + aylanish matritsasi + dolly
@@ -1824,6 +1833,12 @@ const GM3D=(function(){
     const S={
       px:o.px, py:o.py, fcx:o.fcx, fcy:o.fcy, f:o.f,
       zoom:o.zoom||1, dist:o.dist||0, cam:o.cam||null,
+      /* 🌍 Bufer → dunyo: bufer koordinatasi = dunyo + (bx,by). Odatda bx=by=pad
+         (eski xatti-harakat). Kadrdan TASHQARIDAGI element/sahna uchun bufer o'sha
+         joyga SURILADI (bx=pad−siljish) — shunda burilgan kamera kadr tashqarisiga
+         qaraganda ham kontent yo'qolmaydi. */
+      ox:(o.px-(o.bx!==undefined?o.bx:(o.pad||0)))-(o.fcx-(o.pad||0)),
+      oy:(o.py-(o.by!==undefined?o.by:(o.pad||0)))-(o.fcy-(o.pad||0)),
       cs:Math.cos(o.swiv), sn:Math.sin(o.swiv),
       ct:Math.cos(o.tilt), st:Math.sin(o.tilt)
     };
@@ -2453,6 +2468,22 @@ function resizeSnap(){
 }
 const snapCv=document.createElement('canvas');
 const sctx=snapCv.getContext('2d');
+/* 🪟 SHISHA ORQA FONI — joriy chizish kontekstiga mos manba.
+   • oddiy holat: asosiy kanvas (orqadagi qatlamlar allaqachon chizilgan)
+   • yaxlit kamera rejimi: orqadagi qatlamlar KAMERA BUFERIDA (dunyo koordinatasi) —
+     avval asosiy kanvasning ESKI kadri olinardi va shishada boshqa joydagi
+     narsalar (masalan kamera qaragan matn) ko'rinib qolardi
+   • 3D ko'rinish teksturasi: plastinalar alohida — orqa fon yo'q (faqat tus/muz)
+   Natija: {dx,dy,dw,dh} — snapCv ni sceneBase() tizimida qayerga qo'yish. */
+let __sceneCtxCur=null;
+function glassSnap(){
+  if(typeof __v3Flat!=='undefined'&&__v3Flat)return null;
+  let src=cv,dx=0,dy=0,dw=cv.width,dh=cv.height;
+  if(__sceneCtxCur&&__sceneCtxCur===cctx&&camCv.width>2){src=camCv;dx=-_sceneBX;dy=-_sceneBY;dw=camCv.width;dh=camCv.height;}
+  sctx.clearRect(0,0,snapCv.width,snapCv.height);
+  sctx.drawImage(src,0,0,src.width,src.height,0,0,snapCv.width,snapCv.height);
+  return {dx,dy,dw,dh};
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    🖥 KO'RISH SIFATI (preview resolution) — Premiere/AE dagi kabi
@@ -3745,8 +3776,7 @@ function applyWalls(L,fx,bw,bh,local){
   // bo'lsa, transformda qo'shimcha __isoPad siljishi bor. Uni AYIRMASAK, devor
   // mantiqi elementni kadrdan tashqarida deb hisoblab, uni chapga/tepaga
   // "itarib" yuboradi (3D ni 1° ga burganda element sakrab ketishining sababi).
-  const _ip=sceneBase();
-  let _de=dm.e-_ip, _df=dm.f-_ip;
+  let _de=dm.e-sceneBase(), _df=dm.f-sceneBaseY();
   let sc=Math.hypot(dm.a,dm.b)||1;
   // 🎥 Kamera qo'llangan bo'lsa — uni AYIRAMIZ. Devor kadr chegarasiga emas,
   // SAHNA chegarasiga nisbatan ishlashi kerak (kamerani zoom qilish elementlarni
@@ -3776,8 +3806,14 @@ function applyWalls(L,fx,bw,bh,local){
   let ox=0,oy=0;
   {const g=Math.max(0,+(state.sceneGap||0)),sxs=state.W+g,sys=state.H+g;
    const cc=Math.floor((_de+g/2)/sxs), cr=Math.floor((_df+g/2)/sys);
-   // faqat shu joyda sahna kadri bo'lsa — aks holda (oddiy loyiha) avvalgidek asosiy kadr
-   if((cc||cr)&&typeof sceneFrameAt==='function'&&sceneFrameAt(cc,cr)){ox=cc*sxs;oy=cr*sys;}}
+   if(cc||cr){
+     // sahna kadri bo'lsa — devor o'sha kadr chegarasi
+     if(typeof sceneFrameAt==='function'&&sceneFrameAt(cc,cr)){ox=cc*sxs;oy=cr*sys;}
+     // 🎥 kamera bilan ishlaganda asosiy kadrdan tashqaridagi element ATAYLAB o'sha joyda
+     // turibdi (kamera unga qaraydi) — uni asosiy kadrga tortib olmaymiz. Avval kamera
+     // burilganda element "sakrab" asosiy kadrga ketib qolar va ko'rinmay qolardi.
+     else if(camActive())return;
+   }}
   const lo=ox+pad+hw, hi=ox+state.W-pad-hw;
   if(hi>lo){
     if(cx<lo)cx=lo+(lo-cx)*0.4;
@@ -4669,18 +4705,19 @@ function drawProgress(L,local,t,baseAlpha){
   // --- Konteyner (minimal'da yo'q) ---
   if(st!=='minimal'){
     if(st==='glass'){
-      sctx.clearRect(0,0,snapCv.width,snapCv.height);
-      sctx.drawImage(cv,0,0,cv.width,cv.height,0,0,snapCv.width,snapCv.height);
+      const _gs=glassSnap();
       ctx.save();
       pathRound4(ctx,-w/2,-h/2,w,h,cornerRads(L));
       ctx.clip();
+      if(_gs){
       ctx.save();
-      { const _B=sceneBase(); ctx.setTransform(1,0,0,1,_B,_B); }
+      ctx.setTransform(1,0,0,1,sceneBase(),sceneBaseY());
       ctx.filter=`blur(${Math.max(0.4,L.blur/snapSF())}px) saturate(1.4) brightness(1.05)`;
       ctx.imageSmoothingQuality='low';
-      ctx.drawImage(snapCv,0,0,snapCv.width,snapCv.height,0,0,cv.width,cv.height);
+      ctx.drawImage(snapCv,0,0,snapCv.width,snapCv.height,_gs.dx,_gs.dy,_gs.dw,_gs.dh);
       ctx.filter='none';
       ctx.restore();
+      }
       ctx.fillStyle=hexA(L.tint,L.tintA);
       ctx.fill();
       const gg=ctx.createLinearGradient(0,-h/2,0,h/2);
@@ -7103,8 +7140,7 @@ function drawLG(L,t){
   const ccx=dm.e,ccy=dm.f;
   const a=V('lgAng')*Math.PI/180,lx=Math.sin(a),ly=-Math.cos(a);
   const ext=0.5*(Math.abs(lx)*w+Math.abs(ly)*h);
-  sctx.clearRect(0,0,snapCv.width,snapCv.height);
-  sctx.drawImage(cv,0,0,cv.width,cv.height,0,0,snapCv.width,snapCv.height);
+  const _gs=glassSnap();
   // tashqi chuqurlik soyasi (shakl ichi baribir qoplanadi)
   const shA=V('lgShadow')/100;
   if(shA>0.01){
@@ -7117,16 +7153,20 @@ function drawLG(L,t){
   }
   shapePath(L);
   ctx.save();ctx.clip();
+  if(_gs){
   ctx.save();
-  { const _B=sceneBase(); ctx.setTransform(1,0,0,1,_B,_B); }
+  const _bX=sceneBase(),_bY=sceneBaseY();
+  ctx.setTransform(1,0,0,1,_bX,_bY);
   const zs=1+V('lgRefr')/100;
-  if(zs>1.001){ctx.translate(ccx,ccy);ctx.scale(zs,zs);ctx.translate(-ccx,-ccy);}
+  // linza markazi — shu tizimda (kanvas pikseli − dunyo boshi)
+  if(zs>1.001){ctx.translate(ccx-_bX,ccy-_bY);ctx.scale(zs,zs);ctx.translate(-(ccx-_bX),-(ccy-_bY));}
   const bl=Math.max(0.3,V('lgBlur')*k/snapSF());
   ctx.filter=`blur(${bl}px) saturate(${V('lgSat')/100}) brightness(${V('lgBri')/100})`;
   ctx.imageSmoothingQuality='low';
-  ctx.drawImage(snapCv,0,0,snapCv.width,snapCv.height,0,0,cv.width,cv.height);
+  ctx.drawImage(snapCv,0,0,snapCv.width,snapCv.height,_gs.dx,_gs.dy,_gs.dw,_gs.dh);
   ctx.filter='none';
   ctx.restore();
+  }
   // tint
   const ta=V('lgTintA')/100;
   if(ta>0.002){ctx.fillStyle=hexA(V('lgTint'),ta);ctx.fill();}
@@ -9153,13 +9193,14 @@ function renderMatte(L,t,_CAML,sceneCtx){
     try{matteCtx.setTransform(Tm.a,Tm.b,Tm.c,Tm.d,Tm.e,Tm.f);drawTop(M,t,_CAML,matteCtx);}finally{__inMatte=false;}
   }
   ctx=sceneCtx;
-  return {base:Tm.e,mode:L.matteMode||'alpha'};
+  return {base:Tm.e,baseY:Tm.f,mode:L.matteMode||'alpha'};
 }
-function applyMatte(info,RG,P){
+function applyMatte(info,RG,P,PY){
+  if(PY===undefined)PY=P;
   const w=RG.x1-RG.x0,h=RG.y1-RG.y0;if(w<1||h<1)return;
   if(matteReg.width<w||matteReg.height<h){matteReg.width=Math.max(matteReg.width,w);matteReg.height=Math.max(matteReg.height,h);}
   matteRctx.setTransform(1,0,0,1,0,0);matteRctx.clearRect(0,0,w,h);
-  matteRctx.drawImage(matteCv,RG.x0-P+info.base,RG.y0-P+info.base,w,h,0,0,w,h);
+  matteRctx.drawImage(matteCv,RG.x0-P+info.base,RG.y0-PY+(info.baseY!==undefined?info.baseY:info.base),w,h,0,0,w,h);
   let src=matteReg;
   const luma=info.mode==='luma'||info.mode==='lumaInv';
   if(luma){const out=PFX.process(matteReg,{x0:0,y0:0,x1:w,y1:h},[[{g:'lumaToAlpha'}]],{box:{x0:0,y0:0,x1:w,y1:h},t:0,U:1,seed:0,ox:0,oy:0});if(out)src=out;}
@@ -9602,14 +9643,14 @@ function drawSmartGuides(c){
    qo'yiladi (guruhning 3D proyeksiyasidan OLDIN — AE tartibi).
    ═══════════════════════════════════════════════════════════════════════════ */
 const kidIsoCv=document.createElement('canvas'),kidIsoCtx=kidIsoCv.getContext('2d');
-var __kidBase=0;
+var __kidBase=0,__kidBaseY=0;
 function kidIsoBegin(tgt){
   const c=tgt.canvas;
   if(kidIsoCv.width<c.width||kidIsoCv.height<c.height){kidIsoCv.width=Math.max(kidIsoCv.width,c.width);kidIsoCv.height=Math.max(kidIsoCv.height,c.height);}
   const M=tgt.getTransform();
   kidIsoCtx.setTransform(M.a,M.b,M.c,M.d,M.e,M.f);
   kidIsoCtx.globalAlpha=1;kidIsoCtx.globalCompositeOperation='source-over';kidIsoCtx.filter='none';
-  __kidBase=(tgt===fctx)?(__isoPad||0):((tgt===cctx)?_scenePad:0);
+  {const bx=ctxBaseX(tgt),by=ctxBaseY(tgt);__kidBase=bx;__kidBaseY=by;}
   return kidIsoCtx;
 }
 function kidIsoRegion(K,plan,fx){
@@ -9633,7 +9674,7 @@ function kidIsoRegion(K,plan,fx){
 function kidIsoEnd(tgt,K,plan,R){
   if(!R||R.empty)return;
   const w=R.x1-R.x0,h=R.y1-R.y0;
-  if(plan){try{pfxApply(plan,kidIsoCv,kidIsoCtx,{x0:R.x0,y0:R.y0,x1:R.x1,y1:R.y1,ox:R.x0-__kidBase,oy:R.y0-__kidBase},R.box);}catch(e){console.warn('kid pfx',e);}}
+  if(plan){try{pfxApply(plan,kidIsoCv,kidIsoCtx,{x0:R.x0,y0:R.y0,x1:R.x1,y1:R.y1,ox:R.x0-__kidBase,oy:R.y0-__kidBaseY},R.box);}catch(e){console.warn('kid pfx',e);}}
   tgt.save();tgt.setTransform(1,0,0,1,0,0);tgt.globalAlpha=1;tgt.filter='none';
   tgt.globalCompositeOperation=(K.blend&&K.blend!=='normal')?K.blend:'source-over';
   tgt.drawImage(kidIsoCv,R.x0,R.y0,w,h,R.x0,R.y0,w,h);
@@ -9683,7 +9724,7 @@ function rescaleDoc(fx,fy){
    Kadr (eksport) bu ko'rinishdan MUTLAQO mustaqil — faqat tahrir oynasi.
    ═══════════════════════════════════════════════════════════════════════════ */
 var __v3Flat=false;          // drawTop: qatlamning o'z 3D sisiz (yassi) chizish
-var __v3Pad=0;
+var __v3Pad=0,__v3PadY=0;
 let view3D=false;
 const V3={yaw:-0.62,pitch:0.30,distK:2.3,tx:0,ty:0,tz:0,rad:1800,ortho:false,view:'persp',tex:true,pip:true,grid:true};
 try{const j=localStorage.getItem('gm_v3c');if(j)Object.assign(V3,JSON.parse(j));}catch(e){}
@@ -9823,7 +9864,7 @@ function v3Collect(t){
           R={x0:Math.min(R.x0,kr.x0),y0:Math.min(R.y0,kr.y0),x1:Math.max(R.x1,kr.x1),y1:Math.max(R.y1,kr.y1)};
         }
       }
-      if(L.rep&&L.rep.on)R={x0:0,y0:0,x1:cv.width+P*2,y1:cv.height+P*2};
+      if(L.rep&&L.rep.on){const Pr=Math.round(Math.max(cv.width,cv.height)*0.8);R={x0:P-Pr,y0:P-Pr,x1:P+cv.width+Pr,y1:P+cv.height+Pr};}
     }catch(e){R={x0:P,y0:P,x1:P+cv.width,y1:P+cv.height};}
     __isoPad=_sp;
     it.rect={x0:Math.floor(R.x0-P),y0:Math.floor(R.y0-P),x1:Math.ceil(R.x1-P),y1:Math.ceil(R.y1-P)};
@@ -9834,7 +9875,7 @@ function v3Collect(t){
 }
 
 /* Tekstura hududi chegarasi: kadrdan har tomonga 1.5× gacha (katta fon rasmlari ham to'liq) */
-function v3Lim(){return Math.round(Math.max(cv.width,cv.height)*1.5);}
+function v3Lim(){return Math.round(Math.max(cv.width,cv.height)*2.5);}
 /* ── Viewport WebGL (tekstura plastinalar) ── */
 const V3GL=(function(){
   let c=null,gl=null,prog=null,buf=null,U=null,ok=null,vw=4,vh=4;
@@ -9977,16 +10018,17 @@ function v3BuildTex(items,t,budget){
       if(!it.texOK){V3GL.drop(it.L.id);continue;}
       const {x0,y0,x1,y1}=it.rect;
       if(x1-x0<2||y1-y0<2){it.texOK=false;V3GL.drop(it.L.id);continue;}
-      // bir xil (X va Y uchun teng) siljish — ichki chizish kodi shunga tayanadi (sceneBase)
-      const Q=Math.max(0,-Math.min(x0,y0));
-      const nw=x1+Q, nh=y1+Q;
+      // 🌍 bufer FAQAT element hududi o'lchamida: dunyo boshi (−x0,−y0) ga suriladi
+      // (X va Y alohida — sceneBase/sceneBaseY shuni hisobga oladi). Avval bufer
+      // (0,0) dan boshlanardi va kadrdan uzoqdagi sahna kadrlari uchun ulkan bo'lardi.
+      const nw=x1-x0, nh=y1-y0;
       if(v3lcv.width<nw||v3lcv.height<nh){v3lcv.width=Math.max(v3lcv.width,Math.ceil(nw/64)*64);v3lcv.height=Math.max(v3lcv.height,Math.ceil(nh/64)*64);}
-      __v3Pad=Q;
+      __v3Pad=-x0;__v3PadY=-y0;
       const c=v3lctx;
       c.setTransform(1,0,0,1,0,0);c.globalAlpha=1;c.globalCompositeOperation='source-over';c.filter='none';
-      c.clearRect(x0+Q,y0+Q,x1-x0,y1-y0);
-      c.save();c.beginPath();c.rect(x0+Q,y0+Q,x1-x0,y1-y0);c.clip();
-      c.setTransform(1,0,0,1,Q,Q);
+      c.clearRect(0,0,nw,nh);
+      c.save();c.beginPath();c.rect(0,0,nw,nh);c.clip();
+      c.setTransform(1,0,0,1,-x0,-y0);
       _linkMemo=new Map();__v3Flat=true;
       try{drawTop(it.L,t,null,c);}catch(e){}
       finally{__v3Flat=false;}
@@ -9996,12 +10038,12 @@ function v3BuildTex(items,t,budget){
       const tw=Math.max(2,Math.round(rw*s)),th=Math.max(2,Math.round(rh*s));
       if(tile.width!==tw||tile.height!==th){tile.width=tw;tile.height=th;}else tc.clearRect(0,0,tw,th);
       tc.imageSmoothingQuality='high';
-      tc.drawImage(v3lcv,x0+Q,y0+Q,rw,rh,0,0,tw,th);
+      tc.drawImage(v3lcv,0,0,rw,rh,0,0,tw,th);
       V3GL.upload(it.L.id,tile);
       n++;
     }
   }finally{
-    __v3Flat=false;ctx=mainCtx;_linkMemo=new Map();__v3Pad=0;
+    __v3Flat=false;ctx=mainCtx;_linkMemo=new Map();__v3Pad=0;__v3PadY=0;
   }
   // endi ko'rinmaydigan qatlamlar teksturasi bo'shatiladi
   const ids=new Set(items.map(it=>it.L.id));
@@ -10970,7 +11012,7 @@ function camPreset(p){
    Rejim tugmalari sahnadagi panelda: 🌀 Aylantirish · ✋ Surish · ⤢ Yaqinlash · 🔭 Ob'ektiv
    (Shift = surish, Alt = ob'ektiv, g'ildirak = yaqinlash — tezkor yo'llar sifatida qoladi)
    ═══════════════════════════════════════════════════════════════════════════ */
-let camToolOn=false, camToolMode='orbit', _camHudKey='';
+let camToolOn=false, camToolMode='track', _camHudKey='';   // sahna bo'ylab yurish — eng ko'p kerak bo'ladigan amal
 function setCamTool(on){
   camToolOn=!!on;
   const c=getCam();
@@ -10982,8 +11024,8 @@ function setCamTool(on){
   if(camToolOn)toast('🎥 Kamera asbobi: yuqoridagi tugmalardan amalni tanlang va kadrni sichqoncha bilan suring');
   else toast('🎥 Kamera asbobi yopildi — endi elementlarni tanlab surasiz');
 }
-const CAM_MODES=[['orbit','🌀','Aylantirish','Kadrni surib kamerani aylantiring (orbit)','Qarash','Kadrni surib atrofga qarang (burilish)'],
-  ['track','✋','Surish','Kamerani chapga-o\'ngga / tepaga-pastga suradi'],
+const CAM_MODES=[['track','✋','Surish','Kamerani chapga-o\'ngga / tepaga-pastga suradi (sahna bo\'ylab yurish)'],
+  ['orbit','🌀','Aylantirish','Kadrni surib kamerani aylantiring (orbit)','Qarash','Kadrni surib atrofga qarang (burilish)'],
   ['dolly','⤢','Yaqinlash','Yuqoriga surish = yaqinlashadi, pastga = uzoqlashadi'],
   ['lens','🔭','Ob\'ektiv','Yuqoriga = keng burchak, pastga = tor (zoom-ob\'ektiv)']];
 function camHudSync(force){
@@ -11000,6 +11042,12 @@ function camHudSync(force){
       if(a==='kf'){saveHistory();const t=camAddKf();_camUiKey='';renderProps();renderTimeline();seekDirty=true;camHudSync(true);toast('◆ Kamera keyframe — '+t.toFixed(2)+'s');}
       else if(a==='prev'||a==='next'){const t=camKfNav(a==='next'?1:-1);if(t!==null)camGoTime(t);camHudSync(true);}
       else if(a==='off')setCamTool(false);
+      else if(a==='lvl'){
+        // ⟲ Kamerani to'g'rilash: burilish (aylantirish/qiyalik/og'ish) 0 ga — joyi va yaqinligi saqlanadi
+        saveHistory();camSet('sw',0);camSet('ti',0);camSet('roll',0);
+        _camUiKey='';renderProps();renderTimeline();seekDirty=true;camHudSync(true);
+        toast('⟲ Kamera to\'g\'rilandi — endi kadrga to\'g\'ri qaraydi');
+      }
     });
   }
   // 🎥 tugmasida holat: kamera yoqiq bo'lsa ◆ soni ko'rinadi
@@ -11008,7 +11056,9 @@ function camHudSync(force){
   if(bt){const lab=c.on?('🎥 Kamera'+(n?' · ◆'+n:' · yoqiq')):'🎥 Kamera';if(bt.textContent!==lab)bt.textContent=lab;}
   const on=camToolOn&&!view3D;
   const kAt=camKfAt();
-  const key=[on,camToolMode,c.type,n,kAt?kAt.t:-1,camKfNav(-1),camKfNav(1),camAutoOn()].join('|');
+  let _rv=null;try{_rv=camValues(state.time);}catch(e){}
+  const rotOn=!!_rv&&(Math.abs(_rv.sw||0)+Math.abs(_rv.ti||0)+Math.abs(_rv.roll||0)>0.05);
+  const key=[on,camToolMode,c.type,n,kAt?kAt.t:-1,camKfNav(-1),camKfNav(1),camAutoOn(),rotOn].join('|');
   if(!force&&key===_camHudKey)return;
   _camHudKey=key;
   h.style.display=on?'flex':'none';
@@ -11024,7 +11074,8 @@ function camHudSync(force){
   h.innerHTML=`<div class="ch-row">${M}<i class="sep"></i>
       <button data-a="prev" title="Oldingi ◆" ${camKfNav(-1)===null?'disabled':''}>◀</button>
       <button data-a="kf" class="kf ${kAt?'on':''}" title="Playhead joyiga kamera keyframe">◆ <span>${kAt?'Yangilash':'Keyframe'}</span></button>
-      <button data-a="next" title="Keyingi ◆" ${camKfNav(1)===null?'disabled':''}>▶</button>
+ <button data-a="next" title="Keyingi ◆" ${camKfNav(1)===null?'disabled':''}>▶</button>
+      <i class="sep"></i><button data-a="lvl" title="Kamera burilishini olib tashlash — kadrga to'g'ri qaraydi (joyi saqlanadi)" ${rotOn?'':'disabled'}>⟲ <span>To'g'rilash</span></button>
       <i class="sep"></i><button data-a="off" title="Kamera asbobini yopish — elementlarni tanlashga qaytish">✕</button></div>
     <div class="ch-tip">${cur[1]} ${tip}${n&&camAutoOn()?' · ◆ o\'zi yoziladi':(n?'':' · harakat uchun: ◆ → vaqtni suring → yana o\'zgartiring')}</div>`;
 }
@@ -14578,25 +14629,28 @@ function drawShape(L,local,t,baseAlpha){
     // Markazning canvas-piksel koordinatalari (linza zoom uchun)
     const dm=ctx.getTransform();
     const ccx=dm.e, ccy=dm.f;
-    sctx.clearRect(0,0,snapCv.width,snapCv.height);
-    sctx.drawImage(cv,0,0,cv.width,cv.height,0,0,snapCv.width,snapCv.height);
+    const _gs=glassSnap();
     ctx.save();
     ctx.clip();
+    if(_gs){
     ctx.save();
-    { const _B=sceneBase(); ctx.setTransform(1,0,0,1,_B,_B); }
+    const _bX=sceneBase(),_bY=sceneBaseY();
+    ctx.setTransform(1,0,0,1,_bX,_bY);
     if(liquid){
       // Liquid: orqadagi tasvir biroz KATTALASHTIRIB ko'rsatiladi = shisha linza sindirishi
-      ctx.translate(ccx,ccy);
+      // (markaz shu tizimda: kanvas pikseli − dunyo boshi)
+      ctx.translate(ccx-_bX,ccy-_bY);
       ctx.scale(pro?1.14:1.1,pro?1.14:1.1);
-      ctx.translate(-ccx,-ccy);
+      ctx.translate(-(ccx-_bX),-(ccy-_bY));
     }
     const blurPx=pro?Math.max(1.5,(L.blur||16)*0.28):(liquid?Math.max(3,(L.blur||16)*0.45):L.blur);
     // Kichik snapshot ustida blur → keyin kattalashtiriladi (16x tezroq)
     ctx.filter=`blur(${Math.max(0.4,blurPx/snapSF())}px) saturate(${liquid?1.3:1.45}) brightness(${liquid?1.03:1.05})`;
     ctx.imageSmoothingQuality='low';
-    ctx.drawImage(snapCv,0,0,snapCv.width,snapCv.height,0,0,cv.width,cv.height);
+    ctx.drawImage(snapCv,0,0,snapCv.width,snapCv.height,_gs.dx,_gs.dy,_gs.dw,_gs.dh);
     ctx.filter='none';
     ctx.restore();
+    }
     ctx.fillStyle=hexA(L.tint,liquid?L.tintA*0.45:L.tintA);
     ctx.fill();
     let g=ctx.createLinearGradient(0,-L.h/2,0,L.h/2);
@@ -15415,6 +15469,24 @@ function camProjPt(S,zoom,X,Y,Z){
   const f=S.fv*zoom;
   return {x:W/2+f*p.x/p.z, y:H/2+f*p.y/p.z};
 }
+/* 🌍 Kamera ko'radigan sahna maydoni (z0 chuqurlikdagi tekislikda), kadr
+   koordinatalarida. Ufqqa qaragan / orqaga burilgan bo'lsa — null. */
+function camPlaneRect(C,z0,f){
+  const W=cv.width,H=cv.height,M=C.M;
+  if(!M||!(f>0))return null;
+  const dist=C.dist||0, zm=C.zoom||1;
+  const E=m3v(M,0,0,-(f+dist)); E.x+=C.x;E.y+=C.y;E.z+=(C.z||0);
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const q of [[0,0],[W,0],[0,H],[W,H],[W/2,0],[W/2,H],[0,H/2],[W,H/2]]){
+    const d=m3v(M,(q[0]-W/2)/zm,(q[1]-H/2)/zm,f);
+    if(!(Math.abs(d.z)>1e-9))return null;
+    const k=(z0-E.z)/d.z;
+    if(!(k*f>1)||!isFinite(k))return null;
+    const X=E.x+k*d.x+W/2, Y=E.y+k*d.y+H/2;
+    if(X<x0)x0=X; if(X>x1)x1=X; if(Y<y0)y0=Y; if(Y>y1)y1=Y;
+  }
+  return {x0,y0,x1,y1};
+}
 function camLayerDepth(L){
   if(!L)return 0;
   let z=0;
@@ -15643,6 +15715,17 @@ function drawTop(L,t,_CAML,sceneCtx){
       if(_dofB<0.35)_dofB=0;
     }
     const _useF=_fOn||L.mkOn||_use3D||!!_pfx||!!_mtI||_dofB>0||(!!_blend&&L.type!=='video'&&L.type!=='image');
+    /* 🎥 Yassi kamera parametrlari OLDINDAN: izolyatsiya buferidagi hudud EKRAN
+       koordinatasida bo'lishi kerak (kamera surilgan bo'lsa element ekranda
+       boshqa joyda). Avval hudud dunyo koordinatasida olinardi — kamera kadr
+       tashqarisidagi feather/maska/blend li elementga qaraganda u yo'qolardi. */
+    let _fcm=null;
+    if(_flat3){
+      const _f3=(_CAML&&_CAML.f)?_CAML.f:persp3Focal(T.persp3!==undefined?T.persp3:(L.persp3??100));
+      const _w3=(_f3+_dz+(_CAML?_CAML.dist-(_CAML.z||0):0))/_f3;
+      if(_w3>0.03&&isFinite(_w3))_fcm={k:(_CAML?_CAML.zoom:1)/_w3,fx:cv.width/2,fy:cv.height/2,cx:(_CAML?_CAML.x:0),cy:(_CAML?_CAML.y:0)};
+    }
+    const _fcX=x=>_fcm?_fcm.fx+(x-_fcm.fx-_fcm.cx)*_fcm.k:x, _fcY=y=>_fcm?_fcm.fy+(y-_fcm.fy-_fcm.cy)*_fcm.k:y, _fcK=_fcm?_fcm.k:1;
     if(_useF){
       // Element ALOHIDA kanvasga chiziladi — chekkasi/maskasi haqiqiy shaffoflikka eriydi.
       // Kanvas har tomonga ZAXIRA maydon bilan katta — 3D perspektivada yaqin taraf
@@ -15685,7 +15768,18 @@ function drawTop(L,t,_CAML,sceneCtx){
         _ecy=linkT.y+(_ox*Math.sin(_a)+_oy*Math.cos(_a))*_ps;
       }
       const _tsc=(T.scale||1)*(linkT?(linkT.scale||1):1);
-      __isoReg=isoRegion(L,_ecx,_ecy,_tsc,_use3D);
+      /* 🌍 KADRDAN TASHQARIDAGI 3D ELEMENT: bufer o'sha joyga SURILADI.
+         Avval bufer har doim asosiy kadr atrofida (±30%) edi — kamera burilib
+         chapdagi/tepadagi elementga qaraganda element buferga sig'mas va ekranda
+         HECH NARSA ko'rinmasdi. Endi bufer markazi element markaziga tushadi;
+         proyeksiya (GM3D) shu siljishni hisobga oladi — natija aynan bir xil. */
+      __isoSX=0;__isoSY=0;
+      if(_use3D){
+        let _sx0=_ecx,_sy0=_ecy;
+        if(isGroupHolder(L)){try{const _gb=getSelBox(L);if(_gb&&_gb.T){_sx0=_gb.T.x;_sy0=_gb.T.y;}}catch(e){}}
+        if(_sx0<0||_sx0>cv.width||_sy0<0||_sy0>cv.height){__isoSX=Math.round(_sx0-cv.width/2);__isoSY=Math.round(_sy0-cv.height/2);}
+      }
+      __isoReg=isoRegion(L,_fcX(_ecx),_fcY(_ecy),_tsc*_fcK,_use3D);
       // 🧩 Guruh: hudud BARCHA a'zolarni qamrab olishi kerak, aks holda
       // chekkadagi yozuvlar qirqilib qolardi
       if(isGroupHolder(L)){
@@ -15695,7 +15789,7 @@ function drawTop(L,t,_CAML,sceneCtx){
           let KT; try{KT=kfValue(K,clamp(t-K.start,0,K.dur));}catch(e){continue;}
           let kx=KT.x,ky=KT.y,ksc=KT.scale||1;
           if(_carM){const r=_carM.get(K.id);if(r){kx=r.xf.x;ky=r.xf.y;ksc*=r.xf.s;}}
-          const kr=isoRegion(K,kx,ky,ksc,_use3D);
+          const kr=isoRegion(K,_fcX(kx),_fcY(ky),ksc*_fcK,_use3D);
           if(kr.x0<__isoReg.x0)__isoReg.x0=kr.x0;
           if(kr.y0<__isoReg.y0)__isoReg.y0=kr.y0;
           if(kr.x1>__isoReg.x1)__isoReg.x1=kr.x1;
@@ -15704,11 +15798,11 @@ function drawTop(L,t,_CAML,sceneCtx){
         // Plastina kattalashsa/aylansa — hudud ham shunga mos (chekkalar kesilmasin)
         const _gm=groupPlateM(L,T,local,t);
         if(_gm.on){
-          const P=__isoPad, px=_gm.px+P, py=_gm.py+P, c=Math.cos(_gm.r), sn=Math.sin(_gm.r);
+          const P=__isoPad, px=_fcX(_gm.px)+P-__isoSX, py=_fcY(_gm.py)+P-__isoSY, c=Math.cos(_gm.r), sn=Math.sin(_gm.r);
           const R=__isoReg; let a0=1e9,b0=1e9,a1=-1e9,b1=-1e9;
           for(const [x,y] of [[R.x0,R.y0],[R.x1,R.y0],[R.x1,R.y1],[R.x0,R.y1]]){
             const ux=(x-px)*_gm.s*_gm.sx, uy=(y-py)*_gm.s*_gm.sy;
-            const X=px+_gm.dx+ux*c-uy*sn, Y=py+_gm.dy+ux*sn+uy*c;
+            const X=px+_gm.dx*_fcK+ux*c-uy*sn, Y=py+_gm.dy*_fcK+ux*sn+uy*c;
             a0=Math.min(a0,X);a1=Math.max(a1,X);b0=Math.min(b0,Y);b1=Math.max(b1,Y);
           }
           __isoReg={x0:Math.max(0,Math.floor(a0)),y0:Math.max(0,Math.floor(b0)),
@@ -15738,7 +15832,7 @@ function drawTop(L,t,_CAML,sceneCtx){
       }
       fctx.setTransform(1,0,0,1,0,0);
       fctx.clearRect(__isoReg.x0,__isoReg.y0,__isoReg.x1-__isoReg.x0,__isoReg.y1-__isoReg.y0);
-      fctx.setTransform(1,0,0,1,__isoPad,__isoPad);
+      fctx.setTransform(1,0,0,1,__isoPad-__isoSX,__isoPad-__isoSY);
       ctx=fctx;
     }
     ctx.save();
@@ -15935,7 +16029,7 @@ function drawTop(L,t,_CAML,sceneCtx){
     }
     if(_useF){
       ctx=sceneCtx;
-      const P=__isoPad;
+      const P=__isoPad, PX=P-__isoSX, PY=P-__isoSY;   // PX/PY — buferdagi dunyo boshi
       const RG=__isoReg||{x0:0,y0:0,x1:featherCv.width,y1:featherCv.height};
       const rw=Math.max(1,RG.x1-RG.x0), rh=Math.max(1,RG.y1-RG.y0);
       // ✨ GPU effektlar (AE effects) — 3D proyeksiyadan OLDIN (AE tartibi)
@@ -15948,11 +16042,11 @@ function drawTop(L,t,_CAML,sceneCtx){
         const _k3=_flatCam?_flatCam.k:1;
         if(_flatCam){_ex=_flatCam.fx+(_ex-_flatCam.fx-_flatCam.cx)*_k3;_ey=_flatCam.fy+(_ey-_flatCam.fy-_flatCam.cy)*_k3;}
         const _hw=_bb.w*_s2*_k3/2,_hh=_bb.h*_s2*_k3/2;
-        pfxApply(_pfx,featherCv,fctx,{x0:RG.x0,y0:RG.y0,x1:RG.x1,y1:RG.y1,ox:RG.x0-P,oy:RG.y0-P},
-          {x0:_ex-_hw+P-RG.x0,y0:_ey-_hh+P-RG.y0,x1:_ex+_hw+P-RG.x0,y1:_ey+_hh+P-RG.y0});
+        pfxApply(_pfx,featherCv,fctx,{x0:RG.x0,y0:RG.y0,x1:RG.x1,y1:RG.y1,ox:RG.x0-PX,oy:RG.y0-PY},
+          {x0:_ex-_hw+PX-RG.x0,y0:_ey-_hh+PY-RG.y0,x1:_ex+_hw+PX-RG.x0,y1:_ey+_hh+PY-RG.y0});
       }catch(e){console.warn('pfx',e);}}
       // 🎭 Track matte
-      if(_mtI)applyMatte(_mtI,RG,P);
+      if(_mtI)applyMatte(_mtI,RG,PX,PY);
       if(_blend){ctx.save();ctx.globalCompositeOperation=_blend;}
       if(_dofB)ctx.filter='blur('+_dofB.toFixed(2)+'px)';
       if(_use3D){
@@ -15992,7 +16086,7 @@ function drawTop(L,t,_CAML,sceneCtx){
         let okq=false;
         try{
           okq=GM3D.draw(featherCv,ctx,{
-            px:pvx+P, py:pvy+P, fcx:cv.width/2+P, fcy:cv.height/2+P,
+            px:pvx+PX, py:pvy+PY, fcx:cv.width/2+P, fcy:cv.height/2+P, bx:PX, by:PY,
             swiv:ryR, tilt:rxR, dist:_dist, f:_foc, spec:_spI,
             depth:_dpt, shade:_dsh, cam:_CAML, zoom:_CAML?_CAML.zoom:1,
             reg:RG, pad:P, alpha:1
@@ -16010,7 +16104,7 @@ function drawTop(L,t,_CAML,sceneCtx){
           const rw2=Math.max(1,RG2.x1-RG2.x0), rh2=Math.max(1,RG2.y1-RG2.y0);
           pctx.setTransform(1,0,0,1,0,0);
           pctx.clearRect(RG2.x0,RG2.y0,rw2,rh2);
-          okq=basic3D(featherCv,pctx,pvx+P,pvy+P,ryR,rxR,_dist,RG,_foc);
+          okq=basic3D(featherCv,pctx,pvx+PX,pvy+PY,ryR,rxR,_dist,RG,_foc);
           if(okq){
             if(_spI>0.001){
               const glare=Math.abs(Math.sin(ryR))*0.6+Math.abs(Math.sin(rxR))*0.4;
@@ -16018,7 +16112,7 @@ function drawTop(L,t,_CAML,sceneCtx){
                 pctx.save();
                 pctx.globalCompositeOperation='source-atop';
                 pctx.globalAlpha=clamp(glare*_spI,0,0.8);
-                const gx=pvx+P+Math.sin(ryR)*rw*0.3, gy=pvy+P-Math.sin(rxR)*rh*0.3;
+                const gx=pvx+PX+Math.sin(ryR)*rw*0.3, gy=pvy+PY-Math.sin(rxR)*rh*0.3;
                 const rg=pctx.createRadialGradient(gx,gy,0,gx,gy,Math.max(rw,rh)*0.5);
                 rg.addColorStop(0,'rgba(255,255,255,.9)');
                 rg.addColorStop(1,'rgba(255,255,255,0)');
@@ -16027,23 +16121,23 @@ function drawTop(L,t,_CAML,sceneCtx){
                 pctx.restore();
               }
             }
-            ctx.drawImage(perspCv,RG2.x0,RG2.y0,rw2,rh2,RG2.x0-P,RG2.y0-P,rw2,rh2);
-          }else ctx.drawImage(featherCv,RG.x0,RG.y0,rw,rh,RG.x0-P,RG.y0-P,rw,rh);
+            ctx.drawImage(perspCv,RG2.x0,RG2.y0,rw2,rh2,RG2.x0-PX,RG2.y0-PY,rw2,rh2);
+          }else ctx.drawImage(featherCv,RG.x0,RG.y0,rw,rh,RG.x0-PX,RG.y0-PY,rw,rh);
         }
       }else{
         // ⚡ Faqat element hududi ko'chiriladi (butun kanvas emas)
-        ctx.drawImage(featherCv,RG.x0,RG.y0,rw,rh,RG.x0-P,RG.y0-P,rw,rh);
+        ctx.drawImage(featherCv,RG.x0,RG.y0,rw,rh,RG.x0-PX,RG.y0-PY,rw,rh);
       }
       if(_dofB)ctx.filter='none';
       if(_blend)ctx.restore();
-      __isoPad=0;__isoReg=null;
+      __isoPad=0;__isoReg=null;__isoSX=0;__isoSY=0;
     }
     if(saved)for(const k in saved)L[k]=saved[k];
     _flatCam=null;_fth3D=false;
     }catch(err){
       _flatCam=null;
       // Bitta elementdagi xato butun sahnani o'chirib yubormasin
-      ctx=sceneCtx;__isoPad=0;__isoReg=null;
+      ctx=sceneCtx;__isoPad=0;__isoReg=null;__isoSX=0;__isoSY=0;
       for(let i=0;i<12;i++)ctx.restore();
       ctx.setTransform(1,0,0,1,0,0);
       ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.filter='none';
@@ -16070,9 +16164,10 @@ function cullOut(L,t,C){
   let B;try{B=getSelBox(L);}catch(e){return false;}
   // "Kadrdan chiqmasin" (devor) yoqiq element asosiy kadrga tortib olinadi — joyi oldindan
   // noma'lum; faqat o'z sahna kadri bo'lsa (devor shu kadrga ushlaydi) kesish xavfsiz
-  if(L.wallBounce&&!L.linkTo){
+  if(L.wallBounce&&!L.linkTo&&!C.cam){
+    // kamerasiz: asosiy kadrdan tashqaridagi devorli element kadr ichiga tortiladi — kesilmaydi
     const g=Math.max(0,+(state.sceneGap||0)),cc=Math.floor((B.T.x+g/2)/(C.W+g)),cr=Math.floor((B.T.y+g/2)/(C.H+g));
-    if(!(typeof sceneFrameAt==='function'&&sceneFrameAt(cc,cr)))return false;
+    if((cc||cr)&&!(typeof sceneFrameAt==='function'&&sceneFrameAt(cc,cr)))return false;
   }
   let dx=0,dy=0,s=1,rot=0;
   try{const fx=objectFX(L,t-L.start,t);if(fx){dx=fx.dx||0;dy=fx.dy||0;s=Math.max(1,(fx.scale||1)*Math.max(fx.sx||1,fx.sy||1));rot=fx.rot||0;}}catch(e){return false;}
@@ -16136,7 +16231,7 @@ function renderComp(noOv){
   // holati (clip, transform, boshqa kanvasga yozish) shu yerda TIKLANADI —
   // aks holda ekran butunlay bo'sh qolib ketardi
   ctx=mainCtx;
-  __isoPad=0;__isoReg=null;
+  __isoPad=0;__isoReg=null;__isoSX=0;__isoSY=0;__sceneCtxCur=null;
   for(let i=0;i<12;i++)ctx.restore();   // bo'sh stekda restore xavfsiz (no-op)
   ctx.setTransform(1,0,0,1,0,0);
   ctx.globalAlpha=1;
@@ -16171,7 +16266,7 @@ function renderComp(noOv){
      XIL masofada bo'lsa, ularning proyeksiyasi ham bir xil bo'ladi — demak
      hammasini bitta buferga chizib, BIR MARTA proyeksiya qilish kifoya.
      Natija matematik jihatdan aynan bir xil, nusxa esa 8 tadan 1 taga tushadi. */
-  let _camWhole=false,_camWholeDist=0,_camWholePersp=100;
+  let _camWhole=false,_camWholeDist=0,_camWholePersp=100,_wPX=0,_wPY=0,_wSX=0,_wSY=0;
   if(_CAM&&_CAM.rot&&!_CAM.dofOn){
     let ok=true,d0=null,p0=null,cnt=0;
     for(const L of state.layers){
@@ -16186,22 +16281,43 @@ function renderComp(noOv){
       else if(Math.abs(dz-d0)>0.5||Math.abs(ps-p0)>0.5){ok=false;break;}
       cnt++;
     }
-    if(ok&&d0!==null&&cnt>1&&!window.__noWhole){_camWhole=true;_camWholeDist=d0;_camWholePersp=p0;}
+    if(ok&&d0!==null&&cnt>1&&!window.__noWhole){
+      /* 🌍 Kamera AYNAN QAYERGA qarayapti? Ekran burchaklari sahna tekisligiga
+         teskari proyeksiya qilinadi. Bufer o'sha joyni qamraydi — kadrdan
+         tashqaridagi kontentga qaraganda ham hech narsa yo'qolmaydi. Juda katta
+         maydon (uzoqlashtirilgan / ufqqa qaragan kamera) bo'lsa — qatlamma-qatlam
+         yo'l ishlatiladi (u har bir elementni o'z joyida aniq chizadi). */
+      const _mx=Math.max(cv.width,cv.height), _P0=Math.round(_mx*0.07);
+      const _R=camPlaneRect(_CAM,d0,_CAM.f||persp3Focal(p0));
+      if(_R){
+        const _mg=_mx*0.04;
+        if(_R.x0>=-_P0+_mg&&_R.x1<=cv.width+_P0-_mg&&_R.y0>=-_P0+_mg&&_R.y1<=cv.height+_P0-_mg){
+          _camWhole=true;_wPX=_P0;_wPY=_P0;_wSX=0;_wSY=0;
+        }else{
+          const _px=Math.max(_P0,Math.ceil((_R.x1-_R.x0-cv.width)/2+_mg)), _py=Math.max(_P0,Math.ceil((_R.y1-_R.y0-cv.height)/2+_mg));
+          if(_px<=_mx*0.30&&_py<=_mx*0.30){
+            _camWhole=true;_wPX=_px;_wPY=_py;
+            _wSX=Math.round((_R.x0+_R.x1)/2-cv.width/2);_wSY=Math.round((_R.y0+_R.y1)/2-cv.height/2);
+          }
+        }
+        if(_camWhole){_camWholeDist=d0;_camWholePersp=p0;}
+      }
+    }
   }
   const _CAML=_camWhole?null:_CAM;   // qatlam darajasidagi qarorlar uchun
   let sceneCtx=mainCtx;
-  _scenePad=0;
+  _scenePad=0;_sceneBX=0;_sceneBY=0;
   if(_camWhole){
-    _scenePad=Math.round(Math.max(cv.width,cv.height)*0.07);
-    const _cw=cv.width+_scenePad*2, _ch=cv.height+_scenePad*2;
+    _scenePad=Math.max(_wPX,_wPY);_sceneBX=_wPX-_wSX;_sceneBY=_wPY-_wSY;
+    const _cw=cv.width+_wPX*2, _ch=cv.height+_wPY*2;
     if(camCv.width!==_cw||camCv.height!==_ch){camCv.width=_cw;camCv.height=_ch;}
     cctx.setTransform(1,0,0,1,0,0);
     cctx.clearRect(0,0,_cw,_ch);
     cctx.globalAlpha=1;cctx.globalCompositeOperation='source-over';cctx.filter='none';
-    cctx.setTransform(1,0,0,1,_scenePad,_scenePad);
+    cctx.setTransform(1,0,0,1,_sceneBX,_sceneBY);
     sceneCtx=cctx;
   }
-  ctx=sceneCtx;
+  ctx=sceneCtx;__sceneCtxCur=sceneCtx;
   const _mSrc=matteSources();
   const _cull=cullPrep();
   for(const L of state.layers){
@@ -16218,22 +16334,22 @@ function renderComp(noOv){
     if(L.mblur){let _done=false;try{_done=drawMBlur(L,t,_CAML,sceneCtx);}catch(e){console.warn('mblur',e);}ctx=sceneCtx;if(_done)continue;}
     drawTop(L,t,_CAML,sceneCtx);
   }
+  __sceneCtxCur=null;
   /* 🚀 YAXLIT KAMERA: butun sahna BIR MARTA proyeksiya qilinadi */
   if(_camWhole){
     ctx=mainCtx;
-    const P=_scenePad;
-    const _fx=cv.width/2+P, _fy=cv.height/2+P;
+    const _fx=cv.width/2, _fy=cv.height/2;
     let okw=false;
     try{
       okw=GM3D.draw(camCv,mainCtx,{
-        px:_fx, py:_fy, fcx:_fx, fcy:_fy,
+        px:_fx+_sceneBX, py:_fy+_sceneBY, fcx:_fx, fcy:_fy, bx:_sceneBX, by:_sceneBY,
         swiv:0, tilt:0, dist:_camWholeDist, f:_CAM.f||persp3Focal(_camWholePersp),
         spec:0, depth:0, shade:0.5, cam:_CAM, zoom:_CAM.zoom,
-        reg:{x0:0,y0:0,x1:camCv.width,y1:camCv.height}, pad:P, alpha:1
+        reg:{x0:0,y0:0,x1:camCv.width,y1:camCv.height}, pad:0, alpha:1
       });
     }catch(e){okw=false;}
-    if(!okw)mainCtx.drawImage(camCv,P,P,cv.width,cv.height,0,0,cv.width,cv.height);
-    _scenePad=0;
+    if(!okw)mainCtx.drawImage(camCv,_sceneBX,_sceneBY,cv.width,cv.height,0,0,cv.width,cv.height);
+    _scenePad=0;_sceneBX=0;_sceneBY=0;
   }
   ctx=mainCtx;
   // 🌊 Premium o'tishlar — butun kadr ustidan (barcha qatlamlar va kameradan keyin)
