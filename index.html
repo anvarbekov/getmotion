@@ -528,6 +528,9 @@
   .props .sgfx>summary{flex-wrap:wrap; gap:4px 6px; padding:4px 0;}
   .props .sgfx .aefx-body{padding-top:6px;}
   .props .sgfx input[type=color]{width:40px; height:28px; padding:2px; flex:0 0 40px;}
+  details.cap-key{margin:2px 0 8px;font-size:11.5px;color:var(--muted);}
+  details.cap-key>summary{cursor:pointer;list-style:none;padding:4px 0;}
+  details.cap-key>summary::-webkit-details-marker{display:none;}
   /* ═══ 7.8 — 🔢 aniq qiymat + ↺ asl holat (barcha slayderlar) ═══ */
   .ne-head{display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap;margin-bottom:4px;}
   .ne-head>label{flex:1 1 92px;margin-bottom:0!important;min-width:0;}
@@ -601,7 +604,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>7.8</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>7.9</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -1197,8 +1200,9 @@ const BORDER_STYLES = [
 
 /* ================= QATLAM YARATISH ================= */
 function baseLayer(type){
-  return { id:uid++, type, track:trackSeq++, x:state.W/2, y:state.H/2,
-    animIn:'fade', animOut:'fade', start:0, dur:Math.min(5,state.duration),
+  _newPending=true;
+  return { _new:1, id:uid++, type, track:trackSeq++, x:state.W/2, y:state.H/2,
+    animIn:'none', animOut:'none', start:0, dur:Math.min(5,state.duration),   // 🎬 standart: animatsiyasiz — motion dizayner o'zi qo'shadi
     inTime:0.8, outTime:0.6,
     kscale:1, rotDeg:0, rx:0, ry:0, dist3:0, persp3:100, depth3:0, depth3S:45, spec3:false, spec3I:35, opacity:1, kfs:[], kfMode:false, fxBlur:0,
     wallBounce:true, wallPad:12,
@@ -1213,7 +1217,7 @@ function newText(text,y){
     size:Math.round(state.H*0.1), color:'#ffffff', font:FONTS[0].v, weight:700,
     tshadow:0, tshadowColor:'#141414', tdepth:0,
     tgrad:false, tgrad2:'#ec4899', tgradAng:0,
-    animIn:'appleBlur', stagger:0.05 });
+    animIn:'none', stagger:0.05 });
   return L;
 }
 function newProgress(){
@@ -1226,7 +1230,7 @@ function newProgress(){
     blur:14, tint:'#ffffff', tintA:0.1,
     border:true, borderColor:'#ffffff', borderW:1.5,
     y:Math.round(state.H*0.62),
-    animIn:'springPop', inTime:0.6, motion:'none', wallBounce:true,
+    animIn:'none', inTime:0.6, motion:'none', wallBounce:true,
   });
   return L;
 }
@@ -1237,7 +1241,7 @@ function newShape(){
     blur:18, tint:'#ffffff', tintA:0.10,
     border:true, borderColor:'#ffffff', borderW:1.6, borderA:0.4, borderStyle:'solid',
     d3:0, depth:0, bendX:0, bendY:0, headType:'line', headSize:100, annDash:'solid',
-    shadow:false, animIn:'zoom', motion:'none',
+    shadow:false, animIn:'none', motion:'none',
     // 🎨 Style — hammasi standart holatda 0 (hech qanday soya yo'q)
     shOutC:'#000000', shOutX:0, shOutY:0, shOutB:0, shOutS:0, shOutA:0,
     shInC:'#000000',  shInX:0,  shInY:0,  shInB:0,  shInS:0,  shInA:0,
@@ -1273,9 +1277,9 @@ function newMedia(type,name){
 (function(){
   const g = newShape(); g.y=state.H*0.42; g.w=state.W*0.5; g.h=state.H*0.36; g.start=0.1; g.radius=40;
   const t1 = newText('GetMotion', state.H*0.38);
-  t1.size=Math.round(state.H*0.11); t1.animIn='appleBlur'; t1.start=0.4; t1.font=FONTS[2].v;
+  t1.size=Math.round(state.H*0.11); t1.start=0.4; t1.font=FONTS[2].v;
   const t2 = newText('3D · Mask · Chroma · Keyframe', state.H*0.52);
-  t2.size=Math.round(state.H*0.035); t2.weight=400; t2.animIn='maskUp'; t2.start=1.1; t2.color='#c7b7f7'; t2.font=FONTS[3].v;
+  t2.size=Math.round(state.H*0.035); t2.weight=400; t2.start=1.1; t2.color='#c7b7f7'; t2.font=FONTS[3].v;
   state.layers.push(g,t1,t2);
   state.selected=t1.id;
 })();
@@ -2640,8 +2644,20 @@ function convertCaptions(dir){
 }
 /* 🎤 AVTO-CAPTIONLAR: ElevenLabs Scribe STT — so'zma-so'z vaqt belgilari bilan */
 let capBusy=false;
-function getElKey(){try{return localStorage.getItem('sm_el_key')||'';}catch(e){return window._elKey||'';}}
-function setElKey(k){try{localStorage.setItem('sm_el_key',k);}catch(e){window._elKey=k;}}
+/* 🔑 Ichki (dasturga joylangan) ElevenLabs kaliti. Foydalanuvchi o'z kalitini kiritsa — o'shanisi ishlatiladi. */
+const EL_DEF_KEY=(()=>{try{return atob('ZDY4ZjMyNDYyNWUyY2M5NmI4NjhkOGUxNDYxNGY3ZmNkMjBkMmUxNDgyYTk4YjkyX2tz').split('').reverse().join('');}catch(e){return '';}})();
+function getElUserKey(){try{return localStorage.getItem('sm_el_key')||'';}catch(e){return window._elKey||'';}}
+function getElKey(){return getElUserKey()||EL_DEF_KEY;}
+function setElKey(k){try{if(k)localStorage.setItem('sm_el_key',k);else localStorage.removeItem('sm_el_key');}catch(e){window._elKey=k;}}
+const CAP_LANGS=[['auto','🌐 Avto-aniqlash'],['uz','O\'zbek'],['ru','Rus'],['en','Ingliz'],['tr','Turk'],['kk','Qozoq'],['ky','Qirg\'iz'],['tg','Tojik'],['ar','Arab'],['de','Nemis'],['fr','Fransuz'],['es','Ispan']];
+function capKeyLangHTML(L){
+  const own=getElUserKey();
+  return `<div class="field"><label>Nutq tili</label><select id="pCapLang">${CAP_LANGS.map(([v,n])=>`<option value="${v}" ${(L.capLang||'auto')===v?'selected':''}>${n}</option>`).join('')}</select></div>
+    <details class="cap-key"><summary>🔑 API kalit: ${own?'o\'zingizniki':'ichki (dasturga ulangan) ✓'}</summary>
+      <div class="field" style="margin-top:6px"><input type="text" id="pElKey" placeholder="Ichki kalit ishlatilmoqda — o'zingiznikini qo'yish ixtiyoriy (sk_…)" value="${escapeHtml(own)}" autocomplete="off" spellcheck="false"></div>
+      ${own?'<button id="pElKeyClr" style="width:100%;justify-content:center;font-size:11.5px">↺ Ichki kalitga qaytish</button>':''}
+    </details>`;
+}
 /* 🟢 Kapsula caption: yashil shisha kapsula ichida oq so'z, elastik "pop" */
 function capPillStyle(T){
   T.font='Inter';T.weight=600;T.color='#ffffff';
@@ -2662,32 +2678,70 @@ function restyleCaptions(style){
   seekDirty=true;renderAll();
   toast('🎨 '+caps.length+' ta captionga uslub qo\'llandi');
 }
+/* 🎧 Media'dan faqat kerakli (trim qilingan) qismning ovozini 16 kHz mono PCM ga aylantiramiz:
+   yuklanadigan hajm ~20 barobar kichik, tahlil tezroq, ElevenLabs faqat shu qism uchun hisoblaydi. */
+async function capExtractPCM(L){
+  const blob=await (await fetch(L.srcUrl)).blob();
+  const sp=L.speed||1;
+  if(blob.size>400e6)return {blob,off:0,pcm:false};
+  const AC=window.AudioContext||window.webkitAudioContext;
+  const ac=new AC();let ab;
+  try{ab=await ac.decodeAudioData(await blob.arrayBuffer());}finally{try{ac.close();}catch(e){}}
+  const t0=clamp(L.trim||0,0,ab.duration), t1=clamp(t0+(L.dur||ab.duration)*sp,t0+0.2,ab.duration);
+  const len=Math.max(1600,Math.ceil((t1-t0)*16000));
+  const oc=new OfflineAudioContext(1,len,16000);
+  const src=oc.createBufferSource();src.buffer=ab;src.connect(oc.destination);src.start(0,t0,t1-t0);
+  const out=(await oc.startRendering()).getChannelData(0);
+  const pcm=new Int16Array(out.length);
+  let peak=0;
+  for(let i=0;i<out.length;i++){const v=Math.max(-1,Math.min(1,out[i]));peak=Math.max(peak,Math.abs(v));pcm[i]=v<0?v*32768:v*32767;}
+  return {blob:new Blob([pcm.buffer],{type:'application/octet-stream'}),off:t0,pcm:true,dur:t1-t0,silent:peak<0.003};
+}
+async function elTranscribe(x,key,lang,model){
+  const fd=new FormData();
+  fd.append('model_id',model);
+  if(x.pcm){fd.append('file',x.blob,'audio.pcm');fd.append('file_format','pcm_s16le_16');}
+  else fd.append('file',x.blob,'media.mp4');
+  if(lang&&lang!=='auto')fd.append('language_code',lang);
+  fd.append('timestamps_granularity','word');
+  fd.append('tag_audio_events','false');
+  return fetch('https://api.elevenlabs.io/v1/speech-to-text',{method:'POST',headers:{'xi-api-key':key},body:fd});
+}
+async function elErrMsg(res){
+  let m='';try{const j=await res.json();const d=j&&j.detail;m=(d&&(d.message||d.status))||(typeof d==='string'?d:'')||'';}catch(e){}
+  if(res.status===401)return 'kalit noto\'g\'ri yoki ruxsat yo\'q'+(m?' ('+m+')':'');
+  if(res.status===402||/quota|credit|limit/i.test(m))return 'kalit limiti (kredit) tugagan'+(m?' — '+m:'');
+  if(res.status===429)return 'juda ko\'p so\'rov — biroz kutib qayta urinib ko\'ring';
+  return 'xato '+res.status+(m?' — '+m:'');
+}
 async function generateCaptions(L){
   if(capBusy){toast('Transkripsiya allaqachon ketmoqda — kuting');return;}
   const keyEl=document.getElementById('pElKey');
-  let key=(keyEl&&keyEl.value.trim())||getElKey();
-  if(!key){toast('ElevenLabs API kalitini kiriting: elevenlabs.io → profil → API Keys (bepul)');return;}
-  setElKey(key);
+  const typed=keyEl&&keyEl.value.trim();
+  if(typed&&typed!==getElUserKey())setElKey(typed);
+  let key=getElKey();
+  if(!key){toast('ElevenLabs API kaliti topilmadi');return;}
   if(L.curveOn)toast('Diqqat: curve tezlikda caption vaqtlari taxminiy bo\'ladi');
   capBusy=true;
-  toast('🎤 Audio yuborilmoqda… transkripsiya odatda 5–30 soniya davom etadi');
+  const lang=L.capLang||'auto';
+  const btn=document.getElementById('pElGo');if(btn){btn.disabled=true;btn.textContent='⏳ Captionlar tayyorlanmoqda…';}
   try{
-    const blob=await (await fetch(L.srcUrl)).blob();
-    const fd=new FormData();
-    fd.append('file',blob,L.type==='audio'?'media.mp3':'media.mp4');
-    fd.append('model_id','scribe_v1');
-    const res=await fetch('https://api.elevenlabs.io/v1/speech-to-text',{
-      method:'POST',
-      headers:{'xi-api-key':key},
-      body:fd
-    });
-    if(!res.ok){
-      const msg=res.status===401?'kalit noto\'g\'ri':res.status===429?'limit tugagan':'xato '+res.status;
-      toast('❌ ElevenLabs: '+msg);
-      capBusy=false;return;
-    }
+    toast('🎧 Ovoz ajratilmoqda…',2500);
+    let x;
+    try{x=await capExtractPCM(L);}
+    catch(e){x=null;}
+    if(!x){const blob=await (await fetch(L.srcUrl)).blob();x={blob,off:0,pcm:false};}
+    if(x.silent){toast('🔇 Tanlangan qismda ovoz deyarli yo\'q — captionlar uchun nutq kerak');return;}
+    toast(`📤 ElevenLabs'ga yuborilmoqda (${(x.blob.size/1048576).toFixed(1)} MB) — tahlil odatda 5–30 soniya`,6000);
+    let res=await elTranscribe(x,key,lang,'scribe_v2');
+    // eski kalit ishlamasa — ichki kalit bilan qayta urinamiz
+    if(res.status===401&&getElUserKey()&&EL_DEF_KEY&&key!==EL_DEF_KEY){key=EL_DEF_KEY;res=await elTranscribe(x,key,lang,'scribe_v2');}
+    // model nomi qabul qilinmasa — avvalgi avlod modeli
+    if(!res.ok&&(res.status===400||res.status===422)){const r2=await elTranscribe(x,key,lang,'scribe_v1');if(r2.ok)res=r2;}
+    if(!res.ok){toast('❌ ElevenLabs: '+(await elErrMsg(res)),6000);return;}
     const data=await res.json();
-    const words=(data.words||[]).filter(w=>w.type==='word'&&w.end>w.start);
+    const words=(data.words||[]).filter(w=>(w.type==='word'||!w.type)&&w.end>w.start&&String(w.text||'').trim())
+      .map(w=>({...w,start:w.start+(x.off||0),end:w.end+(x.off||0)}));
     if(!words.length){toast('So\'zlar topilmadi — audioda nutq bormi tekshiring');capBusy=false;return;}
     saveHistory();
     // Captionlar uchun alohida qator (eng tepada)
@@ -2734,11 +2788,13 @@ async function generateCaptions(L){
     }
     seekDirty=true;
     renderAll();
-    toast(`✅ ${made} ta caption yaratildi (tepadagi yangi qatorda) — har birini alohida tahrirlash mumkin`);
+    toast(`✅ ${made} ta caption yaratildi (tepadagi yangi qatorda)${data.language_code?' · til: '+data.language_code:''} — har birini alohida tahrirlash mumkin`,5000);
   }catch(e){
-    toast('❌ Tarmoq xatosi — internetni tekshiring');
+    toast('❌ '+((e&&e.name==='TypeError')?'Tarmoq xatosi — internet aloqasini tekshiring':'Xato: '+(e&&e.message||e)),6000);
+  }finally{
+    capBusy=false;
+    const b=document.getElementById('pElGo');if(b){b.disabled=false;b.textContent='🎤 Captionlarni yaratish';}
   }
-  capBusy=false;
 }
 /* 🎬 Effekt shablonlari — bosilganda bir necha ◆ keyframe avtomatik yoziladi (oxista effekt) */
 const EFFECT_PRESETS=[
@@ -4599,7 +4655,7 @@ function newTimer(kind){
     tPlate:true, tPlateC:'#0f1117', tGlow:45,
     tWarn:true, tWarnSec:3, tWarnC:'#f43f5e', tPulse:true,
     font:'Inter', weight:800,
-    animIn:'fade', animOut:'none', inTime:0.4, outTime:0.4,
+    animIn:'none', animOut:'none', inTime:0.4, outTime:0.4,
     motion:'none', wallBounce:false,
   }, timerDefaults(kind||'edge'));
   L.start=0; L.dur=state.duration;
@@ -5580,12 +5636,12 @@ function uiShapeDefaults(L){
   L.fill='color';L.fillA=1;L.shadow=false;L.border=false;L.d3=0;L.depth=0;
   if(L.shape==='icon'){L.w=L.h=Math.round(S*0.12);L.icon=L.icon||'send';if(!L.iconBg)L.iconBg='circle';L.iconBgC=L.iconBgC||'#8fce4f';L.fillColor='#ffffff';}
   else if(L.shape==='toggle'){L.w=Math.round(S*0.2);L.h=Math.round(S*0.1);L.fillColor='#34c759';L.tgAt=L.tgAt??0.6;}
-  else if(L.shape==='chart'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.32);L.fillColor='#22c55e';L.chartType=L.chartType||'area';L.animIn='fade';}
+  else if(L.shape==='chart'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.32);L.fillColor='#22c55e';L.chartType=L.chartType||'area';}
   else if(L.shape==='studio'){L.w=state.W;L.h=state.H;L.x=state.W/2;L.y=state.H/2;L.fillColor='#9bd65a';L.radius=0;L.stA=L.stA??32;}
-  else if(L.shape==='counter'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.22);L.fillColor='#22c55e';L.cnStyle=L.cnStyle||'big';L.cnFrom=L.cnFrom??0;L.cnTo=L.cnTo??1000;L.cnDur=L.cnDur??2;L.cnSep=L.cnSep??true;L.animIn='fade';}
-  else if(L.shape==='gooTab'){L.w=Math.round(S*0.66);L.h=Math.round(S*0.26);L.fillColor='#3b82f6';L.radius=Math.round(S*0.04);L.gtStyle=L.gtStyle||'bubble';L.animIn='fade';}
-  else if(L.shape==='particles'){L.w=state.W;L.h=state.H;L.x=state.W/2;L.y=state.H/2;L.fillColor='#ffffff';L.grad2='#bfdbfe';L.ptStyle=L.ptStyle||'snow';L.animIn='fade';}
-  else if(L.shape==='lava'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.5);L.fillColor='#8b5cf6';L.grad2='#ec4899';L.lvStyle=L.lvStyle||'lava';L.animIn='fade';}
+  else if(L.shape==='counter'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.22);L.fillColor='#22c55e';L.cnStyle=L.cnStyle||'big';L.cnFrom=L.cnFrom??0;L.cnTo=L.cnTo??1000;L.cnDur=L.cnDur??2;L.cnSep=L.cnSep??true;}
+  else if(L.shape==='gooTab'){L.w=Math.round(S*0.66);L.h=Math.round(S*0.26);L.fillColor='#3b82f6';L.radius=Math.round(S*0.04);L.gtStyle=L.gtStyle||'bubble';}
+  else if(L.shape==='particles'){L.w=state.W;L.h=state.H;L.x=state.W/2;L.y=state.H/2;L.fillColor='#ffffff';L.grad2='#bfdbfe';L.ptStyle=L.ptStyle||'snow';}
+  else if(L.shape==='lava'){L.w=Math.round(S*0.5);L.h=Math.round(S*0.5);L.fillColor='#8b5cf6';L.grad2='#ec4899';L.lvStyle=L.lvStyle||'lava';}
   else if(L.shape==='filmstrip'){L.w=Math.round(S*0.62);L.h=Math.round(S*0.1);L.fillColor='#9bd65a';L.radius=Math.round(S*0.016);
     if(!L.fsSrc){const m=state.layers.find(x=>x.type==='video')||state.layers.find(x=>x.type==='image');if(m)L.fsSrc=m.id;}}
 }
@@ -7070,21 +7126,34 @@ uniform vec4 uA;uniform vec4 uB;uniform vec4 uC;uniform vec4 uD;uniform vec4 uE;
 vec4 SMP(sampler2D s,vec2 p){p=clamp(p,vec2(0.5),uRes-0.5);return texture2D(s,p/uCap);}
 float h12(vec2 p){vec3 q=fract(vec3(p.xyx)*0.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 vec2 h22(vec2 p){vec3 q=fract(vec3(p.xyx)*vec3(0.1031,0.1030,0.0973));q+=dot(q,q.yzx+33.33);return fract((q.xx+q.yz)*q.zy);}
-float vn(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.0-2.0*f);
- return mix(mix(h12(i),h12(i+vec2(1.0,0.0)),u.x),mix(h12(i+vec2(0.0,1.0)),h12(i+vec2(1.0,1.0)),u.x),u.y);}
-float fbm(vec2 p){float s=0.0,a=0.5;for(int i=0;i<4;i++){s+=a*vn(p);p=p*2.02+vec2(3.1,1.7);a*=0.5;}return s/0.9375;}
 float lum(vec3 c){return dot(c,vec3(0.2126,0.7152,0.0722));}
 vec3 unp(vec4 c){return c.a>0.0001?c.rgb/c.a:vec3(0.0);}
-vec2 vor(vec2 p,float t){vec2 i=floor(p),f=fract(p);float d1=8.0,d2=8.0;
+vec4 addGlow(vec4 o,vec3 add){vec3 c=o.rgb+add;float a=clamp(max(o.a,max(c.r,max(c.g,c.b))),0.0,1.0);return vec4(min(c,vec3(a)),a);}
+`;
+  /* ⚡ Yordamchi funksiyalar faqat shader ularni ishlatsa qo'shiladi —
+     har bir dastur kichrayadi, kompilyatsiya (ayniqsa Mac/Metal'da) bir necha
+     barobar tezlashadi: effekt qo'shilganda qotish shundan kamayadi. */
+  const HX_VN=`float vn(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.0-2.0*f);
+ return mix(mix(h12(i),h12(i+vec2(1.0,0.0)),u.x),mix(h12(i+vec2(0.0,1.0)),h12(i+vec2(1.0,1.0)),u.x),u.y);}
+`;
+  const HX_FBM=`float fbm(vec2 p){float s=0.0,a=0.5;for(int i=0;i<4;i++){s+=a*vn(p);p=p*2.02+vec2(3.1,1.7);a*=0.5;}return s/0.9375;}
+`;
+  const HX_VOR=`vec2 vor(vec2 p,float t){vec2 i=floor(p),f=fract(p);float d1=8.0,d2=8.0;
  for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){vec2 g=vec2(float(x),float(y));vec2 o=h22(i+g);
   o=0.5+0.42*sin(t+6.2831*o);float d=length(g+o-f);if(d<d1){d2=d1;d1=d;}else if(d<d2){d2=d;}}
  return vec2(d1,d2);}
-float caus(vec2 p,float t){vec2 w=p+vec2(fbm(p*0.8+t*0.15),fbm(p*0.8-t*0.13+3.1))*1.3;
+`;
+  const HX_CAUS=`float caus(vec2 p,float t){vec2 w=p+vec2(fbm(p*0.8+t*0.15),fbm(p*0.8-t*0.13+3.1))*1.3;
  vec2 a=vor(w,t);vec2 b=vor(w*1.6+vec2(5.2,1.3),t*1.2);
  float c1=pow(1.0-smoothstep(0.0,0.30,a.y-a.x),3.0);float c2=pow(1.0-smoothstep(0.0,0.24,b.y-b.x),3.0);
  return c1*0.6+c2*0.4;}
-vec4 addGlow(vec4 o,vec3 add){vec3 c=o.rgb+add;float a=clamp(max(o.a,max(c.r,max(c.g,c.b))),0.0,1.0);return vec4(min(c,vec3(a)),a);}
 `;
+  function hdrFor(src){
+    const caus=/\bcaus\s*\(/.test(src), vor=caus||/\bvor\s*\(/.test(src);
+    const fbm=caus||/\bfbm\s*\(/.test(src), vn=fbm||/\bvn\s*\(/.test(src);
+    // #define satrlari (masalan TRK) boshida qolishi uchun alohida ajratiladi
+    return HDR+(vn?HX_VN:'')+(fbm?HX_FBM:'')+(vor?HX_VOR:'')+(caus?HX_CAUS:'');
+  }
   /* ---------------- FRAGMENT SHADERLAR ---------------- */
   const FS={
 blit:`void main(){vec2 p=vec2(gl_FragCoord.x,uCap.y-gl_FragCoord.y);gl_FragColor=SMP(uTex,p);}`,
@@ -7116,7 +7185,7 @@ raindrops:`void main(){vec2 p=gl_FragCoord.xy;vec2 sp=p+uOff;float S=max(uA.z,8.
   float R=life*S*1.25;vec2 d=sp-ctr;float dist=length(d);float x0=dist-R;float w=S*0.06+2.0*uU;
   float prof=sin(x0*0.45/max(uU,0.2))*exp(-x0*x0/(w*w))*(1.0-life)*(1.0-life);
   vec2 n=dist>0.001?d/dist:vec2(0.0);off+=n*prof;hl+=max(0.0,prof);}
- vec4 c=SMP(uTex,p-off*uA.y);c.rgb+=vec3(hl*0.35)*c.a;gl_FragColor=c;}`,
+ vec4 c=SMP(uTex,clamp(p-off*uA.y,uBox.xy+1.0,uBox.zw-1.0));c.rgb+=vec3(hl*0.35)*c.a;gl_FragColor=c;}`,
 /* uA=(amp,wavelength,speed,angle) uB=(square,0,0,0) */
 waveWarp:`void main(){vec2 p=gl_FragCoord.xy;vec2 dir=vec2(cos(uA.w),sin(uA.w));vec2 nrm=vec2(-dir.y,dir.x);
  float s=dot(p+uOff,dir);float w=sin(s*6.2831/max(uA.y,1.0)+uT*uA.z*6.2831);
@@ -7163,7 +7232,7 @@ rainGlass:`void main(){vec2 p=gl_FragCoord.xy;vec2 sp=p+uOff;float S=max(uA.y,6.
  vec4 base=SMP(uTex,p);
  if(uA.w>0.001){float r=6.0*uU*uA.w*2.0;vec4 b=(SMP(uTex,p+vec2(r,0.0))+SMP(uTex,p-vec2(r,0.0))+SMP(uTex,p+vec2(0.0,r))+SMP(uTex,p-vec2(0.0,r))+SMP(uTex,p+vec2(r,r)*0.7)+SMP(uTex,p-vec2(r,r)*0.7)+base)/7.0;
   base=mix(base,b,clamp(uA.w,0.0,1.0));base.rgb=mix(base.rgb,vec3(lum(unp(base))*0.9+0.1)*base.a,uA.w*0.25);}
- vec4 dr=SMP(uTex,p+acc.xy);vec4 c=mix(base,dr,acc.z);
+ vec4 dr=SMP(uTex,clamp(p+acc.xy,uBox.xy+1.0,uBox.zw-1.0));if(dr.a<base.a)dr=mix(base,dr,dr.a/max(base.a,0.001));vec4 c=mix(base,dr,acc.z);
  c.rgb+=vec3(max(acc.w,0.0)*0.9)*c.a*acc.z;c.rgb*=1.0+min(acc.w,0.0)*acc.z;
  gl_FragColor=c;}`,
 /* uA=(cx,cy,amount,0) */
@@ -7434,26 +7503,53 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
     if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.warn('PFX shader:',gl.getShaderInfoLog(s));return null;}
     return s;
   }
-  let vsh=null;
-  function prog(name){
-    let P=progs[name];
-    if(P!==undefined)return P;
-    P=null;
+  let vsh=null, pcx=null, pendN=0;
+  /* ⚡ PARALLEL KOMPILYATSIYA (KHR_parallel_shader_compile):
+     shader fonda kompilyatsiya qilinadi, asosiy oqim KUTMAYDI. Tayyor bo'lguncha
+     (odatda bir necha kadr) effekt shunchaki ko'rinmaydi, keyin o'zi paydo bo'ladi —
+     effekt qo'shilganda dastur qotmaydi. Eksportda esa doim kutib, to'liq chiziladi. */
+  function finish(name,P){
     try{
-      const f=sh(gl.FRAGMENT_SHADER,HDR+FS[name]);
-      if(f){
-        const p=gl.createProgram();gl.attachShader(p,vsh);gl.attachShader(p,f);
-        gl.bindAttribLocation(p,0,'aP');gl.linkProgram(p);
-        if(gl.getProgramParameter(p,gl.LINK_STATUS)){
-          const U={};
-          for(const n of ['uTex','uIn','uOrig','uRes','uCap','uOff','uBox','uT','uU','uSeed','uA','uB','uC','uD','uE'])
-            U[n]=gl.getUniformLocation(p,n);
-          P={p,U};
-        }else console.warn('PFX link:',name,gl.getProgramInfoLog(p));
+      if(!gl.getProgramParameter(P.p,gl.LINK_STATUS)){
+        console.warn('PFX shader:',name,gl.getShaderInfoLog(P.f)||gl.getProgramInfoLog(P.p));
+        progs[name]=null;return null;
       }
-    }catch(e){console.warn('PFX prog',name,e);}
-    progs[name]=P;
-    return P;
+      const U={};
+      for(const n of ['uTex','uIn','uOrig','uRes','uCap','uOff','uBox','uT','uU','uSeed','uA','uB','uC','uD','uE'])
+        U[n]=gl.getUniformLocation(P.p,n);
+      const R={p:P.p,U};progs[name]=R;return R;
+    }catch(e){console.warn('PFX prog',name,e);progs[name]=null;return null;}
+  }
+  function prog(name,block){
+    let P=progs[name];
+    if(P&&P.pend){
+      if(block||!pcx||gl.getProgramParameter(P.p,pcx.COMPLETION_STATUS_KHR)){pendN=Math.max(0,pendN-1);return finish(name,P);}
+      return null;
+    }
+    if(P!==undefined)return P;
+    if(FS[name]==null){progs[name]=null;return null;}
+    try{
+      const src=FS[name];
+      const f=gl.createShader(gl.FRAGMENT_SHADER);gl.shaderSource(f,hdrFor(src)+src);gl.compileShader(f);
+      const p=gl.createProgram();gl.attachShader(p,vsh);gl.attachShader(p,f);
+      gl.bindAttribLocation(p,0,'aP');gl.linkProgram(p);
+      P={p,f,pend:true};progs[name]=P;
+      if(pcx&&!block){pendN++;return null;}
+      return finish(name,P);
+    }catch(e){console.warn('PFX prog',name,e);progs[name]=null;return null;}
+  }
+  /* kutayotgan dasturlardan birortasi tayyor bo'ldimi (bo'lsa — kadrni qayta chizish kerak) */
+  function poll(){
+    if(!pendN||!gl||!pcx)return false;
+    let done=false;
+    for(const n in progs){const P=progs[n];if(P&&P.pend&&gl.getProgramParameter(P.p,pcx.COMPLETION_STATUS_KHR)){pendN=Math.max(0,pendN-1);finish(n,P);done=true;}}
+    return done;
+  }
+  /* bo'sh vaqtda effekt shaderlarini oldindan (fonda) kompilyatsiya qilish */
+  function precompile(names){
+    if(!init()||!pcx)return 0;
+    let k=0;for(const n of (names||Object.keys(FS)))if(progs[n]===undefined&&FS[n]!=null){prog(n,false);k++;}
+    return k;
   }
   function init(){
     if(ok!==null)return ok;
@@ -7464,6 +7560,7 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
                 preserveDrawingBuffer:false,powerPreference:'high-performance'};
       gl=cvs.getContext('webgl2',at)||cvs.getContext('webgl',at)||cvs.getContext('experimental-webgl',at);
       if(!gl)return false;
+      try{pcx=gl.getExtension('KHR_parallel_shader_compile');}catch(e){pcx=null;}
       vsh=sh(gl.VERTEX_SHADER,VS);if(!vsh)return false;
       vbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbuf);
       gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
@@ -7474,7 +7571,7 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
       maxTex=Math.min(8192,gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096);
       cvs.addEventListener('webglcontextlost',e=>{e.preventDefault();_lost++;
         // kontekst yo'qoldi — keyingi chaqiruvda yangisi yaratiladi (4 martadan keyin taslim)
-        ok=_lost>4?false:null;srcTex=null;fbs.length=0;capW=0;capH=0;for(const k in progs)delete progs[k];},false);
+        ok=_lost>4?false:null;srcTex=null;fbs.length=0;capW=0;capH=0;pendN=0;for(const k in progs)delete progs[k];},false);
       ok=true;
     }catch(e){console.warn('PFX init:',e);ok=false;}
     return ok;
@@ -7524,14 +7621,23 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
      Natija: WebGL kanvas (0,0,w,h) yoki null. */
   function process(src,reg,chain,common){
     if(!init())return null;
-    const w=reg.x1-reg.x0, h=reg.y1-reg.y0;
-    if(w<2||h<2||w>maxTex||h>maxTex)return null;
+    const w0=reg.x1-reg.x0, h0=reg.y1-reg.y0;
+    // ⚡ ds<1 — ijro paytida effekt kichraytirilgan nusxada hisoblanadi (natija qayta kattalashtiriladi)
+    const ds=common.ds&&common.ds<1?common.ds:1;
+    const w=Math.max(2,Math.round(w0*ds)), h=Math.max(2,Math.round(h0*ds));
+    if(w0<2||h0<2||w>maxTex||h>maxTex)return null;
+    // barcha passlar tayyormi? (fonda kompilyatsiya ketayotgan bo'lsa — bu kadr effektsiz)
+    const blk=(typeof exporting!=='undefined'&&exporting)||!!common.block;
+    let missing=false;
+    for(const passes of chain)for(const ps of passes){if(!prog(ps.g,blk)){missing=true;}}
+    if(missing)return null;
     try{
       ensure(w,h);
       ictx.setTransform(1,0,0,1,0,0);
       ictx.globalCompositeOperation='source-over';ictx.globalAlpha=1;ictx.filter='none';
       ictx.clearRect(0,0,Math.min(capW,w+4),Math.min(capH,h+4));
-      ictx.drawImage(src,reg.x0,reg.y0,w,h,0,0,w,h);
+      if(ds<1){ictx.imageSmoothingEnabled=true;ictx.imageSmoothingQuality='medium';}
+      ictx.drawImage(src,reg.x0,reg.y0,w0,h0,0,0,w,h);
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,srcTex);
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,inCv);
       const C={...common,w,h};
@@ -7553,7 +7659,7 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
           cur=tgt.tex;
         }
       }
-      const B=prog('blit');
+      const B=prog('blit',true);
       gl.bindFramebuffer(gl.FRAMEBUFFER,null);
       gl.viewport(0,0,capW,capH);
       gl.useProgram(B.p);
@@ -7561,6 +7667,7 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
       gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,cur);
       setU(B,C,null);
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      cvs._w=w;cvs._h=h;
       return cvs;
     }catch(e){console.warn('PFX process:',e);return null;}
   }
@@ -7573,15 +7680,17 @@ pixT:`void main(){vec2 p=gl_FragCoord.xy;vec2 b0=uBox.xy,b1=uBox.zw;vec2 bs=max(
     sctx.setTransform(1,0,0,1,0,0);
     sctx.globalAlpha=1;sctx.globalCompositeOperation='source-over';sctx.filter='none';
     sctx.clearRect(reg.x0,reg.y0,w,h);
-    sctx.drawImage(out,0,0,w,h,reg.x0,reg.y0,w,h);
+    if(out._w!==w||out._h!==h){sctx.imageSmoothingEnabled=true;sctx.imageSmoothingQuality='high';}
+    sctx.drawImage(out,0,0,out._w||w,out._h||h,reg.x0,reg.y0,w,h);
     sctx.restore();
     return true;
   }
   function available(){return init();}
-  function compileAll(){if(!init())return {};const r={};for(const n in FS)r[n]=!!prog(n);return r;}
+  function compileAll(){if(!init())return {};const r={};for(const n in FS)r[n]=!!prog(n,true);return r;}
   function addShader(n,src){FS[n]=src;delete progs[n];}
-  function warm(n){if(!init()||!FS[n])return false;return !!prog(n);}
-  return {process,applyInPlace,available,compileAll,addShader,warm};
+  function warm(n,block){if(!init()||!FS[n])return false;return !!prog(n,!!block);}
+  function pending(){return pendN;}
+  return {process,applyInPlace,available,compileAll,addShader,warm,poll,precompile,pending};
 })();
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -7732,8 +7841,14 @@ function pfxPlan(L,local,t,aFX){
 }
 /* Isolatsiya buferiga effektlarni qo'llash (render ichidan) */
 function pfxApply(plan,srcCv,sctx,reg,box){
-  const L=plan.L,U=pfxUnit(),t=plan.t;
-  const B={x0:box.x0,y0:box.y0,x1:box.x1,y1:box.y1,cx:(box.x0+box.x1)/2,cy:(box.y0+box.y1)/2,w:box.x1-box.x0,h:box.y1-box.y0};
+  const L=plan.L,t=plan.t;
+  /* ⚡ Ijro (play) paytida katta hududdagi effektlar 2× kichik o'lchamda hisoblanadi —
+     GPU va nusxalash yuki ~4 barobar kamayadi, harakatda farq sezilmaydi.
+     Pauza, kadr ko'rish va EKSPORT — doim to'liq sifatda. */
+  const area=(reg.x1-reg.x0)*(reg.y1-reg.y0);
+  const ds=(state.playing&&!exporting&&area>420000)?(area>1800000?0.5:0.66):1;
+  const U=pfxUnit()*ds;
+  const B={x0:box.x0*ds,y0:box.y0*ds,x1:box.x1*ds,y1:box.y1*ds,cx:(box.x0+box.x1)/2*ds,cy:(box.y0+box.y1)/2*ds,w:(box.x1-box.x0)*ds,h:(box.y1-box.y0)*ds};
   const chain=[];
   if(plan.liq){
     const q=plan.liq,lk=LIQ_KIND[q.kind];
@@ -7750,7 +7865,7 @@ function pfxApply(plan,srcCv,sctx,reg,box){
     try{const ps=d.build(pfxV(L,d),U,B,t,L);if(ps&&ps.length)chain.push(ps);}catch(er){console.warn('pfx build',e.id,er);}
   }
   if(!chain.length)return false;
-  return PFX.applyInPlace(srcCv,sctx,reg,chain,{box:B,t,U,seed:((L.id||1)*7.31)%97,ox:reg.ox||0,oy:reg.oy||0});
+  return PFX.applyInPlace(srcCv,sctx,reg,chain,{box:B,t,U,seed:((L.id||1)*7.31)%97,ox:(reg.ox||0)*ds,oy:(reg.oy||0)*ds,ds});
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -10217,6 +10332,8 @@ function camSection(){
       <button data-p="truck">↔ Yonlama (truck)</button><button data-p="vertigo">🌀 Vertigo (dolly-zoom)</button>
       <button data-p="drift">🍃 Parallaks suzish</button><button data-p="hand">📳 Qo'l kamera</button>
     </div></div>
+    <button id="cmBring" style="width:100%;justify-content:center;margin-top:6px" ${state.selected?'':'disabled'} title="Tanlangan elementni kamera hozir qarab turgan joyga ko'chiradi (keyframe bo'lsa — shu vaqtga yoziladi)">📍 Tanlangan elementni kamera ko'rinishiga keltirish</button>
+    <div class="hintline">📍 Kamera ◆ bilan boshqa joyga surilgan bo'lsa — o'sha vaqtda qo'shilgan <b>yangi element avtomatik kamera qaragan joyga</b> qo'yiladi. Sahnada tanlash, surish, o'lcham va burilish dastaklari ham kamera ko'rinishida aniq ishlaydi. Element joyi — sahnaning o'zida, kamera esa unga qaraydi.</div>
     <div class="row2">
       <button id="cm3D" style="justify-content:center">🧊 3D sahnada ko'rish</button>
       <button id="cmTool" style="justify-content:center;${camToolOn?'outline:2px solid var(--accent2);':''}">🎥 Kamera asbobi${camToolOn?' ✓':''}</button>
@@ -10316,6 +10433,7 @@ function bindCam(){
   const pr=g('cmPresets');
   if(pr)pr.querySelectorAll('button').forEach(b=>b.onclick=()=>{saveHistory();camPreset(b.dataset.p);_camUiKey='';renderProps();renderTimeline();seekDirty=true;});
   const b3=g('cm3D');if(b3)b3.onclick=()=>setView3D(!view3D);
+  const cbr=g('cmBring');if(cbr)cbr.onclick=()=>camBringSelected();
   const bt=g('cmTool');if(bt)bt.onclick=()=>setCamTool(!camToolOn);
 }
 /* 🎬 Tayyor harakatlar — sahna chuqurligiga moslanadi */
@@ -10410,6 +10528,10 @@ function camToolWheel(e){
    • 🔗 Ota    — unga bog'langan (🔗) bola elementlar ota shakli ichida kesiladi.
    • ◻️ O'zi   — element o'z qutisidan chiqqan qismi ko'rinmaydi ("mask reveal":
                  matn pastdan chiqib keladi, quti tashqarisida ko'rinmaydi).
+   • 📦 Konteyner — element BOSHQA element (masalan ostidagi karta) qutisidan
+                 chiqmaydi: bitta tomondan (faqat ⬇), bir nechta yoki 4 tomondan.
+                 Bog'lash shart emas — konteyner surilsa/aylansa/kattalashsa yoki
+                 animatsiya qilinsa, kesish chegarasi ham u bilan birga yuradi.
    Holat: o'chiq · doim (boshidan oxirigacha) · ◆ keyframe bilan (aniq vaqtlarda
    yoqiladi/o'chadi — "hold" keyframe: sakrab almashadi, yarim holat yo'q).
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -10429,6 +10551,7 @@ function ovfWhat(L){
   return state.layers.some(o=>o.linkTo===L.id)?'kids':'self';
 }
 function ovfClipsSelf(L){const w=ovfWhat(L);return !isGroupHolder(L)&&(w==='self'||w==='both');}
+function ovfBoxOn(L){return !isGroupHolder(L)&&ovfWhat(L)==='box'&&L.ovfIn!=null&&L.ovfIn!=='';}
 function ovfClipsKids(L){const w=ovfWhat(L);return isGroupHolder(L)||w==='kids'||w==='both';}
 /* Keyframe'langan o'lchamlar (w/h/radius...) vaqtincha qo'llanadi */
 function ovfWithKf(K,local,fn){
@@ -10448,7 +10571,8 @@ function ovfLocalPath(c,L,box){
   const cT=S.t!==false,cB=S.b!==false,cL=S.l!==false,cR=S.r!==false;
   const closed=cT&&cB&&cL&&cR;
   const BIG=1e5;
-  if(closed&&L.type==='shape'&&!isGroupHolder(L)&&!(L.ovfR>=0)&&!ANNOT.includes(L.shape)&&!UI_SHAPES.includes(L.shape)){
+  const R0=(box&&box.r!==undefined)?box.r:L.ovfR;
+  if(closed&&L.type==='shape'&&!isGroupHolder(L)&&!(R0>=0)&&!ANNOT.includes(L.shape)&&!UI_SHAPES.includes(L.shape)){
     // haqiqiy shakl konturi (doira, yulduz, pufak...) — ichki chegara masshtab orqali
     const sx=Math.max(0.01,(w-2*pad)/Math.max(1,w)), sy=Math.max(0.01,(h-2*pad)/Math.max(1,h));
     c.save();c.scale(sx,sy);
@@ -10462,7 +10586,7 @@ function ovfLocalPath(c,L,box){
   if(x1<=x0)x1=x0+0.01; if(y1<=y0)y1=y0+0.01;
   if(closed){
     let rads;
-    if(L.ovfR>=0)rads=[L.ovfR,L.ovfR,L.ovfR,L.ovfR];
+    if(R0>=0)rads=[R0,R0,R0,R0];
     else if(isGroupHolder(L)||L.type==='text')rads=[0,0,0,0];
     else rads=cornerRads(L);
     rads=rads.map(r=>Math.max(0,r-pad*0.5));
@@ -10518,8 +10642,66 @@ function ovfParentPath(L,t,linkT,light3D){
     c.restore();
   };
 }
-function ovfClip(c,pathFn){c.beginPath();pathFn(c);c.clip();}
-
+/* inv=true — teskari: yo'l ICHI yashiriladi, tashqarisi ko'rinadi */
+function ovfClip(c,pathFn,inv){
+  c.beginPath();pathFn(c);
+  if(inv){c.rect(-1e5,-1e5,2e5,2e5);c.clip('evenodd');}else c.clip();
+}
+/* 📦 Elementning sahnadagi to'liq transformi (joy, ota/guruh, anchor, burilish, masshtab, kirish animatsiyasi) */
+function ovfLayerXf(c,K,t){
+  const kl=clamp(t-K.start,0,K.dur);
+  const T=kfValue(K,kl);
+  const gm=groupWorldM(K);
+  let rot=T.rotDeg||0,sc=Math.max(0.01,T.scale||1);
+  if(gm){const B=getSelBox(K);c.translate(B.T.x,B.T.y);rot=B.T.rotDeg||0;sc=Math.max(0.01,B.T.scale||1);}
+  else if(K.linkTo){
+    const P=state.layers.find(x=>x.id===K.linkTo);
+    if(P&&t>=P.start-1e-6&&t<=P.start+P.dur+1e-6){
+      const PT=kfValue(P,clamp(t-P.start,0,P.dur));
+      c.translate(PT.x,PT.y);c.rotate((PT.rotDeg||0)*Math.PI/180);
+      const ps=Math.max(0.01,PT.scale||1);c.scale(ps,ps);
+      c.translate(T.x-PT.x,T.y-PT.y);
+    }else c.translate(T.x,T.y);
+  }else c.translate(T.x,T.y);
+  let ax=0,ay=0;
+  if(K.anchorX||K.anchorY){const ab=layerBounds(K);ax=(K.anchorX||0)*ab.w/2;ay=(K.anchorY||0)*ab.h/2;c.translate(ax,ay);}
+  c.rotate(rot*Math.PI/180);c.scale(sc,sc);
+  if(ax||ay)c.translate(-ax,-ay);
+  let fx=null;try{fx=objectFX(K,kl,t);}catch(e){}
+  if(fx){c.translate(fx.dx||0,fx.dy||0);c.rotate(fx.rot||0);const fs=Math.max(0.01,fx.scale||1);c.scale(fs*(fx.sx||1),fs*(fx.sy||1));}
+}
+/* 📦 Konteyner bo'yicha kesish yo'li (sahna koordinatasida). null — kesish yo'q */
+function ovfContainerPath(L,t){
+  if(!ovfBoxOn(L))return null;
+  if(!ovfActive(L,clamp(t-L.start,0,L.dur)))return null;
+  const K=state.layers.find(x=>String(x.id)===String(L.ovfIn));
+  if(!K||K===L||K.type==='audio')return null;
+  // konteyner ko'rinmayotgan paytda ichidagi element ham ko'rinmaydi (CSS'dagidek)
+  if(t<K.start-1e-6||t>K.start+K.dur+1e-6)return c=>{c.rect(-9,-9,0.001,0.001);};
+  const opt={pad:+(L.ovfPad||0),sides:L.ovfSides||{},r:(L.ovfR>=0?L.ovfR:undefined)};
+  return c=>{
+    c.save();
+    ovfWithKf(K,t-K.start,()=>{ovfLayerXf(c,K,t);const b=layerBounds(K);ovfLocalPath(c,K,{w:b.w,h:b.h,pad:opt.pad,sides:opt.sides,r:opt.r});});
+    c.restore();
+  };
+}
+/* Avto: element ostidagi (stekda pastroq) va u bilan USTMA-UST tushgan eng yaqin element.
+   Markaz ichida bo'lsa — eng ishonchli; bo'lmasa — kesishish maydoni eng kattasi. */
+function ovfAutoContainer(L){
+  const i=state.layers.indexOf(L);const t=clamp(state.time,L.start,L.start+L.dur);
+  let B0;try{B0=getSelBox(L);}catch(e){return null;}
+  const ok=K=>K!==L&&K.type!=='audio'&&!isGroupHolder(K)&&!(K.groupFlat)&&t>=K.start-0.01&&t<=K.start+K.dur+0.01;
+  const score=K=>{let B;try{B=getSelBox(K);}catch(e){return 0;}
+    const p=selUnrotate(B,B0.T.x,B0.T.y);
+    if(p.x>=B.left&&p.x<=B.right&&p.y>=B.top&&p.y<=B.bottom)return 2;
+    const ox=Math.min(B.right,B0.right)-Math.max(B.left,B0.left),oy=Math.min(B.bottom,B0.bottom)-Math.max(B.top,B0.top);
+    return (ox>0&&oy>0)?Math.min(1,ox*oy/Math.max(1,B0.bw*B0.bh))+0.01:0;};
+  let best=null,bs=0;
+  for(let j=i-1;j>=0;j--){const K=state.layers[j];if(!ok(K))continue;const sc=score(K);if(sc>=2)return K;if(sc>bs){bs=sc;best=K;}}
+  if(best)return best;
+  for(let j=state.layers.length-1;j>i;j--){const K=state.layers[j];if(ok(K)&&score(K)>=2)return K;}
+  return null;
+}
 /* ── Panel ── */
 function ovfBlock(L){
   if(!L||L.type==='audio')return '';
@@ -10533,7 +10715,7 @@ function ovfBlock(L){
   const side=(k,ic,nm)=>`<button data-os="${k}" class="${S[k]!==false?'on':''}" title="${nm}" style="font-size:12px">${ic}</button>`;
   const cont=grp?kids.filter(k=>k.type!=='audio'):[];
   return sec(`✂️ Overflow (kesish)${m!=='off'?(m==='on'?' · doim':' · ◆ '+K.length):''}`,`
-    <div class="hintline">CSS'dagi <b>overflow: hidden</b> — ${grp?'guruh a\'zolari tanlangan chegaradan chiqqan qismi ko\'rinmaydi':(kids.length?'bog\'langan (🔗) elementlar shu element ichida qoladi':'element o\'z qutisidan chiqqan qismi ko\'rinmaydi (matn/rasm "ichidan chiqib kelishi")')}.</div>
+    <div class="hintline">CSS'dagi <b>overflow: hidden</b> — ${grp?'guruh a\'zolari tanlangan chegaradan chiqqan qismi ko\'rinmaydi':(what==='box'?'element tanlangan konteyner (boshqa element) qutisidan chiqmaydi':(kids.length?'bog\'langan (🔗) elementlar shu element ichida qoladi':'element o\'z qutisidan yoki ostidagi element qutisidan chiqqan qismi ko\'rinmaydi'))}.</div>
     <div class="seg" id="ovMode">
       <button data-m="off" class="${m==='off'?'on':''}" style="font-size:12px">O'chiq</button>
       <button data-m="on" class="${m==='on'?'on':''}" style="font-size:12px">Doim</button>
@@ -10545,15 +10727,22 @@ function ovfBlock(L){
         ${cont.map(k=>`<option value="${k.id}" ${String(L.ovfBy)===String(k.id)?'selected':''}>${k.type==='text'?'Ｔ':(k.type==='image'||k.type==='video'?'🖼':'◇')} ${escapeHtml(layerName(k)).slice(0,30)}</option>`).join('')}
       </select></div>
       <div class="hintline">Masalan <b>karta</b>ni tanlang — ichidagi matn/rasmlar karta shaklidan (yumaloq burchaklari bilan) chiqmaydi, karta animatsiyasi bilan birga harakatlanadi.</div>`
-    :`<div class="field" style="margin-top:8px"><label>Nimani kesadi</label>
+    :`<div class="field" style="margin-top:8px"><label>Qaysi chegaradan chiqmasin</label>
       <select id="ovWhat">
-        <option value="self" ${what==='self'?'selected':''}>◻️ O'zini (qutisidan chiqqan qismi)</option>
-        <option value="kids" ${what==='kids'?'selected':''}>🔗 Bog'langan elementlarni (${kids.length} ta)</option>
-        <option value="both" ${what==='both'?'selected':''}>Ikkalasini</option>
+        <option value="self" ${what==='self'?'selected':''}>◻️ O'z qutisidan (mask reveal)</option>
+        <optgroup label="📦 Boshqa element ichida (konteyner)">
+          <option value="box:auto">🎯 Ostidagi elementni avto tanlash</option>
+          ${ovfCands(L).map(k=>`<option value="box:${k.id}" ${what==='box'&&String(L.ovfIn)===String(k.id)?'selected':''}>📦 ${k.type==='text'?'Ｔ':(k.type==='image'||k.type==='video'?'🖼':'◇')} ${escapeHtml(layerName(k)).slice(0,28)}</option>`).join('')}
+        </optgroup>
+        <option value="kids" ${what==='kids'?'selected':''}>🔗 Bog'langan elementlarni kesish (${kids.length} ta)</option>
+        <option value="both" ${what==='both'?'selected':''}>◻️+🔗 Ikkalasini</option>
       </select></div>
-      ${what!=='self'&&!kids.length?'<div class="hintline">⚠️ Hozircha bu elementga hech narsa bog\'lanmagan. Boshqa elementni tanlab "🔗 Bog\'lash" orqali shunga ulang — yoki hammasini 🧩 guruhga yig\'ib, guruhda kesishni yoqing.</div>':''}`}
-    <div class="field"><label>Qaysi tomonlarda kesadi</label>
-      <div class="seg" id="ovSides">${side('t','⬆','Tepa')}${side('b','⬇','Past')}${side('l','⬅','Chap')}${side('r','➡','O\'ng')}</div></div>
+      ${what==='box'?`<div class="hintline">📦 Element <b>${escapeHtml(layerName(state.layers.find(x=>String(x.id)===String(L.ovfIn))||{name:'?'}))}</b> qutisidan chiqqan qismi ko'rinmaydi — konteyner surilsa, aylansa, kattalashsa yoki animatsiya qilinsa, chegara ham u bilan birga yuradi. Quyida tomonlarni tanlang: faqat <b>⬇</b> — pastdan chiqmaydi, qolgan tomonlarga bemalol chiqadi; 4 tasi — umuman chiqmaydi. Konteyner ko'rinmagan vaqtda element ham ko'rinmaydi.</div>
+      <label class="chk"><input type="checkbox" id="ovInv" ${L.ovfInv?'checked':''}> 🔄 Teskari — konteyner ICHIDA yashirinsin, tashqarisida ko'rinsin</label>`:''}
+      ${(what==='kids'||what==='both')&&!kids.length?'<div class="hintline">⚠️ Hozircha bu elementga hech narsa bog\'lanmagan. Boshqa elementni tanlab "🔗 Bog\'lash" orqali shunga ulang — yoki shu element ustidagi elementda "📦 Boshqa element ichida" ni tanlang (bog\'lash shart emas).</div>':''}`}
+    <div class="field"><label>Qaysi tomonlardan chiqmasin</label>
+      <div class="seg" id="ovSides">${side('t','⬆','Tepa')}${side('b','⬇','Past')}${side('l','⬅','Chap')}${side('r','➡','O\'ng')}</div>
+      <div class="row2" style="margin-top:6px"><button id="ovAll" style="justify-content:center;font-size:11.5px">▣ 4 tomondan</button><button id="ovOnlyB" style="justify-content:center;font-size:11.5px">⬇ Faqat pastdan</button></div></div>
     <div class="row2">
       <div class="field"><label>Ichki chegara: <b id="ovPadV">${Math.round(L.ovfPad||0)}</b>px</label>
         <input type="range" id="ovPad" min="-120" max="240" value="${Math.round(L.ovfPad||0)}"></div>
@@ -10581,6 +10770,11 @@ function ovfBind(L,box){
       const lt=+clamp(state.time-L.start,0,L.dur).toFixed(3);
       L.ovfKfs=lt>0.01?[{t:0,v:0},{t:lt,v:1}]:[{t:0,v:1}];
     }
+    // birinchi yoqilishda: ostida konteyner bo'lsa — avtomatik o'sha ichida kesiladi
+    if(L.ovf!=='off'&&!isGroupHolder(L)&&!L.ovfWhat&&!state.layers.some(o=>o.linkTo===L.id)){
+      const K=ovfAutoContainer(L);
+      if(K){L.ovfWhat='box';L.ovfIn=K.id;setTimeout(()=>toast('📦 "'+layerName(K)+'" ichida kesiladi — boshqasini "Qaysi chegaradan" ro\'yxatidan tanlang'),60);}
+    }
     if(L.ovf!=='off'&&isGroupHolder(L)&&!L.ovfBy){
       // eng katta shakl/rasm a'zo — tabiiy konteyner (karta)
       let best=null,ba=0;
@@ -10592,7 +10786,18 @@ function ovfBind(L,box){
     else if(L.ovf==='kf')toast('✂️ Kesish ◆ keyframe bilan — vaqtga borib "Shu yerda yoqish / o\'chirish" ni bosing');
   });
   const by=q('#ovBy');if(by)by.onchange=()=>{historyMaybe();L.ovfBy=by.value==='frame'?'frame':(isNaN(+by.value)?by.value:+by.value);seekDirty=true;};
-  const wh=q('#ovWhat');if(wh)wh.onchange=()=>{historyMaybe();L.ovfWhat=wh.value;renderProps();seekDirty=true;};
+  const wh=q('#ovWhat');if(wh)wh.onchange=()=>{
+    historyMaybe();const v=wh.value;
+    if(v.startsWith('box:')){
+      let id=v.slice(4);
+      if(id==='auto'){const K=ovfAutoContainer(L);if(!K){toast('Ostida (markazi ustida) element topilmadi — ro\'yxatdan konteynerni o\'zingiz tanlang');renderProps();return;}id=K.id;toast('📦 "'+layerName(K)+'" konteyner sifatida tanlandi');}
+      L.ovfWhat='box';L.ovfIn=isNaN(+id)?id:+id;
+    }else L.ovfWhat=v;
+    renderProps();seekDirty=true;};
+  const iv=q('#ovInv');if(iv)iv.onchange=()=>{historyMaybe();L.ovfInv=iv.checked;seekDirty=true;};
+  const setSides=o=>{historyMaybe();L.ovfSides=o;renderProps();seekDirty=true;};
+  const oa=q('#ovAll');if(oa)oa.onclick=()=>setSides({t:true,b:true,l:true,r:true});
+  const ob=q('#ovOnlyB');if(ob)ob.onclick=()=>setSides({t:false,b:true,l:false,r:false});
   const sd=q('#ovSides');if(sd)sd.querySelectorAll('button').forEach(b=>b.onclick=()=>{historyMaybe();L.ovfSides=L.ovfSides||{};const k=b.dataset.os;L.ovfSides[k]=(L.ovfSides[k]===false);b.classList.toggle('on',L.ovfSides[k]!==false);seekDirty=true;});
   const pd=q('#ovPad');if(pd){pd.oninput=()=>{L.ovfPad=+pd.value;const v=q('#ovPadV');if(v)v.textContent=pd.value;seekDirty=true;};pd.onchange=()=>historyMaybe();}
   const rr=q('#ovR');if(rr){rr.oninput=()=>{L.ovfR=+rr.value<0?-1:+rr.value;const v=q('#ovRV');if(v)v.textContent=L.ovfR>=0?L.ovfR:'avto';seekDirty=true;};rr.onchange=()=>historyMaybe();}
@@ -10657,6 +10862,9 @@ function ovfOverlay(L){
     const T=kfValue(L,local),GM=groupPlateM(L,T,local,t);
     const saveO=L.ovf;L.ovf='on';
     try{fn=ovfGroupPath(L,T,local,t,GM);}finally{L.ovf=saveO;}
+  }else if(ovfBoxOn(L)){
+    const saveO=L.ovf;L.ovf='on';
+    try{fn=ovfContainerPath(L,t);}finally{L.ovf=saveO;}
   }else{
     const B=getSelBox(L);
     fn=c=>{c.save();c.translate(B.T.x,B.T.y);c.rotate((B.T.rotDeg||0)*Math.PI/180);const s=Math.max(0.01,B.T.scale||1);c.scale(s,s);ovfWithKf(L,local,()=>ovfLocalPath(c,L));c.restore();};
@@ -10667,6 +10875,15 @@ function ovfOverlay(L){
   ctx.strokeStyle=on?'rgba(34,211,238,.95)':'rgba(34,211,238,.35)';
   ctx.lineWidth=Math.max(1.6,state.W/900);ctx.setLineDash([10,6]);
   ctx.stroke();ctx.restore();
+}
+
+/* konteyner nomzodlari: stekda ostidagilar avval */
+function ovfCands(L){
+  const i=state.layers.indexOf(L);
+  const ok=K=>K!==L&&K.type!=='audio'&&!isGroupHolder(K)&&!K.groupFlat;
+  const below=state.layers.slice(0,Math.max(0,i)).filter(ok).reverse();
+  const above=state.layers.slice(i+1).filter(ok);
+  return below.concat(above);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -10844,7 +11061,7 @@ function ckParams(L,scale){
   return {kcb,kcr,kl,dom,sLo,sHi,dk,wb,yk:Math.max(0.02,Y),kr:r,kg:g,kb:b,unmix:(L.ckUnmix??85)/100,bal:0.4+wb*1.2,
     clipB:(L.ckClipB??8)/100*0.6, clipW:1-(100-(L.ckClipW??96))/100*0.6,
     spill:(L.ckSpill??85)/100, spillLuma:(L.ckSpillLuma??55)/100, edge:(L.ckEdge??60)/100*1.5,
-    choke:(L.ckChoke??1)*(scale||1), feather:(L.ckFeather??1.2)*(scale||1), view:L.ckView==='matte'?1:(L.ckView==='status'?2:0)};
+    choke:(L.ckChoke??0)*(scale||1), feather:(L.ckFeather??0.6)*(scale||1), view:L.ckView==='matte'?1:(L.ckView==='status'?2:0)};
 }
 /* CPU zaxira (WebGL bo'lmasa) — xuddi shu algoritm, kichikroq o'lchamda */
 function ckCPU(L,src,w,h){
@@ -11065,6 +11282,7 @@ const SEG_PRESETS=[
   ['🎨 Rangli ajratish',[{id:'colorPop'}]],
   ['🔷 Gologramma',[{id:'hologram'}]],
   ['✂️ Fonni o\'chirish',[{id:'cutout'}]],
+  ['📷 Portret (fon xira)',[{id:'bgBlur',g:24}]],
 ];
 function segFxNew(id,over){
   const d=SEG_FXM.get(id);if(!d)return null;
@@ -11073,7 +11291,7 @@ function segFxNew(id,over){
   Object.assign(o,d[4]||{});delete o.lab;
   return Object.assign(o,over||{});
 }
-function segDefaults(){return {on:true,mode:'person',fps:24,res:384,thr:50,grow:0,smooth:2,temporal:true,inv:false,feather:1,parts:[1,2,3,4,5],cls:[15],pts:[],fx:[segFxNew('tint',{c1:'#dc2626',a:42}),segFxNew('ants')]};}
+function segDefaults(){return {on:true,mode:'person',fps:24,res:384,thr:50,grow:0,smooth:2,temporal:true,inv:false,feather:1,refine:true,edge:60,decon:70,parts:[1,2,3,4,5],cls:[15],pts:[],fx:[segFxNew('tint',{c1:'#dc2626',a:42}),segFxNew('ants')]};}
 function segOn(L){return !!(L&&L.seg&&L.seg.on&&(L.type==='video'||L.type==='image'));}
 
 /* ═══ MediaPipe dvigateli (bir marta yuklanadi, keyin brauzer keshidan) ═══ */
@@ -11479,6 +11697,110 @@ function segBlurInto(dst,src,sx,sy,sw,sh,dw,dh,r){
   dst.imageSmoothingEnabled=true;dst.imageSmoothingQuality='high';
   dst.drawImage(b,0,0,w2,h2,0,0,dw,dh);
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   ✂️ PROFESSIONAL CHEKKA (Refine Edge) — GPU'da
+   AI niqobi kichik (256–512px) bo'ladi; oddiy kattalashtirilganda chekka xira va
+   "zinapoya" bo'lib qoladi, soch atrofida fon qoladi. Bu yerda niqob kadrning O'ZI
+   bo'yicha qayta tiklanadi (joint bilateral upsampling — Google Meet / CapCut usuli):
+   har bir piksel atrofidagi niqob nuqtalari rang o'xshashligiga qarab tortiladi,
+   shuning uchun chegara haqiqiy kontur (soch, yelka, barmoq) bo'ylab o'tadi.
+   Keyin chekka rangi tozalanadi (fon rangi aralashmasi olib tashlanadi —
+   decontamination), natija premultiplied RGBA bo'lib qaytadi. Bitta pass.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const SEGREF=(function(){
+  let cvs=null,gl=null,ok=null,prog=null,U={},texI=null,texM=null,soft=false;
+  const up=document.createElement('canvas'),upx=up.getContext('2d');
+  const VS='#version 300 es\nin vec2 aP;void main(){gl_Position=vec4(aP,0.0,1.0);}';
+  // GLSL 3.0: textureLod — mip darajasi aniq beriladi (hosilaga bog'liq emas → chekkada "taroq" chiziqlari yo'q)
+  const FS=`#version 300 es
+precision highp float;
+out vec4 oCol;
+uniform sampler2D uImg;uniform sampler2D uMask;uniform vec2 uRes;uniform vec2 uMRes;uniform vec4 uMR;
+uniform float uSig;uniform float uLo;uniform float uHi;uniform float uDec;uniform float uBias;uniform float uInv;
+float mk(vec2 q){float m=textureLod(uMask,q,0.0).a;return uInv>0.5?1.0-m:m;}
+void main(){
+  vec2 uv=vec2(gl_FragCoord.x/uRes.x,1.0-gl_FragCoord.y/uRes.y);
+  vec3 c=textureLod(uImg,uv,0.0).rgb;
+  vec2 muv=uMR.xy+uv*uMR.zw;
+  vec2 mp=muv*uMRes-0.5;vec2 b0=floor(mp);
+  float sw=0.0,sa=0.0;vec3 fg=vec3(0.0);float fw=0.0;
+  for(int j=-1;j<=2;j++)for(int i=-1;i<=2;i++){
+    vec2 q=b0+vec2(float(i),float(j));
+    vec2 quv=(q+0.5)/uMRes;
+    float m=mk(quv);
+    vec2 iuv=(quv-uMR.xy)/uMR.zw;
+    vec3 cq=textureLod(uImg,iuv,uBias).rgb;
+    vec2 dd=abs(mp-q)*0.5;vec2 kk=max(vec2(0.0),1.0-dd*dd);float wsp=kk.x*kk.x*kk.y*kk.y;   // oyna chegarasida 0 → 'taroq' artefakti yo'q
+    vec3 dc=c-cq;float wr=exp(-dot(dc,dc)/(2.0*uSig*uSig));
+    float w=wsp*(wr+0.002);
+    sw+=w;sa+=w*m;
+    float wf=wsp*m*m*m;fg+=cq*wf;fw+=wf;
+  }
+  float a=sa/max(sw,1e-6);
+  a=clamp((a-uLo)/max(uHi-uLo,1e-3),0.0,1.0);
+  a=a*a*(3.0-2.0*a);
+  vec3 col=c;
+  if(fw>1e-4&&a<0.999){vec3 F=fg/fw;col=mix(c,F,(1.0-a)*uDec);}
+  oCol=vec4(col*a,a);
+}`;
+  function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.warn('SEGREF',gl.getShaderInfoLog(s));return null;}return s;}
+  function mkTex(){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);return t;}
+  function init(){
+    if(ok!==null)return ok;ok=false;
+    try{
+      cvs=document.createElement('canvas');cvs.width=16;cvs.height=16;
+      gl=cvs.getContext('webgl2',{alpha:true,premultipliedAlpha:true,antialias:false,depth:false,preserveDrawingBuffer:false});
+      if(!gl)return false;
+      try{const di=gl.getExtension('WEBGL_debug_renderer_info');const rn=di?String(gl.getParameter(di.UNMASKED_RENDERER_WEBGL)):'';soft=/swiftshader|llvmpipe|software|basic render/i.test(rn);}catch(e){}
+      const v=sh(gl.VERTEX_SHADER,VS),f=sh(gl.FRAGMENT_SHADER,FS);if(!v||!f)return false;
+      prog=gl.createProgram();gl.attachShader(prog,v);gl.attachShader(prog,f);gl.bindAttribLocation(prog,0,'aP');gl.linkProgram(prog);
+      if(!gl.getProgramParameter(prog,gl.LINK_STATUS))return false;
+      for(const n of ['uImg','uMask','uRes','uMRes','uMR','uSig','uLo','uHi','uDec','uBias','uInv'])U[n]=gl.getUniformLocation(prog,n);
+      const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+      texI=mkTex();texM=mkTex();
+      cvs.addEventListener('webglcontextlost',e=>{e.preventDefault();ok=null;},false);
+      ok=true;
+    }catch(e){console.warn('SEGREF init',e);ok=false;}
+    return ok;
+  }
+  /* S — media manbasi (src,sx,sy,sw,sh), P — niqob, c — kesish (crop), pw×ph — natija o'lchami */
+  function run(S,P,c,pw,ph,o){
+    if(!init())return null;
+    try{
+      if(up.width!==pw||up.height!==ph){up.width=pw;up.height=ph;}
+      upx.setTransform(1,0,0,1,0,0);upx.globalCompositeOperation='copy';upx.imageSmoothingEnabled=true;
+      upx.drawImage(S.src,S.sx,S.sy,S.sw,S.sh,0,0,pw,ph);
+      if(cvs.width!==pw||cvs.height!==ph){cvs.width=pw;cvs.height=ph;}
+      gl.viewport(0,0,pw,ph);gl.useProgram(prog);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texI);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,up);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.generateMipmap(gl.TEXTURE_2D);
+      gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,texM);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,P.cv);
+      gl.uniform1i(U.uImg,0);gl.uniform1i(U.uMask,1);
+      gl.uniform2f(U.uRes,pw,ph);gl.uniform2f(U.uMRes,P.w,P.h);
+      const cw=Math.max(1e-3,1-c.l-c.r),ch=Math.max(1e-3,1-c.t-c.b);
+      gl.uniform4f(U.uMR,c.l,c.t,cw,ch);
+      // niqob katagi kadrda necha pikselga to'g'ri keladi → mip darajasi (o'rtacha rang)
+      gl.uniform1f(U.uBias,Math.max(0,Math.log2(Math.max(1,pw/(P.w*cw)))-0.5));
+      const ed=clamp((o.edge??60)/100,0,1);
+      gl.uniform1f(U.uSig,0.05+0.20*(1-ed));
+      const sp=0.32*(1-ed)+0.06;           // chekka keskinligi
+      gl.uniform1f(U.uLo,0.5-sp+(o.grow||0)*0.025);gl.uniform1f(U.uHi,0.5+sp+(o.grow||0)*0.025);
+      gl.uniform1f(U.uDec,clamp((o.decon??70)/100,0,1));
+      gl.uniform1f(U.uInv,0);
+      gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      return cvs;
+    }catch(e){console.warn('SEGREF',e);return null;}
+  }
+  function isSoft(){init();return soft;}
+  return {run,isSoft,available:()=>init()};
+})();
 /* drawMedia'dan oldin: kerak bo'lsa fon o'zgartirilgan kompozitsiya */
 function segPrepare(L,S,m,local,t){
   if(!segOn(L)||!L.el)return null;
@@ -11525,11 +11847,22 @@ function segPrepare(L,S,m,local,t){
   }
   // ob'ekt (niqob bilan kesilgan asl kadr) ustiga
   const sb=segTmp('sub',pw,ph);
-  sb._x.drawImage(S.src,S.sx,S.sy,S.sw,S.sh,0,0,pw,ph);
-  sb._x.globalCompositeOperation='destination-in';
-  if((L.seg.feather||0)>0.2){const mm=segTmp('mf',pw,ph);mk(mm._x);segBlurInto(sb._x,mm,0,0,pw,ph,pw,ph,L.seg.feather*pw/1080*2);}
-  else mk(sb._x);
-  sb._x.globalCompositeOperation='source-over';
+  let refined=null;
+  // ✂️ Professional chekka: niqob kadr konturi bo'yicha aniqlanadi + chekka rangi tozalanadi
+  if(L.seg.refine!==false&&!L.seg.inv){try{refined=SEGREF.run(S,P,c,pw,ph,{edge:L.seg.edge,decon:L.seg.decon,grow:0});}catch(e){refined=null;}}
+  if(refined){
+    sb._x.drawImage(refined,0,0,pw,ph,0,0,pw,ph);
+    if((L.seg.feather||0)>1.2){   // qo'shimcha yumshatish (ixtiyoriy)
+      const mm=segTmp('mf',pw,ph);segBlurInto(mm._x,sb,0,0,pw,ph,pw,ph,(L.seg.feather-1)*pw/1080*1.5);
+      sb._x.globalCompositeOperation='destination-in';sb._x.drawImage(mm,0,0);sb._x.globalCompositeOperation='source-over';
+    }
+  }else{
+    sb._x.drawImage(S.src,S.sx,S.sy,S.sw,S.sh,0,0,pw,ph);
+    sb._x.globalCompositeOperation='destination-in';
+    if((L.seg.feather||0)>0.2){const mm=segTmp('mf',pw,ph);mk(mm._x);segBlurInto(sb._x,mm,0,0,pw,ph,pw,ph,L.seg.feather*pw/1080*2);}
+    else mk(sb._x);
+    sb._x.globalCompositeOperation='source-over';
+  }
   o.drawImage(sb,0,0);
   R.S={src:out,sx:0,sy:0,sw:pw,sh:ph};
   return R;
@@ -11653,7 +11986,11 @@ function segBlock(L){
   const on=segOn(L);
   let h=`<label class="chk"><input type="checkbox" id="sgOn" ${on?'checked':''}> 🎯 Odam / ob'ektni ajratib ko'rsatish</label>
     <div class="hintline">AI videodagi odam yoki ob'ektni har kadrda topadi va unga effekt beradi (ekrandagidek bo'yash + yuguruvchi punktir va yana 20+ effekt). Video <b>bir marta fonda tahlil qilinadi</b> — keyin play va eksport oddiy video kabi yengil ishlaydi.</div>`;
-  if(!on)return sec('🎯 AI ajratish — odam va ob\'ektlar',h,false);
+  if(!on){
+    h+=`<button id="sgCut" class="primary" style="width:100%;justify-content:center;margin-top:6px">✂️ Fonni avtomatik olib tashlash (AI, 1 bosish)</button>
+      <div class="hintline">Odam aniqlanadi, fon shaffof bo'ladi — chekkalar (soch, yelka) kadr konturi bo'yicha aniq kesiladi. Ostiga istalgan rasm/video/rang qo'ying.</div>`;
+    return sec('🎯 AI ajratish — odam va ob\'ektlar',h,false);
+  }
   const st=segSt(L);segMissing(L);
   const pct=st.total?Math.round(st.done/st.total*100):0;
   h+=`<div class="field"><label>Nimani ajratadi</label><select id="sgMode">${Object.entries(SEG_MODES).map(([k,v])=>`<option value="${k}" ${S.mode===k?'selected':''}>${v.n}</option>`).join('')}</select></div>`;
@@ -11670,6 +12007,8 @@ function segBlock(L){
     <details class="sec" ${_sgSub.mask?'open':''} data-sgs="mask"><summary>🔧 Niqobni sozlash</summary><div class="inner">
       ${segSl('thr','Sezgirlik',10,90,1,'%')}${segSl('grow','Kengaytirish / qisish',-10,10,0.5,'')}
       ${segSl('smooth','Kontur silliqligi',0,3,1,'')}${segSl('feather','Chekka yumshoqligi',0,10,0.5,'')}
+      <label class="chk"><input type="checkbox" id="sgRef" ${S.refine!==false?'checked':''}> ✂️ Professional chekka (soch, barmoq aniq — fon effektlari uchun)</label>
+      ${S.refine!==false?segSl('edge','Chekka aniqligi',0,100,1,'%')+segSl('decon','Chekka rangini tozalash',0,100,1,'%'):''}
       <label class="chk"><input type="checkbox" id="sgTemp" ${S.temporal?'checked':''}> Titrashni kamaytirish (qo'shni kadrlar bilan)</label>
       <label class="chk"><input type="checkbox" id="sgInv" ${S.inv?'checked':''}> Teskari (effekt FONga beriladi)</label>
     </div></details>
@@ -11683,7 +12022,7 @@ function segBlock(L){
   return sec('🎯 AI ajratish — odam va ob\'ektlar',h,true);
 }
 const _sgSub={};
-function segSl(k,n,mn,mx,st,u){const v=L_SG()[k]??0;return `<div class="field"><label>${n}: <b data-sgv="${k}">${v}</b>${u}</label><input type="range" data-sgk="${k}" data-def="${(segDefaults()[k])??''}" min="${mn}" max="${mx}" step="${st}" value="${v}"></div>`;}
+function segSl(k,n,mn,mx,st,u){const v=L_SG()[k]??segDefaults()[k]??0;return `<div class="field"><label>${n}: <b data-sgv="${k}">${v}</b>${u}</label><input type="range" data-sgk="${k}" data-def="${(segDefaults()[k])??''}" min="${mn}" max="${mx}" step="${st}" value="${v}"></div>`;}
 let _sgL=null;function L_SG(){return (_sgL&&_sgL.seg)||{};}
 function segFxCard(f,i){
   const d=SEG_FXM.get(f.id);if(!d)return '';
@@ -11718,6 +12057,9 @@ function segBind(L,box){
   _sgL=L;
   const q=s=>box.querySelector(s);
   const on=q('#sgOn');
+  const cut=q('#sgCut');
+  if(cut)cut.onclick=()=>{historyMaybe();L.seg=segDefaults();L.seg.fx=[segFxNew('cutout')];L.seg.refine=true;L.aiOn=false;renderProps();seekDirty=true;
+    toast('✂️ AI fonni olib tashlamoqda — birinchi marta model yuklanadi, keyin video bir marta tahlil qilinadi');};
   if(on)on.onchange=()=>{historyMaybe();if(!L.seg)L.seg=segDefaults();L.seg.on=on.checked;if(L.aiOn)L.aiOn=false;renderProps();seekDirty=true;
     if(on.checked)toast('🎯 AI tahlil boshlandi — natija bir necha soniyada ko\'rinadi (birinchi marta model yuklanadi)');};
   if(!segOn(L))return;
@@ -11732,6 +12074,7 @@ function segBind(L,box){
   const rs=q('#sgRes');if(rs)rs.onchange=()=>{historyMaybe();S.res=+rs.value;re();};
   box.querySelectorAll('[data-sgk]').forEach(el=>{el.oninput=()=>{S[el.dataset.sgk]=+el.value;const v=box.querySelector(`[data-sgv="${el.dataset.sgk}"]`);if(v)v.textContent=el.value;seekDirty=true;};el.onchange=()=>historyMaybe();});
   const tp=q('#sgTemp');if(tp)tp.onchange=()=>{historyMaybe();S.temporal=tp.checked;seekDirty=true;};
+  const rf=q('#sgRef');if(rf)rf.onchange=()=>{historyMaybe();S.refine=rf.checked;if(S.edge==null)S.edge=60;if(S.decon==null)S.decon=70;re();};
   const iv=q('#sgInv');if(iv)iv.onchange=()=>{historyMaybe();S.inv=iv.checked;seekDirty=true;};
   box.querySelectorAll('details[data-sgs]').forEach(d=>d.addEventListener('toggle',()=>{_sgSub[d.dataset.sgs]=d.open;}));
   box.querySelectorAll('[data-sgpr]').forEach(b=>b.onclick=()=>{historyMaybe();const p=SEG_PRESETS[+b.dataset.sgpr];S.fx=p[1].map(o=>segFxNew(o.id,o));re();toast('✨ '+p[0]);});
@@ -11768,7 +12111,7 @@ function ckBlock(L){
     ${sl('ckUnmix','Chekka rangini ajratish',0,100,1,85,'%','yashil aralashgan chekka asl rangiga qaytadi')}
     ${sl('ckEdge','Chekkada qo\'shimcha tozalash',0,100,1,60,'%')}
     ${sl('ckSpillLuma','Yorug\'likni saqlash',0,100,1,55,'%','teri rangi xiralashmasin')}
-    <div class="row2">${sl('ckChoke','Chekkani qisish',-6,6,0.25,1,'px')}${sl('ckFeather','Chekka silliqligi',0,8,0.25,1.2,'px')}</div>
+    <div class="row2">${sl('ckChoke','Chekkani qisish',-6,6,0.25,0,'px')}${sl('ckFeather','Chekka silliqligi',0,8,0.25,0.6,'px')}</div>
     <div class="row2">${sl('ckClipB','Fon tozaligi',0,100,1,8,'')}${sl('ckClipW','Ob\'ekt butunligi',0,100,1,96,'')}</div>
     ${sl('ckBal','Ekran balansi',0,100,1,50,'','sariq/ko\'k narsalar himoyasi ↔ toza chekka')}
     <button id="ckReset" style="width:100%;justify-content:center;margin-top:4px">↺ Standart sozlamalar</button>
@@ -12154,8 +12497,11 @@ function trRender(t){
     if(P<=0.0005||P>=0.9995)continue;
     const u=trUniforms(T,P);
     let ok=false;
+    // ⚡ ijro paytida katta kadrda o'tish 0.7× o'lchamda hisoblanadi (pauza va eksport — to'liq)
+    const ds=(state.playing&&!exporting&&W*H>1e6)?(W*H>3.5e6?0.5:0.7):1;
     try{ok=PFX.applyInPlace(cv,mainCtx,{x0:0,y0:0,x1:W,y1:H},[[{g:trProg((TR_BY[T.kind]||TR_DEFS[0])[1]),A:u.A,B:u.B,C:u.C,D:u.D,E:u.E}]],
-      {ox:0,oy:0,box:{x0:0,y0:0,x1:W,y1:H},t,U:Math.min(W,H)/1080,seed:T.seed||7});}catch(e){ok=false;}
+      {ox:0,oy:0,box:{x0:0,y0:0,x1:W*ds,y1:H*ds},t,U:Math.min(W,H)/1080*ds,seed:T.seed||7,ds});}catch(e){ok=false;}
+    if(!ok&&PFX.pending&&PFX.pending()>0)continue;   // shader fonda kompilyatsiya bo'lyapti — bir-ikki kadr kutamiz
     if(!ok){ // WebGL yo'q — oddiy rangli yopilish (kesish baribir yashiriladi)
       const c=mainCtx;c.save();c.setTransform(1,0,0,1,0,0);c.globalAlpha=Math.min(1,Math.sin(P*Math.PI)*1.3);c.fillStyle=T.c1||'#000';c.fillRect(0,0,W,H);c.restore();
     }
@@ -12330,6 +12676,7 @@ function trPreviewDraw(cnv,T,P,tm){
   try{out=PFX.process(src,{x0:0,y0:0,x1:w,y1:h},[[{g:trProg((TR_BY[T.kind]||TR_DEFS[0])[1]),A:u.A,B:u.B,C:u.C,D:u.D,E:u.E}]],{ox:0,oy:0,box:{x0:0,y0:0,x1:w,y1:h},t:tm,U:Math.min(w,h)/1080*2.2,seed:T.seed||7});}catch(e){}
   x.clearRect(0,0,w,h);
   if(out)x.drawImage(out,0,0,w,h,0,0,w,h);else x.drawImage(src,0,0);
+  return !!out;
 }
 function trGallery(target){
   let ov=document.getElementById('trOv');
@@ -12346,13 +12693,14 @@ function trGallery(target){
     // ⚡ Kartalar navbat bilan (har kadrda bittadan) chiziladi — 25 ta shaderni birdaniga
     // kompilyatsiya qilib oynani qotirib qo'ymaslik uchun
     const queue=[];const gen=(trGallery._gen=(trGallery._gen||0)+1);
-    const pump=()=>{if(gen!==trGallery._gen||!queue.length)return;const f=queue.shift();try{f();}catch(e){}requestAnimationFrame(pump);};
+    const pump=()=>{if(gen!==trGallery._gen||!queue.length)return;const f=queue.shift();let ok=true;try{ok=f()!==false;}catch(e){}if(!ok&&(f._n=(f._n||0)+1)<240)queue.push(f);requestAnimationFrame(pump);};
     ov.querySelectorAll('.tr-card').forEach(card=>{
       const k=card.dataset.k,cnv=card.querySelector('canvas');
       const T={...base,...trDefaults(k),c1:base.c1,c2:base.c2,c3:base.c3,kind:k,seed:11};
       {const x=cnv.getContext('2d');const g=x.createLinearGradient(0,0,cnv.width,cnv.height);g.addColorStop(0,T.c3);g.addColorStop(.5,T.c2);g.addColorStop(1,T.c1);x.fillStyle=g;x.fillRect(0,0,cnv.width,cnv.height);x.fillStyle='rgba(255,255,255,.85)';x.font='26px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText((TR_BY[k]||[])[3]||'',cnv.width/2,cnv.height/2);}
       const P0=TR_BY[k][1]>=19?0.3:0.17;
       queue.push(()=>trPreviewDraw(cnv,T,P0,1.0));
+      try{PFX.warm(trProg(TR_BY[k][1]));}catch(e){}   // fonda kompilyatsiya boshlanadi
       let raf=0,t0=0;
       const loop=now=>{const P=((now-t0)/1500)%1;trPreviewDraw(cnv,T,P,now/1000);raf=requestAnimationFrame(loop);};
       card.onmouseenter=()=>{t0=performance.now();raf=requestAnimationFrame(loop);};
@@ -13691,6 +14039,80 @@ function groupToRaw(L,x,y){
   const ux=x-M.px-M.dx, uy=y-M.py-M.dy, c=Math.cos(-M.r), sn=Math.sin(-M.r);
   return {x:M.px+(ux*c-uy*sn)/(M.s*M.sx), y:M.py+(ux*sn+uy*c)/(M.s*M.sy)};
 }
+/* ═══ 🎥 KAMERA BILAN TAHRIRLASH ═══
+   Kamera surilgan/yaqinlashgan bo'lsa sahna (dunyo) koordinatasi ekrandagidan farq
+   qiladi. Shu xarita bilan: tanlash, sudrash, o'lcham/burilish dastaklari va tanlov
+   ramkalari KAMERA KO'RIB TURGAN joyda aniq ishlaydi; yangi element ham aynan
+   kamera qaragan joyga qo'yiladi. Kamera o'chiq yoki joyida bo'lsa — null. */
+function camProjPt(S,zoom,X,Y,Z){
+  const W=cv.width,H=cv.height;
+  const p=m3v(S.m,X-W/2-S.eye.x,Y-H/2-S.eye.y,Z-S.eye.z);
+  if(!(p.z>1))return null;
+  const f=S.fv*zoom;
+  return {x:W/2+f*p.x/p.z, y:H/2+f*p.y/p.z};
+}
+function camLayerDepth(L){
+  if(!L)return 0;
+  let z=0;
+  try{const T=kfValue(L,clamp(state.time-L.start,0,L.dur));z=(T.dist3!==undefined?T.dist3:(L.dist3||0));}catch(e){z=L.dist3||0;}
+  if(L.linkTo){const P=state.layers.find(x=>x.id===L.linkTo);if(P)z+=P.dist3||0;}
+  return z;
+}
+function camViewAffine(L){
+  if(view3D||!camActive())return null;
+  const c=getCam();
+  let S,zoom;
+  try{const v=camValues(state.time);S=camSolve(c,v,state.time,true);zoom=Math.max(0.05,v.zoom||1);}catch(e){return null;}
+  let cx=cv.width/2,cy=cv.height/2,z=0;
+  if(L&&L.type!=='audio'){try{const B=getSelBox(L);cx=B.T.x;cy=B.T.y;z=camLayerDepth(L);}catch(e){}}
+  const d=50,p0=camProjPt(S,zoom,cx,cy,z),px=camProjPt(S,zoom,cx+d,cy,z),py=camProjPt(S,zoom,cx,cy+d,z);
+  if(!p0||!px||!py)return null;
+  const a=(px.x-p0.x)/d,b=(px.y-p0.y)/d,cc=(py.x-p0.x)/d,dd=(py.y-p0.y)/d;
+  const e=p0.x-a*cx-cc*cy,f=p0.y-b*cx-dd*cy;
+  if(Math.abs(a-1)+Math.abs(dd-1)+Math.abs(b)+Math.abs(cc)<1e-4&&Math.abs(e)+Math.abs(f)<0.05)return null;
+  return {a,b,c:cc,d:dd,e,f};
+}
+function camUnmap(A,x,y){
+  if(!A)return {x,y};
+  const det=A.a*A.d-A.b*A.c;if(Math.abs(det)<1e-9)return {x,y};
+  const u=x-A.e,v=y-A.f;
+  return {x:(A.d*u-A.c*v)/det, y:(-A.b*u+A.a*v)/det};
+}
+/* kamera hozir qaragan (kadr markazidagi) sahna nuqtasi */
+function camViewCenter(){
+  const A=camViewAffine(null);
+  return A?camUnmap(A,cv.width/2,cv.height/2):{x:cv.width/2,y:cv.height/2};
+}
+/* yangi yaratilgan elementlar kamera qaragan joyga suriladi (kamera surilgan bo'lsa) */
+var _newPending=false;   // var — baseLayer ilova boshida ham chaqiriladi
+function camPlaceNew(){
+  _newPending=false;
+  const fresh=state.layers.filter(L=>L._new);
+  if(!fresh.length)return;
+  for(const L of fresh)delete L._new;
+  if(!camActive())return;
+  const V=camViewCenter(),dx=V.x-cv.width/2,dy=V.y-cv.height/2;
+  if(Math.abs(dx)+Math.abs(dy)<1)return;
+  for(const L of fresh){
+    if(L.type==='audio'||L.linkTo)continue;
+    L.x=(L.x||0)+dx;L.y=(L.y||0)+dy;
+    if(L.kfs)for(const k of L.kfs){if(k.x!==undefined)k.x+=dx;if(k.y!==undefined)k.y+=dy;}
+  }
+  seekDirty=true;
+}
+/* tanlangan elementni kamera ko'rib turgan joyga keltirish */
+function camBringSelected(){
+  const L=state.layers.find(x=>x.id===state.selected);
+  if(!L||L.type==='audio'){toast('Avval elementni tanlang');return;}
+  const V=camViewCenter(),B=getSelBox(L);
+  const dx=V.x-B.T.x,dy=V.y-B.T.y;
+  if(Math.abs(dx)+Math.abs(dy)<1){toast('Element allaqachon kamera ko\'rinishi markazida');return;}
+  saveHistory();
+  const T=kfValue(L,clamp(state.time-L.start,0,L.dur));
+  setAnimProp(L,'x',Math.round((T.x||0)+dx));setAnimProp(L,'y',Math.round((T.y||0)+dy));
+  seekDirty=true;renderProps();
+  toast('📍 Element kamera ko\'rinishiga keltirildi');
+}
 function getSelBox(L){
   let T=kfValue(L,clamp(state.time-L.start,0,L.dur));
   if(L.linkTo){const _cx=carKidXf(L,state.time,T);if(_cx)T={...T,x:_cx.x,y:_cx.y,scale:(T.scale||1)*_cx.s,rotDeg:(T.rotDeg||0)+_cx.rotDeg};}
@@ -13974,6 +14396,8 @@ function drawTop(L,t,_CAML,sceneCtx){
     }
     // ✂️ Overflow: ota (konteyner) shakli ichida kesiladi
     if(linkT){const _ovp=ovfParentPath(L,t,linkT,!_use3D&&!_flat3);if(_ovp)ovfClip(ctx,_ovp);}
+    // 📦 Overflow: boshqa element (konteyner) qutisidan chiqmaydi — tanlangan tomonlarda
+    if(L.ovf&&L.ovf!=='off'&&L.ovfWhat==='box'){let _ovb=null;try{_ovb=ovfContainerPath(L,t);}catch(e){}if(_ovb)ovfClip(ctx,_ovb,!!L.ovfInv);}
     if(linkT){
       // 🔗 TO'LIQ PARENTING: ota elementning markazi atrofida qo'llanadi —
       // ota surilsa/burilsa/3D bukilsa/kattalashsa, bola ham U BILAN BIRGA harakatlanadi
@@ -14268,6 +14692,7 @@ function drawTop(L,t,_CAML,sceneCtx){
 }
 function render(){
   _lbCache=new Map();   // ⚡ har freymda bir marta hisoblanadi
+  if(_newPending){try{camPlaceNew();}catch(e){}}
   // 🧊 3D sahna ish maydoni — eksportda hech qachon ishlatilmaydi
   if(view3D&&!exporting){
     try{v3Frame();}
@@ -14276,6 +14701,33 @@ function render(){
   }
   renderComp(false);
 }
+/* ⚡ Sahna imzosi — kadrga ta'sir qiladigan hamma narsa. null = keshlamaslik. */
+let _scSig=null, _visEpoch=0, __forceRender=false;
+const _scCv=document.createElement('canvas'), _scCtx=_scCv.getContext('2d');
+try{document.fonts&&document.fonts.addEventListener('loadingdone',()=>{_visEpoch++;seekDirty=true;});}catch(e){}
+function _sigRep(k,v){
+  if(k==='el'||(k&&k.charCodeAt(0)===95))return undefined;      // '_' bilan boshlanuvchi keshlar
+  if(v&&typeof v==='object'&&!Array.isArray(v)&&Object.getPrototypeOf(v)!==Object.prototype)return undefined;
+  return v;
+}
+function sceneSig(){
+  if(exporting||state.playing||view3D||__forceRender)return null;
+  try{if(nowMs_idleGrainCheck())return null;}catch(e){}
+  let media='';
+  for(const L of state.layers){
+    const e=L.el;
+    if(e){
+      if(L.type==='video')media+=(+e.currentTime||0).toFixed(3)+(e.seeking?'s':'')+e.readyState+(e.videoWidth||0)+'|';
+      else if(L.type==='image')media+=(e.complete?1:0)+':'+(e.naturalWidth||0)+'|';
+    }
+    if(L._seg)media+=(L._seg.done||0)+'/'+(L._seg.total||0)+'|';
+  }
+  return [t3(state.time),cv.width,cv.height,state.bg,state.bgPattern,state.bgPatColor,state.bgPatA,state.bgA,
+    state.selected,(state.multi||[]).join(','),_visEpoch,state.mbShutter,state.mbSamples,media,
+    JSON.stringify(state.bgGrad||null),JSON.stringify(state.cam||null),JSON.stringify(state.trans||null),
+    JSON.stringify(state.layers,_sigRep)].join('§');
+}
+function t3(x){return (+x||0).toFixed(4);}
 /* Kadrni chizish. noOv=true — tanlov ramkalari/yo'riqnomalarsiz (3D monitor uchun) */
 function renderComp(noOv){
   _lbCache=new Map();
@@ -14292,9 +14744,22 @@ function renderComp(noOv){
   _linkMemo=new Map();
   timerSync();
   _frameSeq++;             // ⚡ video proksi keshi uchun freym raqami
+  const t=state.time;
+  /* ⚡ SAHNA KESHI: pauzada hech narsa o'zgarmagan bo'lsa (sichqoncha panel ustida
+     yurganda, tanlov ramkasi yangilanganda …) butun sahna — effektlar, 3D, kamera,
+     o'tishlar — QAYTA HISOBLANMAYDI: oldingi kadr nusxasi qo'yiladi, ustiga faqat
+     tanlov ramkalari chiziladi. Og'ir effektli loyihalarda tahrir paytidagi
+     qotishlarning asosiy sababi aynan shu takroriy qayta hisob edi. */
+  const _scK=noOv?null:sceneSig();
+  scene:{
+  if(_scK!==null&&_scK===_scSig&&_scCv.width===cv.width&&_scCv.height===cv.height){
+    mainCtx.save();mainCtx.setTransform(1,0,0,1,0,0);mainCtx.globalAlpha=1;mainCtx.filter='none';
+    mainCtx.globalCompositeOperation='copy';mainCtx.drawImage(_scCv,0,0);mainCtx.restore();
+    break scene;
+  }
+  const _scT0=performance.now();
   _n3Dprev=Math.max(1,_n3D); _n3D=0;
   drawBG();
-  const t=state.time;
   // 🎥 Sahna kamerasi — butun freym uchun bir marta
   const _CAM=camActive()?camAt(t):null;
   /* ═══ 🚀 YAXLIT KAMERA REJIMI ═══
@@ -14369,7 +14834,20 @@ function renderComp(noOv){
   ctx=mainCtx;
   // 🌊 Premium o'tishlar — butun kadr ustidan (barcha qatlamlar va kameradan keyin)
   if(state.trans&&state.trans.length){try{trRender(t);}catch(e){console.warn('o\'tish',e);}ctx=mainCtx;}
+  // keshga faqat og'ir kadrlar yoziladi (yengil sahnani qayta chizish nusxadan arzon)
+  if(_scK!==null&&performance.now()-_scT0>5){
+    if(_scCv.width!==cv.width||_scCv.height!==cv.height){_scCv.width=cv.width;_scCv.height=cv.height;}
+    _scCtx.setTransform(1,0,0,1,0,0);_scCtx.globalCompositeOperation='copy';_scCtx.globalAlpha=1;_scCtx.drawImage(cv,0,0);
+    _scCtx.globalCompositeOperation='source-over';
+    _scSig=_scK;
+  }else _scSig=null;
+  }
+  ctx=mainCtx;
   if(noOv)return;
+  // 🎥 Tanlov ramkalari/dastaklar kamera ko'rinishiga moslanadi (kamera surilgan bo'lsa ham aniq)
+  let _ovA=null;try{_ovA=camViewAffine(state.layers.find(x=>x.id===state.selected)||null);}catch(e){}
+  ctx.save();
+  if(_ovA)ctx.setTransform(_ovA.a,_ovA.b,_ovA.c,_ovA.d,_ovA.e,_ovA.f);
   if(guides.length){
     ctx.save();
     ctx.strokeStyle='#22d3ee';ctx.lineWidth=Math.max(1.5,state.W/900);
@@ -14469,6 +14947,7 @@ function renderComp(noOv){
     }
     ctx.restore();
   }
+  ctx.restore();
   if(dragInfo){
     ctx.save();
     ctx.font=`${Math.max(16,state.W*0.016)}px "JetBrains Mono",monospace`;
@@ -14802,8 +15281,13 @@ let lastT=performance.now();
 let lastInput=Date.now(), lastIdleRender=0;
 const IS_TOUCH_DEV=matchMedia('(pointer:coarse)').matches;
 const PLAY_GAP=IS_TOUCH_DEV?32:0;  // mobil: ~30fps play (batareya/issiqlik)
-['mousemove','mousedown','wheel','keydown','touchstart','touchmove'].forEach(ev=>
+['mousedown','wheel','keydown','touchstart','touchmove','pointerup'].forEach(ev=>
   addEventListener(ev,()=>{lastInput=Date.now();},{passive:true}));
+/* ⚡ Sichqoncha panel/timeline ustida shunchaki yurganda sahna qayta chizilmaydi —
+   faqat tugma bosilgan holda (sudrash) yoki sahna ustida bo'lsa */
+addEventListener('mousemove',e=>{
+  if(e.buttons||(e.target&&e.target.closest&&e.target.closest('#stageWrap')))lastInput=Date.now();
+},{passive:true});
 let _grainChk={t:0,v:false,n:-1};
 function nowMs_idleGrainCheck(){
   // grain borligini sekundiga ~2 marta tekshiramiz (har kadrda butun ro'yxatni aylanmaymiz)
@@ -14815,6 +15299,8 @@ function nowMs_idleGrainCheck(){
 }
 function loop(now){
   const dt=(now-lastT)/1000;lastT=now;
+  // fonda kompilyatsiya bo'lgan effekt tayyor bo'ldi → kadr yangilanadi
+  try{if(PFX.poll())seekDirty=true;}catch(e){}
   if(state.playing&&!__holdTime){
     state.time+=dt;
     if(state.time>=state.duration){
@@ -14843,11 +15329,13 @@ function loop(now){
   // 40fps ko'zga bir xil, lekin yuk 1.5x kam). Eksportda cheklov YO'Q.
   if(state.playing&&!exporting&&nowMs-lastIdleRender<PLAY_GAP){requestAnimationFrame(loop);return;}
   lastIdleRender=nowMs;
+  __forceRender=seekDirty;   // kimdir "qayta chiz" degan bo'lsa — sahna keshi ishlatilmaydi
   tickVideos();
   aiPump();
   try{segPump();}catch(e){}
   const _t0=performance.now();
   render();
+  __forceRender=false;
   _rndMs=_rndMs*0.9+(performance.now()-_t0)*0.1;
   perfTick(_rndMs);
   previewAutoTick();
@@ -14855,6 +15343,16 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+/* ⚡ Ilova ochilgach bo'sh vaqtda barcha effekt shaderlari fonda tayyorlab qo'yiladi
+   (parallel kompilyatsiya qo'llansa) — keyin effekt qo'shilganda kutish ham bo'lmaydi */
+setTimeout(function preFx(){
+  try{
+    const names=[...new Set(PFX_DEFS.flatMap(d=>{try{const ps=d.build(()=>0,1,{x0:0,y0:0,x1:100,y1:100,cx:50,cy:50,w:100,h:100},0,{});return (ps||[]).map(q=>q.g);}catch(e){return [];}}))];
+    let i=0;const step=()=>{const part=names.slice(i,i+6);i+=6;if(!part.length){PFX.precompile();return;}PFX.precompile(part);
+      (window.requestIdleCallback||setTimeout)(step,{timeout:800});};
+    step();
+  }catch(e){}
+},2500);
 
 function setPlaying(v){
   state.playing=v;
@@ -15805,7 +16303,7 @@ function addImageFile(f,startTime){
   saveHistory();
   const url=URL.createObjectURL(f);
   const L=newMedia('image',f.name.replace(/\.[^.]+$/,''));
-  L.srcUrl=url;L.animIn='zoom';L.radius=24;
+  L.srcUrl=url;L.radius=24;
   L.mediaKey='m'+Date.now()+'_'+Math.floor(Math.random()*1e6);
   saveMediaBlob(L.mediaKey,f);
   const img=new Image();
@@ -16338,14 +16836,14 @@ document.getElementById('btnAddGlass').onclick=()=>{
   S.x=Math.round(state.W/2);
   S.y=Math.round(state.H*0.3);
   S.blur=8;S.tintA=0.08;S.shadow=false;S.d3=0;S.depth=0;
-  S.animIn='springPop';S.inTime=0.6;S.motion='none'; // ✦ Elastik sakrab-chiqish — ekrandan chiqib ketmaydi (kichik offset)
+  S.animIn='none';S.inTime=0.6;S.motion='none'; // ✦ Elastik sakrab-chiqish — ekrandan chiqib ketmaydi (kichik offset)
   S.start=clamp(state.time,0,Math.max(0,state.duration-5));
   const T=newText(txt);
   T.font='Inter';T.weight=700;
   T.size=size;T.color='#ffffff';
   T.tshadow=0;T.stagger=0.05;
   T.x=S.x;T.y=S.y;
-  T.animIn='elasticPos';T.inTime=0.6; // ✦ Elastik joylashish
+  T.animIn='none';T.inTime=0.6; // ✦ Elastik joylashish
   T.start=S.start;
   state.layers.push(S);
   state.layers.push(T);
@@ -17614,9 +18112,8 @@ function renderProps(){
         <label class="chk"><input type="checkbox" id="pMuted" ${L.muted?'checked':''}> Ovozni o'chirish</label>
         <div class="hintline">✂ Bo'lish, chetdan cho'zish (trim), nusxa olish — hammasi video kabi ishlaydi. Eksportda videoga qo'shiladi.</div>`,true)
       +sec('🎤 Avto-captionlar (AI)',`
-        <div class="hintline">Gapirilgan so'zlarni aynan o'z vaqtida ekranga matn qilib yozadi (ElevenLabs Scribe). Bepul kalit: <b>elevenlabs.io</b> → profil → API Keys.</div>
-        <div class="field"><label>ElevenLabs API kalit</label>
-          <input type="text" id="pElKey" placeholder="sk_..." value="${escapeHtml(getElKey())}"></div>
+        <div class="hintline">Gapirilgan so'zlarni aynan o'z vaqtida ekranga matn qilib yozadi (ElevenLabs Scribe v2). Kalit dasturga ulangan — bir bosishda ishlaydi.</div>
+        ${capKeyLangHTML(L)}
         <div class="field"><label>Caption uslubi</label><select id="pCapStyle">
           <option value="classic" ${(L.capStyle||'classic')==='classic'?'selected':''}>Klassik (3–5 so'zli qator)</option>
           <option value="pill" ${L.capStyle==='pill'?'selected':''}>🟢 Kapsula — so'zma-so'z (motion reel)</option></select></div>
@@ -17879,9 +18376,8 @@ function renderProps(){
         </div>
         <div class="hintline">Ramkadan ochilgan joy shaffof qolish o'rniga shu rang bilan bo'yaladi — masalan yorliq yoki urg'u sifatida.</div>`:''}`,L.maskOn)+
       (L.type==='video'?sec('🎤 Avto-captionlar (AI)',`
-        <div class="hintline">Gapirilgan so'zlarni <b>aynan o'z vaqtida</b> ekranga matn qilib yozadi. O'zbek tilini qo'llaydi (ElevenLabs Scribe, avto-aniqlash). Bepul kalit: <b>elevenlabs.io</b> → profil → API Keys. Kalit faqat sizning brauzeringizda saqlanadi.</div>
-        <div class="field"><label>ElevenLabs API kalit</label>
-          <input type="text" id="pElKey" placeholder="sk_..." value="${escapeHtml(getElKey())}"></div>
+        <div class="hintline">Gapirilgan so'zlarni <b>aynan o'z vaqtida</b> ekranga matn qilib yozadi (ElevenLabs Scribe v2, o'zbek tilini ham qo'llaydi). Kalit dasturga ulangan — bir bosishda ishlaydi. Faqat klipning <b>kesilgan (trim) qismi</b> tahlil qilinadi.</div>
+        ${capKeyLangHTML(L)}
         <div class="field"><label>Caption uslubi</label><select id="pCapStyle">
           <option value="classic" ${(L.capStyle||'classic')==='classic'?'selected':''}>Klassik (3–5 so'zli qator)</option>
           <option value="pill" ${L.capStyle==='pill'?'selected':''}>🟢 Kapsula — so'zma-so'z (motion reel)</option></select></div>
@@ -18008,7 +18504,6 @@ function renderProps(){
       if(!L.fillColor||L.fillColor==='#8b5cf6')L.fillColor='#ffffff';if(L.shape==='pen'&&!L.pts)L.pts=PEN_DEF.map(q=>q.slice());renderProps();}
     if(L.shape==='select'){
       // Belgilash ramkasi uchun qulay boshlang'ich sozlamalar
-      if(L.animIn!=='drawOn'){L.animIn='drawOn';L.inTime=Math.max(L.inTime,1.2);}
       if(!L.fillColor||L.fillColor==='#8b5cf6')L.fillColor='#ffd648';
       if(L.borderW<3)L.borderW=5;
       L.fill='color';L.shadow=false;
@@ -18395,6 +18890,8 @@ function renderProps(){
   on('pFReset','onclick',()=>applyFPreset(FILTER_PRESETS[0].a));
   on('pElGo','onclick',()=>generateCaptions(L));
   on('pCapStyle','onchange',e=>{L.capStyle=e.target.value;});
+  on('pCapLang','onchange',e=>{L.capLang=e.target.value;});
+  on('pElKeyClr','onclick',()=>{setElKey('');renderProps();toast('🔑 Ichki kalit ishlatiladi');});
   on('pCapRestyle','onclick',()=>restyleCaptions(L.capStyle||'pill'));
   on('pCapLat','onclick',()=>convertCaptions('lat'));
   on('pCapCyr','onclick',()=>convertCaptions('cyr'));
@@ -19320,7 +19817,10 @@ document.getElementById('inDuration').onchange=e=>{
   let groupMove=null; // sahnada guruh surish: {starts:Map, main:{x,y}}
   const toCanvas=e=>{
     const r=cv.getBoundingClientRect();
-    return{x:(e.clientX-r.left)/r.width*cv.width,y:(e.clientY-r.top)/r.height*cv.height};
+    const x=(e.clientX-r.left)/r.width*cv.width,y=(e.clientY-r.top)/r.height*cv.height;
+    // 🎥 kamera surilgan bo'lsa — ekran nuqtasi sahnadagi (dunyo) nuqtaga aylantiriladi
+    let A=null;try{A=camViewAffine(state.layers.find(q=>q.id===state.selected)||null);}catch(er){}
+    return A?camUnmap(A,x,y):{x,y};
   };
   const hitRadius=()=>Math.max(12,state.W*0.012);
 
