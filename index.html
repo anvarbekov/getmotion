@@ -164,6 +164,16 @@
   .kf-item .x{cursor:pointer; color:var(--muted);}
   .kf-item .x:hover{color:var(--danger);}
   .hintline{font-size:11px; color:var(--muted); line-height:1.5; margin:4px 0 8px;}
+  /* 🎨 rang/shakl animatsiyasi holatlari */
+  .kfdot{color:var(--accent2);font-size:10px;margin-left:4px;font-weight:700;}
+  .look-strip{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+  .look-chip{display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--border);border-radius:9px;cursor:pointer;font-size:12px;background:rgba(255,255,255,.03);transition:border-color .15s,background .15s;}
+  .look-chip:hover{border-color:rgba(167,139,250,.6);}
+  .look-chip.on{border-color:var(--accent2);background:rgba(139,92,246,.14);}
+  .look-chip .sw{width:22px;height:22px;border-radius:6px;flex:none;border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 0 0 1px rgba(0,0,0,.2);}
+  .look-chip span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .look-chip .x{font-style:normal;opacity:.55;padding:0 4px;border-radius:5px;}
+  .look-chip .x:hover{opacity:1;color:#f87171;background:rgba(248,113,113,.12);}
   /* Timeline */
   .timeline{flex:0 0 auto; background:var(--panel); border-top:1px solid var(--border); height:210px; display:flex; flex-direction:column; position:relative;}
   .tl-resizer{position:absolute; top:-4px; left:0; right:0; height:8px; cursor:ns-resize; z-index:20;}
@@ -727,7 +737,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.2</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.3</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -1296,6 +1306,7 @@ const SHAPES = [
   {v:'rect',n:'To\'rtburchak'},{v:'circle',n:'Doira'},{v:'pill',n:'Kapsula'},
   {v:'bubble',n:'💬 Izoh pufagi (dumli)'},
   {v:'triangle',n:'Uchburchak'},{v:'hexagon',n:'Olti burchak'},{v:'star',n:'Yulduz'},
+  {v:'diamond',n:'◆ Romb'},{v:'pentagon',n:'⬟ Besh burchak'},{v:'heart',n:'❤ Yurak'},
   {v:'arrow',n:'➜ Strelka (to\'g\'ri / egiluvchan)'},
   {v:'curve',n:'↷ Egri strelka'},
   {v:'arrowDouble',n:'⇆ Ikki boshli strelka'},
@@ -1423,6 +1434,42 @@ const ease={
 };
 function hexA(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
 function hexRGB(hex){const n=parseInt(hex.slice(1),16);return [n>>16&255,n>>8&255,n&255];}
+/* ═══ 🎨 RANG ANIMATSIYASI — OKLab fazosida aralashtirish ═══
+   Oddiy RGB da qizil→yashil oralig'i "loyqa jigarrang" bo'lib o'tadi. OKLab —
+   ko'z sezishiga mos fazo: ranglar orasidagi o'tish toza va bir tekis yorqinlikda.
+   (CSS color-mix(in oklab) va Figma/AE ning zamonaviy rejimi bilan bir xil.) */
+const _okC=new Map();
+function _s2l(c){c/=255;return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4);}
+function _l2s(c){c=c<=0.0031308?c*12.92:1.055*Math.pow(Math.max(0,c),1/2.4)-0.055;return Math.round(clamp(c,0,1)*255);}
+function colToOk(c){
+  let v=_okC.get(c);if(v)return v;
+  let r=0,g=0,b=0,s=String(c||'#000000').trim();
+  if(s[0]==='#'){if(s.length===4)s='#'+s[1]+s[1]+s[2]+s[2]+s[3]+s[3];const n=parseInt(s.slice(1,7),16)||0;r=n>>16&255;g=n>>8&255;b=n&255;}
+  else{const m=s.match(/rgba?\(([^)]+)\)/i);if(m){const q=m[1].split(',').map(x=>parseFloat(x));r=q[0]||0;g=q[1]||0;b=q[2]||0;}}
+  const R=_s2l(r),G=_s2l(g),B=_s2l(b);
+  const l=Math.cbrt(0.4122214708*R+0.5363325363*G+0.0514459929*B),
+        m2=Math.cbrt(0.2119034982*R+0.6806995451*G+0.1073969566*B),
+        s2=Math.cbrt(0.0883024619*R+0.2817188376*G+0.6299787005*B);
+  v=[0.2104542553*l+0.7936177850*m2-0.0040720468*s2, 1.9779984951*l-2.4285922050*m2+0.4505937099*s2, 0.0259040371*l+0.7827717662*m2-0.8086757660*s2];
+  if(_okC.size>400)_okC.clear();
+  _okC.set(c,v);return v;
+}
+function okToHex(L0,a,b){
+  const l=Math.pow(L0+0.3963377774*a+0.2158037573*b,3), m=Math.pow(L0-0.1055613458*a-0.0638541728*b,3), s=Math.pow(L0-0.0894841775*a-1.2914855480*b,3);
+  const R=_l2s(4.0767416621*l-3.3077115913*m+0.2309699292*s), G=_l2s(-1.2684380046*l+2.6097574011*m-0.3413193965*s), B=_l2s(-0.0041960863*l-0.7034186147*m+1.7076147010*s);
+  return '#'+((1<<24)|(R<<16)|(G<<8)|B).toString(16).slice(1);
+}
+function colorMix(c1,c2,u){
+  if(c1===c2||u<=0)return c1; if(u>=1)return c2;
+  const A=colToOk(c1),B=colToOk(c2);
+  return okToHex(A[0]+(B[0]-A[0])*u,A[1]+(B[1]-A[1])*u,A[2]+(B[2]-A[2])*u);
+}
+/* rang tonini (OKLCH) burish — "🌈 rang aylanishi" uchun */
+function colorHueShift(c,deg){
+  const [L0,a,b]=colToOk(c);const C=Math.hypot(a,b),h=Math.atan2(b,a)+deg*Math.PI/180;
+  const Cc=Math.max(C,0.09);   // juda och (kulrang) rangda ham ko'rinadigan ton bo'lsin
+  return okToHex(clamp(L0,0.35,0.9),Cc*Math.cos(h),Cc*Math.sin(h));
+}
 function shadeHex(hex,f){
   const [r,g,b]=hexRGB(hex);
   return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`;
@@ -1627,8 +1674,8 @@ function snapSF(){return PERF.lvl===0?4:(PERF.lvl===1?6:9);}
 /* 🌍 Kanvas "dunyo boshi" — chizish kanvasidagi (0,0) dunyo nuqtasining joyi.
    X va Y ALOHIDA: kadrdan tashqaridagi element (kamera o'sha tomonga qaraganda)
    uchun bufer o'sha joyga suriladi, siljish esa har o'q bo'yicha har xil. */
-function ctxBaseX(c){ if(typeof kidIsoCtx!=='undefined'&&c===kidIsoCtx)return __kidBase; if(v3lctx&&c===v3lctx)return __v3Pad; return (c===fctx)?((__isoPad||0)-__isoSX):((c===cctx)?_sceneBX:0); }
-function ctxBaseY(c){ if(typeof kidIsoCtx!=='undefined'&&c===kidIsoCtx)return __kidBaseY; if(v3lctx&&c===v3lctx)return __v3PadY; return (c===fctx)?((__isoPad||0)-__isoSY):((c===cctx)?_sceneBY:0); }
+function ctxBaseX(c){ if(_xfAc&&(c===_xfAc||c===_xfBc))return __xfBX; if(typeof kidIsoCtx!=='undefined'&&c===kidIsoCtx)return __kidBase; if(v3lctx&&c===v3lctx)return __v3Pad; return (c===fctx)?((__isoPad||0)-__isoSX):((c===cctx)?_sceneBX:0); }
+function ctxBaseY(c){ if(_xfAc&&(c===_xfAc||c===_xfBc))return __xfBY; if(typeof kidIsoCtx!=='undefined'&&c===kidIsoCtx)return __kidBaseY; if(v3lctx&&c===v3lctx)return __v3PadY; return (c===fctx)?((__isoPad||0)-__isoSY):((c===cctx)?_sceneBY:0); }
 function sceneBase(){ return ctxBaseX(ctx); }
 function sceneBaseY(){ return ctxBaseY(ctx); }
 let _fth3D=false;   // joriy qatlam 3D da chizilyaptimi (rangli feather chegarasi uchun)
@@ -2592,12 +2639,45 @@ const KF_EXTRA=['radius','borderW','maskW','maskH','innerX','innerY','blur','w',
   'mkW','mkH','mkX','mkY','mkRot','mkFeather','mkRadius','pval','borderAng',
   'boxOpenT','boxOpenB','boxOpenL','boxOpenR','mkBgA','borderHue','olHue','tgradAng','olAng','dist3','persp3','depth3','depth3S','spec3I',
   'shOutA','shOutB','shOutS','shOutX','shOutY','shInA','shInB','shInS','shInX','shInY',
-  'borderGlowI','borderGlowA','nmDist','nmBlur','nmInt','nmAng','nmSpread','nmGrad','nmEdge','nmInW','lgBlur','lgSat','lgBri','lgRefr','lgDisp','lgTintA','lgRim','lgRimI','lgAng','lgSpec','lgSpecS','lgInner','lgInnerW','lgShadow','lgSheen','lgBand','borderRunSpd','borderRunLen','borderRunGlow','borderSpinSpd','borderSparkSpd','headSize'];
+  'borderGlowI','borderGlowA','fillA','tintA','borderA',
+  /* 🎨 rang va tur (matnli qiymatlar) — kfMixV aralashtiradi */
+  'fillColor','grad2','tint','borderColor','shOutC','shInC','borderGlowC','color','shape','fill',
+  'nmDist','nmBlur','nmInt','nmAng','nmSpread','nmGrad','nmEdge','nmInW','lgBlur','lgSat','lgBri','lgRefr','lgDisp','lgTintA','lgRim','lgRimI','lgAng','lgSpec','lgSpecS','lgInner','lgInnerW','lgShadow','lgSheen','lgBand','borderRunSpd','borderRunLen','borderRunGlow','borderSpinSpd','borderSparkSpd','headSize'];
 /* kf kaliti → qatlam xususiyati (nom to'qnashuvini oldini olish) */
 const KF_MAP={mscale:'scale', tsize:'size', tsh:'tshadow', td:'tdepth', fxb:'fxBlur',
   fB:'fBright', fC:'fContrast', fS:'fSat', fH:'fHue', fT:'fTemp', fG:'fTint',
   ftT:'featherT', ftB:'featherB', ftL:'featherL', ftR:'featherR'};
 const KF_PAIRS=[...KF_EXTRA.map(k=>[k,k]),...Object.entries(KF_MAP)];
+/* 🎨 Rang kalitlari — OKLab da silliq o'tadi; shakl/to'ldirish turi — morf / aralashma */
+const KF_COLOR=new Set(['fillColor','grad2','tint','borderColor','shOutC','shInC','borderGlowC','color']);
+const KF_DISC=new Set(['shape','fill']);
+/* Shakl "ko'rinishi" (rang + tur) kalitlari — panel va tayyor animatsiyalar uchun */
+const LOOK_KEYS=['shape','fill','fillColor','grad2','fillA','tint','tintA','borderColor','borderA'];
+/* Bir-biriga SILLIQ aylana oladigan (yopiq kontur) shakllar */
+const MORPH_OK=new Set(['rect','circle','pill','bubble','triangle','hexagon','star','blob','burst','speech','diamond','pentagon','heart']);
+function kfMixV(kk,a,b,u,out){
+  if(typeof a==='number'&&typeof b==='number')return a+(b-a)*u;
+  if(a===undefined)return b; if(b===undefined||a===b)return a;
+  if(KF_COLOR.has(kk))return colorMix(a,b,u);
+  if(u<=0)return a; if(u>=1)return b;
+  if(kk==='shape'){
+    if(MORPH_OK.has(a)&&MORPH_OK.has(b)){(out._mx||(out._mx={})).shape={from:a,to:b,u};return a;}
+    return u<0.5?a:b;
+  }
+  if(kk==='fill'){(out._mx||(out._mx={})).fill={from:a,to:b,u};return a;}
+  return u<0.5?a:b;
+}
+/* Keyframe qiymatlarini qatlamga VAQTINCHA qo'llash (sv — tiklash uchun eski qiymatlar) */
+function kfApplyTmp(L,T,sv){
+  const M=kfPM();
+  for(const kk in T){const prop=M[kk];
+    if(prop!==undefined&&T[kk]!==undefined&&L[prop]!==undefined){sv[prop]=L[prop];L[prop]=T[kk];}}
+  if(T._mx){
+    if(T._mx.shape){sv._shMorph=L._shMorph;L._shMorph=T._mx.shape;}
+    if(T._mx.fill){sv._fillMix=L._fillMix;L._fillMix=T._mx.fill;}
+  }
+  return sv;
+}
 const EASE_KF={
   smooth:t=>ease.inOut(t),
   linear:t=>t,
@@ -2628,8 +2708,16 @@ const EASE_NAMES=[
   ['back','Back (ikki tomon)'],['bounce','Bounce (sakraydi)'],
   ['spring','Elastik (spring)'],['spline','O\'ta silliq (spline — AE)'],
 ];
+/* Panel uchun: xususiyatning PLAYHEAD vaqtidagi (animatsiyalangan) qiymati */
+function kfNow(L,k){try{const v=kfValue(L,clamp(state.time-L.start,0,L.dur))[k];return v!==undefined?v:L[k];}catch(e){return L[k];}}
 function kfValue(L,local){
   const r=kfValueRaw(L,local);
+  /* ⏳ Kutilayotgan (hali ◆ ga yozilmagan) o'zgarishlar playhead vaqtida DARHOL
+     ko'rinadi — rangni/shaklni/joyni o'zgartirsangiz ekranda shu zahoti aks etadi.
+     (Eksportga ta'sir qilmaydi — faqat tahrir ko'rinishi.) */
+  if(L._kfPend&&!exporting&&!state.playing&&Math.abs((L.start||0)+local-state.time)<1e-3&&Math.abs(state.time-(L._kfPendT??state.time))<1e-3){
+    for(const k in L._kfPend){const v=L._kfPend[k];if(v===undefined)continue;r[k==='rot'?'rotDeg':k]=v;if(r._mx&&r._mx[k])delete r._mx[k];}
+  }
   if(L.ex)exApply(L,local,r);   // ƒ AE expressions
   return r;
 }
@@ -2663,7 +2751,9 @@ function kfValueRaw(L,local){
     const out2={x:sp('x',0),y:sp('y',0),scale:sp('scale',1),rotDeg:sp('rot',0),
       rx:sp('rx',0),ry:sp('ry',0),alpha:clamp(sp('alpha',1),0,1)};
     {const M=kfPM();for(const q of [p0,a,b,p3])for(const kk in q){if(kk in out2)continue;const prop=M[kk];
-      if(prop!==undefined&&L[prop]!==undefined)out2[kk]=sp(kk,L[prop]);}}
+      if(prop===undefined||L[prop]===undefined)continue;
+      const va=g(a,kk,L[prop]),vb=g(b,kk,L[prop]);
+      out2[kk]=(typeof va==='number'&&typeof vb==='number')?sp(kk,L[prop]):kfMixV(kk,va,vb,u,out2);}}
     return out2;
   }
   const eFn=EASE_KF[L.kfEase]||EASE_KF.smooth;
@@ -2672,7 +2762,7 @@ function kfValueRaw(L,local){
   const out={x:lp(a.x,b.x),y:lp(a.y,b.y),scale:lp(a.scale,b.scale),
     rotDeg:lp(a.rot,b.rot),rx:lp(a.rx??0,b.rx??0),ry:lp(a.ry??0,b.ry??0),alpha:lp(a.alpha,b.alpha)};
   {const M=kfPM();for(const q of [a,b])for(const kk in q){if(kk in out)continue;const prop=M[kk];
-    if(prop!==undefined&&L[prop]!==undefined)out[kk]=lp(a[kk]??L[prop],b[kk]??L[prop]);}}
+    if(prop!==undefined&&L[prop]!==undefined)out[kk]=kfMixV(kk,a[kk]??L[prop],b[kk]??L[prop],u,out);}}
   return out;
 }
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2694,6 +2784,7 @@ function kfAtPlayhead(L){
 }
 function markKfPending(L,key,oldV,newV){
   if(!L._kfPend){L._kfPend={};L._kfPrev={};}
+  L._kfPendT=state.time;   // ko'rinish (preview) shu vaqtda
   if(!(key in L._kfPend))L._kfPrev[key]=oldV;
   L._kfPend[key]=newV;
 }
@@ -3075,7 +3166,7 @@ function applyEffectPreset(L,preset){
     const patch=fn(baseScale,L,diag,bd);
     L.kfs=L.kfs.filter(k=>Math.abs(k.t-t)>0.04);
     const kf={t,x:cur.x,y:cur.y,scale:cur.scale,rot:cur.rotDeg,rx:cur.rx||0,ry:cur.ry||0,alpha:cur.alpha};
-    for(const [kk,prop] of KF_PAIRS)if(L[prop]!==undefined&&!/^(e_|trim|gt|lv|nm|lg|draw)/.test(kk))kf[kk]=cur[kk]??L[prop];
+    for(const [kk,prop] of KF_PAIRS)if(L[prop]!==undefined&&!/^(e_|trim|gt|lv|nm|lg|draw)/.test(kk)&&!KF_COLOR.has(kk)&&!KF_DISC.has(kk)&&!LOOK_KEYS.includes(kk))kf[kk]=cur[kk]??L[prop];
     Object.assign(kf,patch);
     L.kfs.push(kf);
   }
@@ -3918,9 +4009,26 @@ function drawBG(){
 }
 function shapePath(L){
   if(L.pm&&L.pm.on&&!__pmBusy&&!ANNOT.includes(L.shape)&&!UI_SHAPES.includes(L.shape)&&pmPathDraw(L))return;
+  // 🔄 keyframe bilan shakl almashinuvi — oraliqda silliq morf
+  if(L._shMorph&&!__shmBusy&&shapeMorphPath(L))return;
   const w=L.w,h=L.h;
   ctx.beginPath();
   switch(L.shape){
+    case 'diamond':ctx.moveTo(0,-h/2);ctx.lineTo(w/2,0);ctx.lineTo(0,h/2);ctx.lineTo(-w/2,0);ctx.closePath();break;
+    case 'pentagon':{
+      const r=Math.min(w,h)/2;
+      for(let k=0;k<5;k++){const a=-Math.PI/2+k*Math.PI*2/5;k?ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r):ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);}
+      ctx.closePath();break;
+    }
+    case 'heart':{
+      // klassik yurak egri chizig'i (x=16sin³t, y=13cos t−5cos2t−2cos3t−cos4t) — qutiga moslangan
+      const N=72;
+      for(let k=0;k<=N;k++){const q=k/N*Math.PI*2,sn=Math.sin(q);
+        const x=16*sn*sn*sn, y=13*Math.cos(q)-5*Math.cos(2*q)-2*Math.cos(3*q)-Math.cos(4*q);
+        const X=x/16*w/2, Y=-(y+2.6)/14.6*h/2;
+        k?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}
+      ctx.closePath();break;
+    }
     case 'circle':ctx.arc(0,0,Math.min(w,h)/2,0,7);break;
     case 'pill':pathRound(ctx,-w/2,-h/2,w,h,h/2);break;
     case 'bubble':{
@@ -7048,6 +7156,7 @@ function neoRender(L){
   if((Math.max(w,h)+2*M)*kq>maxPx)kq=maxPx/(Math.max(w,h)+2*M);
   kq=Math.max(0.05,kq);
   const key=[L.shape,Math.round(w),Math.round(h),L.radius,L.radMulti?[L.rTL,L.rTR,L.rBR,L.rBL].join():'',L.id,
+    L._shMorph?L._shMorph.to+'@'+L._shMorph.u.toFixed(3):'',
     NM_KEYS.map(q=>Math.round(+V(q)*100)/100||V(q)).join('|'),kq.toFixed(3),_NU.toFixed(3)].join('~');
   let ent=_neoCache.get(key);
   if(ent){_neoCache.delete(key);_neoCache.set(key,ent);return ent;}
@@ -8199,7 +8308,8 @@ const FlatCtx={
 /* Istalgan shaklning konturi (shapePath orqali) — kesh bilan */
 const _outlineCache=new Map();
 function shapeOutline(L){
-  const key=[L.shape,Math.round(L.w),Math.round(L.h),Math.round(L.radius||0),L.radMulti?[L.rTL,L.rTR,L.rBR,L.rBL].join():'',L.id].join('|');
+  const key=[L.shape,Math.round(L.w),Math.round(L.h),Math.round(L.radius||0),L.radMulti?[L.rTL,L.rTR,L.rBR,L.rBL].join():'',L.id,
+    L._shMorph&&!__shmBusy?L._shMorph.to+'@'+L._shMorph.u.toFixed(4):''].join('|');
   let r=_outlineCache.get(key);
   if(r)return r;
   const prev=ctx;
@@ -8209,6 +8319,131 @@ function shapeOutline(L){
   _outlineCache.set(key,r);
   if(_outlineCache.size>200)_outlineCache.delete(_outlineCache.keys().next().value);
   return r;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🔄 SHAKL MORFI — bir shakl ikkinchisiga SILLIQ aylanadi (AE "path morph" kabi)
+   Ikkala kontur bir xil sondagi nuqtalarga (yoy uzunligi bo'yicha teng qadam)
+   qayta bo'linadi, yo'nalishi tenglashtiriladi va boshlang'ich nuqta eng kichik
+   "siljish" bo'yicha tanlanadi — shuning uchun shakl o'z-o'zidan buralib ketmaydi.
+   Natija keshlanadi: har freymda faqat N ta nuqta aralashtiriladi (mikrosekundlar).
+   ═══════════════════════════════════════════════════════════════════════════ */
+var __shmBusy=false;
+const _morphCache=new Map();
+function _morphRaw(L,shape){
+  const sv=L.shape,sm=L._shMorph,spm=L.pm,prev=ctx;
+  let polys=null;
+  L.shape=shape;L._shMorph=null;L.pm=null;__shmBusy=true;
+  try{ctx=FlatCtx;FlatCtx.beginPath();shapePath(L);polys=FlatCtx.polys.filter(p=>p.pts.length>2);}
+  catch(e){polys=null;}
+  finally{ctx=prev;L.shape=sv;L._shMorph=sm;L.pm=spm;__shmBusy=false;}
+  if(!polys||!polys.length)return null;
+  // eng katta (asosiy) kontur
+  let best=null,ba=-1;
+  for(const p of polys){let a=0;const q=p.pts;for(let i=0;i<q.length;i++){const j=(i+1)%q.length;a+=q[i][0]*q[j][1]-q[j][0]*q[i][1];}if(Math.abs(a)>ba){ba=Math.abs(a);best=p;}}
+  return best?best.pts:null;
+}
+function _morphSample(pts,N){
+  const M=pmMake([{pts,closed:true}]);
+  const o=new Float64Array(N*2);
+  for(let i=0;i<N;i++){const q=pmPoint(M,i/N);o[i*2]=q.x;o[i*2+1]=q.y;}
+  let ar=0;for(let i=0;i<N;i++){const j=(i+1)%N;ar+=o[i*2]*o[j*2+1]-o[j*2]*o[i*2+1];}
+  if(ar<0){for(let i=1,j=N-1;i<j;i++,j--){let t=o[i*2];o[i*2]=o[j*2];o[j*2]=t;t=o[i*2+1];o[i*2+1]=o[j*2+1];o[j*2+1]=t;}}
+  return o;
+}
+/* Qutbiy (markazdan nur) namuna: har burchak uchun konturgacha masofa.
+   Bizning barcha morf shakllar markazga nisbatan "yulduzsimon" — shuning uchun
+   radiuslarni aralashtirish eng toza o'tishni beradi (kvadrat→doira = qavariq
+   "squircle", yulduz→doira = uchlari bir tekis yumshaydi, burilish yo'q). */
+function _morphPolar(pts,N){
+  const R=new Float64Array(N),n=pts.length;
+  for(let i=0;i<N;i++){
+    const a=i/N*Math.PI*2-Math.PI/2,dx=Math.cos(a),dy=Math.sin(a);
+    let best=-1;
+    for(let k=0;k<n;k++){
+      const p=pts[k],q=pts[(k+1)%n],ex=q[0]-p[0],ey=q[1]-p[1];
+      const den=dx*ey-dy*ex;if(Math.abs(den)<1e-12)continue;
+      const t=(p[0]*ey-p[1]*ex)/den, s=(p[0]*dy-p[1]*dx)/den;
+      if(s>=-1e-9&&s<=1+1e-9&&t>best)best=t;
+    }
+    if(!(best>0))return null;   // markaz shakl tashqarisida — qutbiy usul yaramaydi
+    R[i]=best;
+  }
+  return R;
+}
+function morphPair(L,from,to){
+  const key=[from,to,Math.round(L.w),Math.round(L.h),Math.round(L.radius||0),L.radMulti?[L.rTL,L.rTR,L.rBR,L.rBL].join():'',
+    (from==='blob'||to==='blob')?L.id:''].join('|');
+  let P=_morphCache.get(key);if(P!==undefined)return P;
+  const a=_morphRaw(L,from),b=_morphRaw(L,to);
+  if(!a||!b){_morphCache.set(key,null);return null;}
+  {const NP=Math.max(360,Math.min(1440,Math.round(Math.max(L.w,L.h)*1.2/4)*4));
+   const RA=_morphPolar(a,NP),RB=RA&&_morphPolar(b,NP);
+   if(RA&&RB){
+     const A=new Float64Array(NP*2),B=new Float64Array(NP*2);
+     for(let i=0;i<NP;i++){const an=i/NP*Math.PI*2-Math.PI/2,c=Math.cos(an),sn=Math.sin(an);A[i*2]=c*RA[i];A[i*2+1]=sn*RA[i];B[i*2]=c*RB[i];B[i*2+1]=sn*RB[i];}
+     P={N:NP,A,B};
+     if(_morphCache.size>80)_morphCache.delete(_morphCache.keys().next().value);
+     _morphCache.set(key,P);return P;
+   }}
+  const per=Math.max(L.w,L.h)*Math.PI;
+  const N=clamp(Math.round(per/5),96,420);
+  const A=_morphSample(a,N),B0=_morphSample(b,N);
+  // eng yaqin boshlang'ich nuqta (aylanma siljish) — kvadrat masofa yig'indisi minimal
+  let bk=0,bs=Infinity;const step=N>200?2:1;
+  for(let k=0;k<N;k+=step){let s=0;for(let i=0;i<N;i+=2){const j=((i+k)%N)*2,dx=A[i*2]-B0[j],dy=A[i*2+1]-B0[j+1];s+=dx*dx+dy*dy;if(s>=bs)break;}if(s<bs){bs=s;bk=k;}}
+  const B=new Float64Array(N*2);for(let i=0;i<N;i++){const j=((i+bk)%N)*2;B[i*2]=B0[j];B[i*2+1]=B0[j+1];}
+  P={N,A,B};
+  if(_morphCache.size>80)_morphCache.delete(_morphCache.keys().next().value);
+  _morphCache.set(key,P);
+  return P;
+}
+/* shapePath ichidan chaqiriladi: morf kontur chizildi → true */
+function shapeMorphPath(L){
+  const m=L._shMorph;if(!m)return false;
+  const P=morphPair(L,m.from||L.shape,m.to);if(!P)return false;
+  // yumshoq "pishiq" o'tish: o'rtada ham shakl to'liq (yoyilib ketmaydi)
+  const u=clamp(m.u,0,1),A=P.A,B=P.B,N=P.N;
+  ctx.beginPath();
+  for(let i=0;i<N;i++){const x=A[i*2]+(B[i*2]-A[i*2])*u,y=A[i*2+1]+(B[i*2+1]-A[i*2+1])*u;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+  ctx.closePath();
+  return true;
+}
+
+/* ═══ 💠 TO'LDIRISH USLUBLARI ARALASHMASI (rang → gradient → shisha ...) ═══
+   Ikkala uslub alohida buferda chiziladi va (1−u)·A + u·B — aniq chiziqli
+   aralashma (premultiplied). Shisha/liquid fon, chekka nurlari — hammasi o'z
+   holicha, shunchaki biri ikkinchisiga silliq o'tadi. */
+var _xfA=null,_xfAc=null,_xfB=null,_xfBc=null,__xfBX=0,__xfBY=0;
+function shapeFillXfade(L,t,to,u,drawFn){
+  const c0=ctx,M=c0.getTransform(),cw=c0.canvas.width,ch=c0.canvas.height;
+  const hw=L.w/2,hh=L.h/2;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const [x,y] of [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]]){const X=M.a*x+M.c*y+M.e,Y=M.b*x+M.d*y+M.f;
+    if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;}
+  const mg=26*Math.max(1,Math.hypot(M.a,M.b));
+  x0=Math.max(0,Math.floor(x0-mg));y0=Math.max(0,Math.floor(y0-mg));x1=Math.min(cw,Math.ceil(x1+mg));y1=Math.min(ch,Math.ceil(y1+mg));
+  const rw=x1-x0,rh=y1-y0;
+  if(rw<1||rh<1)return;
+  if(!_xfA){_xfA=document.createElement('canvas');_xfAc=_xfA.getContext('2d');_xfB=document.createElement('canvas');_xfBc=_xfB.getContext('2d');}
+  if(_xfA.width<rw||_xfA.height<rh){const W2=Math.max(_xfA.width,Math.ceil(rw/64)*64),H2=Math.max(_xfA.height,Math.ceil(rh/64)*64);_xfA.width=_xfB.width=W2;_xfA.height=_xfB.height=H2;}
+  const bx=ctxBaseX(c0)-x0,by=ctxBaseY(c0)-y0;
+  const sv=L.fill,sbx=__xfBX,sby=__xfBY;
+  try{
+    for(const [cx,fill] of [[_xfAc,sv],[_xfBc,to]]){
+      cx.setTransform(1,0,0,1,0,0);cx.globalAlpha=1;cx.globalCompositeOperation='source-over';cx.filter='none';
+      cx.clearRect(0,0,rw,rh);
+      cx.setTransform(M.a,M.b,M.c,M.d,M.e-x0,M.f-y0);
+      __xfBX=bx;__xfBY=by;ctx=cx;L.fill=fill;
+      cx.save();try{drawFn();}finally{cx.restore();}
+    }
+  }finally{ctx=c0;L.fill=sv;__xfBX=sbx;__xfBY=sby;}
+  const a=_xfAc;
+  a.setTransform(1,0,0,1,0,0);
+  a.globalCompositeOperation='destination-in';a.globalAlpha=1;a.fillStyle='rgba(0,0,0,'+(1-u).toFixed(4)+')';a.fillRect(0,0,rw,rh);
+  a.globalCompositeOperation='lighter';a.globalAlpha=u;a.drawImage(_xfB,0,0,rw,rh,0,0,rw,rh);
+  a.globalCompositeOperation='source-over';a.globalAlpha=1;
+  c0.save();c0.setTransform(1,0,0,1,0,0);c0.drawImage(_xfA,0,0,rw,rh,x0,y0,rw,rh);c0.restore();
 }
 
 /* ---------- O'lchov (path measure) ---------- */
@@ -11266,8 +11501,7 @@ function ovfClipsKids(L){const w=ovfWhat(L);return isGroupHolder(L)||w==='kids'|
 function ovfWithKf(K,local,fn){
   let sv=null;
   if(K.kfs&&K.kfs.length){
-    sv={};const T=kfValue(K,clamp(local,0,K.dur)),M=kfPM();
-    for(const kk in T){const p=M[kk];if(p!==undefined&&T[kk]!==undefined&&K[p]!==undefined){sv[p]=K[p];K[p]=T[kk];}}
+    sv=kfApplyTmp(K,kfValue(K,clamp(local,0,K.dur)),{});
   }
   try{return fn();}finally{if(sv)for(const p in sv)K[p]=sv[p];}
 }
@@ -14569,6 +14803,178 @@ function sceneBgPick(F){
   inp.click();
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎨 RANG VA SHAKL ANIMATSIYASI — "holatlar" (◆) bilan
+   Shakl vaqt davomida rangini (OKLab da silliq), turini (doira → yulduz → yurak,
+   silliq morf) va to'ldirish uslubini (rang → gradient → shisha, aniq aralashma)
+   o'zgartiradi. Hammasi oddiy keyframe (L.kfs) ichida — easing, timeline ◆,
+   nusxa/undo, eksport avtomatik ishlaydi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const LOOK_FILL_N={glass:'Shisha',liquid:'Liquid',liquid2:'Liquid Pro',lglass:'Liquid (aniq)',neo:'Neomorf',color:'Bir rang',gradient:'Gradient'};
+const LOOK_MOTION_F=['x','y','scale','rot','alpha','rx','ry'];
+/* xususiyat haqiqatan o'zgaradimi (kamida ikki holatda har xil qiymat) */
+function lookAnimated(L,k){
+  const K=L&&L.kfs;if(!K||K.length<2)return false;
+  let v0,has=false;
+  for(const q of K){if(q[k]===undefined)continue;if(!has){v0=q[k];has=true;}else if(q[k]!==v0)return true;}
+  return false;
+}
+function lookStates(L){return (L.kfs||[]).filter(q=>LOOK_KEYS.some(k=>q[k]!==undefined));}
+function lookHas(L){return lookStates(L).length>0;}
+function lookKeysOf(L){return LOOK_KEYS.filter(k=>L[k]!==undefined);}
+function lookShapeName(v){const o=SHAPES.find(x=>x.v===v);return o?o.n.replace(/^[^A-Za-z0-9А-Яа-яЁёЎўҚқҒғҲҳ']+\s*/,''):(v||'');}
+function lookSwatch(c1,c2,f){
+  if(f==='gradient')return `linear-gradient(180deg,${c1},${c2})`;
+  if(f==='color')return c1;
+  return `linear-gradient(135deg,rgba(255,255,255,.6),${c1} 70%)`;
+}
+function lookBlock(L){
+  const st=lookStates(L);
+  const local=clamp(state.time-L.start,0,L.dur);
+  const pend=kfPendingCount(L);
+  const chips=st.map(q=>{
+    const on=Math.abs(q.t-local)<KF_TOL;
+    const f=q.fill??L.fill;
+    return `<div class="look-chip${on?' on':''}" data-t="${q.t}" title="${q.t.toFixed(2)}s — bosing: shu holatga o'tish">
+      <i class="sw" style="background:${lookSwatch(q.fillColor??L.fillColor,q.grad2??L.grad2,f)}"></i>
+      <span><b>${(L.start+q.t).toFixed(1)}s</b> · ${escapeHtml(lookShapeName(q.shape??L.shape))} · ${LOOK_FILL_N[f]||f}</span>
+      <em class="x" data-t="${q.t}" title="Bu holatdan rang/shaklni olib tashlash">✕</em></div>`;
+  }).join('');
+  return `<div class="hintline">Shakl vaqt davomida <b>rangini</b>, <b>turini</b> (doira → yulduz → yurak…) va <b>to'ldirish uslubini</b> (bir rang → gradient → shisha) <b>silliq</b> o'zgartiradi.<br>
+    <b>1.</b> Boshlanishda <b>◆ Holatni yozish</b> &nbsp;<b>2.</b> Playheadni suring, yuqorida rang / shakl / uslubni tanlang &nbsp;<b>3.</b> Yana <b>◆</b></div>
+    <button id="pLookRec" class="primary" style="width:100%;justify-content:center${pend?';outline:2px solid var(--accent2)':''}">${lookRecLabel(L)}</button>
+    ${st.length?`<div class="look-strip">${chips}</div>`:`<div class="hintline" style="margin-top:6px">Hali holat yozilmagan.</div>`}
+    <div class="row2" style="margin-top:6px">
+      <button id="pLookRainbow" style="justify-content:center" title="Rang bir necha tusdan silliq o'tib, boshlang'ich rangga qaytadi">🌈 Rang aylanishi</button>
+      <button id="pLookMorph" style="justify-content:center" title="Shakl boshqa turlarga silliq aylanib, yana o'ziga qaytadi">🔄 Shakl almashinuvi</button>
+    </div>
+    ${st.length?`<button id="pLookClear" style="width:100%;justify-content:center;margin-top:6px">✕ Rang/shakl animatsiyasini olib tashlash</button>`:''}
+    <div class="hintline" style="margin-top:6px">O'tish uslubi — <b>Keyframe easing</b> (Transformatsiya bo'limida). Ranglar OKLab fazosida aralashadi — oraliqda "loyqa" rang chiqmaydi.</div>`;
+}
+function lookRecLabel(L){
+  const pend=kfPendingCount(L),local=clamp(state.time-L.start,0,L.dur);
+  const at=(L.kfs||[]).some(q=>Math.abs(q.t-local)<KF_TOL&&LOOK_KEYS.some(k=>q[k]!==undefined));
+  return `◆ ${at?'Holatni yangilash':'Holatni yozish'} — ${state.time.toFixed(2)}s${pend?' · '+pend+' o\'zgarish kutmoqda':''}`;
+}
+/* rang/slayder o'zgarganda tugma yozuvini yangilash (butun panel qayta chizilmaydi) */
+function lookPendUI(L){
+  const b=document.getElementById('pLookRec');if(!b)return;
+  b.textContent=lookRecLabel(L);
+  b.style.outline=kfPendingCount(L)?'2px solid var(--accent2)':'';
+  if(hasKF(L))try{renderTimeline();}catch(e){}
+}
+/* Rang/shakl kalitlari hali hech bir nuqtada bo'lmasa — barcha mavjud nuqtalarga
+   HOZIRGI (o'zgarishdan oldingi) ko'rinish yoziladi: shunda keyingi holat aynan
+   shu nuqtadan boshlab o'zgaradi, undan oldin esa o'zgarmaydi */
+function lookEnsure(L){
+  const prev=L._kfPrev||{};
+  L.kfs=L.kfs||[];
+  for(const k of lookKeysOf(L)){
+    if(L.kfs.some(q=>q[k]!==undefined))continue;
+    const base=(k in prev)?prev[k]:L[k];
+    for(const q of L.kfs)q[k]=base;
+  }
+}
+/* lokal vaqt t ga holat (mavjud nuqtaga yoki yangi nuqta) */
+function lookSetAt(L,t,patch){
+  L.kfs=L.kfs||[];
+  let kf=L.kfs.find(q=>Math.abs(q.t-t)<KF_TOL);
+  if(!kf){
+    const cur=kfValueRaw(L,t);
+    kf={t,x:cur.x,y:cur.y,scale:cur.scale,rot:cur.rotDeg,rx:cur.rx,ry:cur.ry,alpha:cur.alpha};
+    const anim=new Set();for(const q of L.kfs)for(const kk in q)if(kk!=='t'&&!(kk in kf))anim.add(kk);
+    for(const kk of anim){const v=cur[kk];if(v!==undefined)kf[kk]=v;}
+    L.kfs.push(kf);L.kfs.sort((a,b)=>a.t-b.t);
+  }
+  Object.assign(kf,patch);
+  return kf;
+}
+/* ◆ Holatni yozish — playhead vaqtiga joriy rang + shakl + uslub (va boshqa kutilayotgan o'zgarishlar) */
+function lookRecord(L){
+  saveHistory();
+  const local=clamp(state.time-L.start,0,L.dur);
+  const shown=kfValue(L,local);            // kutilayotgan o'zgarishlar bilan
+  const pend=L._kfPend||{};
+  lookEnsure(L);
+  const patch={};
+  for(const k of lookKeysOf(L)){const v=shown[k];patch[k]=v!==undefined?v:L[k];}
+  for(const k in pend)if(!(k in patch))patch[k]=pend[k];
+  lookSetAt(L,local,patch);
+  L._kfPend=null;L._kfPrev=null;
+  return local;
+}
+function lookDelState(L,t){
+  const kf=(L.kfs||[]).find(q=>Math.abs(q.t-t)<1e-6)||(L.kfs||[]).find(q=>Math.abs(q.t-t)<KF_TOL);
+  if(!kf)return;
+  for(const k of LOOK_KEYS)delete kf[k];
+}
+function lookClear(L){
+  // hozir ko'rinib turgan ko'rinish asosiy qiymat bo'lib qoladi
+  const local=clamp(state.time-L.start,0,L.dur),cur=kfValueRaw(L,local);
+  for(const k of LOOK_KEYS)if(cur[k]!==undefined&&L[k]!==undefined)L[k]=cur[k];
+  for(const q of (L.kfs||[]))for(const k of LOOK_KEYS)delete q[k];
+  L._kfPend=null;L._kfPrev=null;
+}
+/* Tayyor animatsiyalar uchun vaqtlar: element allaqachon HARAKATLANAYOTGAN bo'lsa —
+   o'sha nuqtalar (harakat egri chizig'i buzilmasin), aks holda klip bo'ylab 4 holat */
+function lookPresetTimes(L){
+  const K=L.kfs||[];
+  const moving=K.length>=2&&K.some(q=>LOOK_MOTION_F.some(f=>(q[f]??0)!==(K[0][f]??0)));
+  if(moving)return K.map(q=>q.t);
+  const d=L.dur;return [0,d/3,d*2/3,d];
+}
+function lookPresetRainbow(L){
+  saveHistory();
+  L._kfPend=null;L._kfPrev=null;
+  const T=lookPresetTimes(L),n=T.length;
+  const c0=kfNow(L,'fillColor')||'#8b5cf6',g0=kfNow(L,'grad2')||'#0ea5e9',t0=kfNow(L,'tint')||'#ffffff';
+  lookEnsure(L);
+  T.forEach((t,i)=>{
+    const loop=n>=3, deg=loop?360*i/(n-1):180*i;
+    const same=i===0||(loop&&i===n-1);
+    lookSetAt(L,t,{fillColor:same?c0:colorHueShift(c0,deg),grad2:same?g0:colorHueShift(g0,deg),
+      tint:same?t0:colorHueShift(t0==='#ffffff'?c0:t0,deg)});
+  });
+  // shishada rang deyarli ko'rinmaydi — tus sezilsin
+  const f=kfNow(L,'fill');
+  if((f==='glass'||f==='liquid'||f==='liquid2')&&(L.tintA||0)<0.28){for(const q of L.kfs)if(q.tintA===undefined||q.tintA<0.28)q.tintA=0.28;L.tintA=Math.max(L.tintA||0,0.28);}
+  return n;
+}
+function lookPresetMorph(L){
+  saveHistory();
+  L._kfPend=null;L._kfPrev=null;
+  const T=lookPresetTimes(L),n=T.length;
+  let s0=kfNow(L,'shape');if(!MORPH_OK.has(s0))s0='rect';
+  const pool=['circle','star','heart','hexagon','diamond','rect','pentagon'].filter(x=>x!==s0);
+  lookEnsure(L);
+  T.forEach((t,i)=>{
+    const loop=n>=3;
+    const sh=(i===0||(loop&&i===n-1))?s0:pool[(i-1)%pool.length];
+    lookSetAt(L,t,{shape:sh});
+  });
+  return n;
+}
+function lookBind(L){
+  const q=id=>document.getElementById(id);
+  const after=()=>{renderProps();renderTimeline();seekDirty=true;};
+  const b=q('pLookRec');
+  if(b)b.onclick=()=>{const t=lookRecord(L);after();toast('◆ Holat yozildi — '+(L.start+t).toFixed(2)+'s. Endi playheadni suring, rang/shaklni o\'zgartiring va yana ◆');};
+  const r=q('pLookRainbow');
+  if(r)r.onclick=()=>{const n=lookPresetRainbow(L);after();toast('🌈 Rang aylanishi — '+n+' ta holat (◆). Play bosib ko\'ring');};
+  const m=q('pLookMorph');
+  if(m)m.onclick=()=>{const n=lookPresetMorph(L);after();toast('🔄 Shakl almashinuvi — '+n+' ta holat (◆). Play bosib ko\'ring');};
+  const c=q('pLookClear');
+  if(c)c.onclick=()=>{saveHistory();lookClear(L);after();toast('Rang/shakl animatsiyasi olib tashlandi — hozirgi ko\'rinish qoldi');};
+  document.querySelectorAll('#props .look-chip, .look-chip').forEach(ch=>{
+    ch.onclick=e=>{
+      const t=+ch.dataset.t;
+      if(e.target.classList.contains('x')){e.stopPropagation();saveHistory();lookDelState(L,t);after();return;}
+      state.time=clamp(L.start+t,0,state.duration);seekDirty=true;try{syncTimeUI(true);}catch(er){}
+      renderProps();renderTimeline();
+    };
+  });
+}
+
 function drawShape(L,local,t,baseAlpha){
   const fx=objectFX(L,local,t);
   applyWalls(L,fx,L.w,L.h,local);
@@ -14622,6 +15028,49 @@ function drawShape(L,local,t,baseAlpha){
     }
   }
   const _fm=shapeFillMul(L,fx);if(_fm<1)ctx.globalAlpha=alpha*_fm;
+  // 💠 To'ldirish uslubi keyframe bilan almashsa — ikki uslub silliq aralashadi
+  const _fmx=L._fillMix;
+  if(_fmx&&_fmx.to&&_fmx.to!==L.fill&&_fmx.u>0.002){
+    if(_fmx.u>=0.998){const _sf=L.fill;L.fill=_fmx.to;try{shapeFillDraw(L,t);}finally{L.fill=_sf;}}
+    else shapeFillXfade(L,t,_fmx.to,_fmx.u,()=>shapeFillDraw(L,t));
+  }else shapeFillDraw(L,t);
+  // 🎨 STYLE: ichki soya (default 0 — ko'rinmaydi)
+  styleShadowInner(L);
+  if(_fm<1)ctx.globalAlpha=alpha;
+  if((L.border||_fm<1)&&trimActive(L)){
+    // 〰 Trim Paths — kontur chizilib boradi
+    if(!L.border)ctx.globalAlpha=alpha*(1-_fm);
+    drawShapeTrimStroke(L,fx,t,L.border?(L.borderColor||'#ffffff'):(L.fillColor||'#ffffff'),L.border?L.borderW:Math.max(2,L.borderW||3));
+    ctx.globalAlpha=alpha;
+    if(L.border)borderGlowFx(L,L.w,L.h,t);
+  }else if(L.border){
+    shapePath(L);
+    applyBorderStyle(L);
+    ctx.strokeStyle=borderStroke(L,L.w,L.h,t,1);
+    ctx.lineWidth=L.borderW;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    borderGlowFx(L,L.w,L.h,t);
+  }
+  // 3D chuqurlikda yuqori qirra yorug' bevel
+  if(L.depth>0){
+    shapePath(L);
+    const bvg=ctx.createLinearGradient(0,-L.h/2,0,L.h/2);
+    bvg.addColorStop(0,'rgba(255,255,255,.55)');
+    bvg.addColorStop(.4,'rgba(255,255,255,.06)');
+    bvg.addColorStop(1,'rgba(0,0,0,.28)');
+    ctx.strokeStyle=bvg;ctx.lineWidth=1.6;ctx.setLineDash([]);ctx.stroke();
+  }
+  if(fx.flash>0.01){
+    shapePath(L);
+    ctx.fillStyle=`rgba(255,255,255,${fx.flash})`;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* 💠 Shakl to'ldirishi (joriy L.fill uslubida) — morf/aralashma uchun alohida funksiya */
+function shapeFillDraw(L,t){
   shapePath(L);
   if(L.fill==='glass'||L.fill==='liquid'||L.fill==='liquid2'){
     const pro=L.fill==='liquid2';
@@ -14709,7 +15158,12 @@ function drawShape(L,local,t,baseAlpha){
       ctx.strokeStyle='rgba(255,255,255,.95)';
       ctx.lineWidth=1.6;ctx.setLineDash([]);ctx.stroke();
       ctx.restore();
-      pathRound(ctx,-L.w/2+3,-L.h/2+3,L.w-6,L.h-6,Math.max(2,L.radius-3));
+      // ichki nozik aks — shaklning O'Z konturi bo'yicha (avval har doim to'rtburchak edi:
+      // doira/yulduz/yurakda ichida begona ramka chiqardi)
+      ctx.save();
+      ctx.scale(Math.max(0.01,(L.w-6)/Math.max(1,L.w)),Math.max(0.01,(L.h-6)/Math.max(1,L.h)));
+      shapePath(L);
+      ctx.restore();
       ctx.strokeStyle='rgba(255,255,255,.3)';
       ctx.lineWidth=1;ctx.stroke();
     }else if(liquid){
@@ -14740,39 +15194,6 @@ function drawShape(L,local,t,baseAlpha){
     ctx.fillStyle=hexA(L.fillColor,L.fillA);
     ctx.fill();
   }
-  // 🎨 STYLE: ichki soya (default 0 — ko'rinmaydi)
-  styleShadowInner(L);
-  if(_fm<1)ctx.globalAlpha=alpha;
-  if((L.border||_fm<1)&&trimActive(L)){
-    // 〰 Trim Paths — kontur chizilib boradi
-    if(!L.border)ctx.globalAlpha=alpha*(1-_fm);
-    drawShapeTrimStroke(L,fx,t,L.border?(L.borderColor||'#ffffff'):(L.fillColor||'#ffffff'),L.border?L.borderW:Math.max(2,L.borderW||3));
-    ctx.globalAlpha=alpha;
-    if(L.border)borderGlowFx(L,L.w,L.h,t);
-  }else if(L.border){
-    shapePath(L);
-    applyBorderStyle(L);
-    ctx.strokeStyle=borderStroke(L,L.w,L.h,t,1);
-    ctx.lineWidth=L.borderW;
-    ctx.stroke();
-    ctx.setLineDash([]);
-    borderGlowFx(L,L.w,L.h,t);
-  }
-  // 3D chuqurlikda yuqori qirra yorug' bevel
-  if(L.depth>0){
-    shapePath(L);
-    const bvg=ctx.createLinearGradient(0,-L.h/2,0,L.h/2);
-    bvg.addColorStop(0,'rgba(255,255,255,.55)');
-    bvg.addColorStop(.4,'rgba(255,255,255,.06)');
-    bvg.addColorStop(1,'rgba(0,0,0,.28)');
-    ctx.strokeStyle=bvg;ctx.lineWidth=1.6;ctx.setLineDash([]);ctx.stroke();
-  }
-  if(fx.flash>0.01){
-    shapePath(L);
-    ctx.fillStyle=`rgba(255,255,255,${fx.flash})`;
-    ctx.fill();
-  }
-  ctx.restore();
 }
 
 /* Quti (mask) shu lokal vaqtda faolmi? maskTo=null bo'lsa — klip oxirigacha */
@@ -15665,11 +16086,8 @@ function drawTop(L,t,_CAML,sceneCtx){
     }
     // Keyframe'langan effekt xususiyatlarini vaqtincha qo'llash
     let saved=null;
-    if(L.kfs&&L.kfs.length){
-      saved={};
-      const _M=kfPM();
-      for(const kk in T){const prop=_M[kk];
-        if(prop!==undefined&&T[kk]!==undefined&&L[prop]!==undefined){saved[prop]=L[prop];L[prop]=T[kk];}}
+    if((L.kfs&&L.kfs.length)||L._kfPend){
+      saved=kfApplyTmp(L,T,{});
     }
     const _fOn=L.featherOn&&((L.featherT||0)+(L.featherB||0)+(L.featherL||0)+(L.featherR||0)>0);
     // 🎬 Haqiqiy 3D: burilish sezilarli bo'lsa element avval tekis chiziladi,
@@ -15964,11 +16382,8 @@ function drawTop(L,t,_CAML,sceneCtx){
           const kl=t-K.start;
           const KT=kfValue(K,kl);
           let ksaved=null;
-          if(K.kfs&&K.kfs.length){
-            ksaved={};
-            const _M=kfPM();
-            for(const kk in KT){const prop=_M[kk];
-              if(prop!==undefined&&KT[kk]!==undefined&&K[prop]!==undefined){ksaved[prop]=K[prop];K[prop]=KT[kk];}}
+          if((K.kfs&&K.kfs.length)||K._kfPend){
+            ksaved=kfApplyTmp(K,KT,{});
           }
           // 🧲 elastik + ⚓ anchor + 🧊 a'zoning o'z 3D si — guruhlanmagandagidek
           let KT2=KT,_kst=null;
@@ -17612,7 +18027,13 @@ function layerName(L){
   if(L.type==='text')return L.text.split('\n')[0]||'Matn';
   if(L.type==='progress')return (L.plabel||'Progress')+' '+Math.round(L.pval)+'%';
   if(L.type==='timer')return (L.tLabel||(TIMERS.find(x=>x.v===L.tKind)?.n)||'Taymer');
-  if(L.type==='shape')return (SHAPES.find(s=>s.v===L.shape)?.n||'Shakl');
+  if(L.type==='shape'){
+    // 🔄 shakl turi vaqt davomida o'zgarsa — "Doira → Yulduz" ko'rinishida
+    const _sn=v=>(SHAPES.find(s=>s.v===v)?.n||'Shakl');
+    if(L.kfs&&L.kfs.length>1){const seq=[];for(const q of L.kfs)if(q.shape&&seq[seq.length-1]!==q.shape)seq.push(q.shape);
+      if(seq.length>1)return seq.slice(0,3).map(_sn).join(' → ')+(seq.length>3?' …':'');}
+    return _sn(L.shape);
+  }
   return L.name||(L.type==='video'?'Video':L.type==='audio'?'Audio':'Rasm');
 }
 /* ✏️ Elementni nomlash — timeline bar / qatlam ro'yxati / xususiyatlar panelidan */
@@ -19040,8 +19461,8 @@ function borderBlock(L){
     <div class="row2">
       <div class="field"><label>Burchak: <b id="pBAngV">${Math.round(L.borderAng||0)}</b>°</label>
         <input type="range" id="pBAng" min="0" max="360" value="${Math.round(L.borderAng||0)}"></div>
-      <div class="field"><label>Shaffoflik: <b id="pBAV">${Math.round((L.borderA??1)*100)}</b>%</label>
-        <input type="range" id="pBA" min="0" max="100" value="${Math.round((L.borderA??1)*100)}"></div>
+      <div class="field"><label>Shaffoflik: <b id="pBAV">${Math.round((kfNow(L,'borderA')??1)*100)}</b>%</label>
+        <input type="range" id="pBA" min="0" max="100" value="${Math.round((kfNow(L,'borderA')??1)*100)}"></div>
     </div>
     <label class="chk"><input type="checkbox" id="pBSpin" ${L.borderSpin?'checked':''}> 🔄 Ranglar aylanib tursin (jonli)</label>
     ${L.borderSpin?`<div class="row2">
@@ -19051,7 +19472,7 @@ function borderBlock(L){
         <select id="pBSpinEase">${SPIN_EASES.map(([v,n])=>`<option value="${v}" ${(L.borderSpinEase||'linear')===v?'selected':''}>${n}</option>`).join('')}</select></div>
     </div>`:''}
     `:`
-    <div class="field"><label>Chegara rangi</label><input type="color" id="pBColor" value="${L.borderColor}"></div>`}
+    <div class="field"><label>Chegara rangi</label><input type="color" id="pBColor" value="${kfNow(L,'borderColor')}"></div>`}
     <div class="row2">
       <div class="field"><label>Qalinligi: <b id="pBWV">${L.borderW}</b></label>
         <input type="range" id="pBW" min="1" max="30" step="0.5" value="${L.borderW}"></div>
@@ -19068,7 +19489,7 @@ function borderBlock(L){
         <input type="range" id="pBGlowA" min="0" max="100" value="${Math.round(L.borderGlowA??70)}"></div>
     </div>
     <div class="field"><label>Nur rangi <span style="color:var(--muted)">— bo'sh qoldirsangiz chegara rangi olinadi</span></label>
-      <input type="color" id="pBGlowC" value="${L.borderGlowC||L.borderColor||'#ffd76b'}"></div>`:''}
+      <input type="color" id="pBGlowC" value="${kfNow(L,'borderGlowC')||kfNow(L,'borderColor')||'#ffd76b'}"></div>`:''}
     <label class="chk"><input type="checkbox" id="pBSpark" ${L.borderSparkOn?'checked':''}> 🌟 Aylanuvchi yorqin uchqun (shine)</label>
     ${L.borderSparkOn?`<div class="field"><label>Uchqun tezligi: <b id="pBSparkSV">${(L.borderSparkSpd||0.5).toFixed(2)}</b>×</label>
       <input type="range" id="pBSparkS" min="0.1" max="2" step="0.05" value="${L.borderSparkSpd||0.5}"></div>`:''}
@@ -19089,7 +19510,7 @@ function borderBlock(L){
     <div class="row2">
       <div class="field"><label>Quyuqlik: <b id="pSoAV">${Math.round(L.shOutA||0)}</b>%</label>
         <input type="range" id="pSoA" min="0" max="90" value="${Math.round(L.shOutA||0)}"></div>
-      <div class="field"><label>Rang</label><input type="color" id="pSoC" value="${L.shOutC||'#000000'}"></div>
+      <div class="field"><label>Rang</label><input type="color" id="pSoC" value="${kfNow(L,'shOutC')||'#000000'}"></div>
     </div>
     <div class="row2">
       <div class="field"><label>Yumshoqlik: <b id="pSoBV">${Math.round(L.shOutB||0)}</b></label>
@@ -19108,7 +19529,7 @@ function borderBlock(L){
     <div class="row2">
       <div class="field"><label>Quyuqlik: <b id="pSiAV">${Math.round(L.shInA||0)}</b>%</label>
         <input type="range" id="pSiA" min="0" max="90" value="${Math.round(L.shInA||0)}"></div>
-      <div class="field"><label>Rang</label><input type="color" id="pSiC" value="${L.shInC||'#000000'}"></div>
+      <div class="field"><label>Rang</label><input type="color" id="pSiC" value="${kfNow(L,'shInC')||'#000000'}"></div>
     </div>
     <div class="row2">
       <div class="field"><label>Yumshoqlik: <b id="pSiBV">${Math.round(L.shInB||0)}</b></label>
@@ -19322,7 +19743,7 @@ function renderProps(){
             <button data-a="center" class="${(L.align||'center')==='center'?'on':''}" title="O'rtaga tekislash">⬌ O'rta</button>
             <button data-a="right" class="${(L.align||'center')==='right'?'on':''}" title="O'ngdan tekislash">➡ O'ng</button>
           </div></div>
-        <div class="field"><label>Rang</label><input type="color" id="pColor" value="${L.color}"></div>
+        <div class="field"><label>Rang ${lookAnimated(L,'color')?'<span class="kfdot" title="Vaqt davomida o\'zgaradi (◆)">◆</span>':''}</label><input type="color" id="pColor" value="${kfNow(L,'color')}"></div>
         <label class="chk"><input type="checkbox" id="pTGrad" ${L.tgrad?'checked':''}> 🌈 Yozuvni gradient qilish</label>
         ${L.tgrad?`<div class="row2">
           <div class="field"><label>Ikkinchi rang</label><input type="color" id="pTGrad2" value="${L.tgrad2||'#ec4899'}"></div>
@@ -19540,9 +19961,10 @@ function renderProps(){
       transformBlock(L)+maskBlock(L)+featherBlock(L)+timingBlock(L);
   }
   else if(L.type==='shape'){
+    const _fl=kfNow(L,'fill'),_shN=kfNow(L,'shape');
     html=(isGroupHolder(L)?sec('🎠 3D Karusel',carouselBlock(L),!!(L.car&&L.car.on)):'')+
       sec('◇ Shakl',`
-        <div class="field"><label>Tayyor shakl</label><select id="pShape">${selOpts(SHAPES,L.shape)}</select></div>
+        <div class="field"><label>Tayyor shakl ${lookAnimated(L,'shape')?'<span class="kfdot" title="Vaqt davomida o\'zgaradi (◆)">◆</span>':''}</label><select id="pShape">${selOpts(SHAPES,_shN)}</select></div>
         ${UI_SHAPES.includes(L.shape)?uiShapeBlock(L):''}
         ${ANNOT.includes(L.shape)?`<div class="hintline">🎯 Ko'rsatish vositasi: rangi — "Rang 1", qalinligi — "Chegara qalinligi". Kirish: <b>"⚡ Chizilib paydo bo'lish"</b> = o'zi chizilib chiqadi. Aylantirish — sahnadagi 🔄 dastak.</div>
         <div class="row2">
@@ -19574,30 +19996,30 @@ function renderProps(){
           <input type="range" id="pR" min="0" max="200" value="${L.radius}"></div>
         ${radMultiBlock(L)}`,true)+
       sec('💠 To\'ldirish',`
-        <div class="field"><label>Uslub</label>
+        <div class="field"><label>Uslub ${lookAnimated(L,'fill')?'<span class="kfdot" title="Vaqt davomida o\'zgaradi (◆)">◆</span>':''}</label>
           <select id="pFill">
-            <option value="glass" ${L.fill==='glass'?'selected':''}>Glass (shisha)</option>
-            <option value="liquid" ${L.fill==='liquid'?'selected':''}>✨ Liquid Glass (jonli shisha)</option>
-            <option value="liquid2" ${L.fill==='liquid2'?'selected':''}>💧 Liquid Glass Pro (suv)</option>
-            <option value="lglass" ${L.fill==='lglass'?'selected':''}>💎 Liquid Glass — aniq sozlash</option>
-            <option value="neo" ${L.fill==='neo'?'selected':''}>🧊 Neomorphism — aniq sozlash</option>
-            <option value="color" ${L.fill==='color'?'selected':''}>Bir rang</option>
-            <option value="gradient" ${L.fill==='gradient'?'selected':''}>Gradient</option>
+            <option value="glass" ${_fl==='glass'?'selected':''}>Glass (shisha)</option>
+            <option value="liquid" ${_fl==='liquid'?'selected':''}>✨ Liquid Glass (jonli shisha)</option>
+            <option value="liquid2" ${_fl==='liquid2'?'selected':''}>💧 Liquid Glass Pro (suv)</option>
+            <option value="lglass" ${_fl==='lglass'?'selected':''}>💎 Liquid Glass — aniq sozlash</option>
+            <option value="neo" ${_fl==='neo'?'selected':''}>🧊 Neomorphism — aniq sozlash</option>
+            <option value="color" ${_fl==='color'?'selected':''}>Bir rang</option>
+            <option value="gradient" ${_fl==='gradient'?'selected':''}>Gradient</option>
           </select></div>
-        ${L.fill==='neo'?neoBlock(L):L.fill==='lglass'?lglassBlock(L):''}
-        ${(L.fill==='neo'||L.fill==='lglass')?'':`<div class="row2">
-          <div class="field"><label>Rang 1</label><input type="color" id="pFillC" value="${L.fillColor}"></div>
-          <div class="field"><label>Rang 2 (gradient)</label><input type="color" id="pGrad2" value="${L.grad2}"></div>
+        ${_fl==='neo'?neoBlock(L):_fl==='lglass'?lglassBlock(L):''}
+        ${(_fl==='neo'||_fl==='lglass')?'':`<div class="row2">
+          <div class="field"><label>Rang 1 ${lookAnimated(L,'fillColor')?'<span class="kfdot">◆</span>':''}</label><input type="color" id="pFillC" value="${kfNow(L,'fillColor')}"></div>
+          <div class="field"><label>Rang 2 (gradient) ${lookAnimated(L,'grad2')?'<span class="kfdot">◆</span>':''}</label><input type="color" id="pGrad2" value="${kfNow(L,'grad2')}"></div>
         </div>
-        <div class="field"><label>Rang kuchi: <b id="pFAV">${Math.round(L.fillA*100)}%</b></label>
-          <input type="range" id="pFA" min="5" max="100" value="${Math.round(L.fillA*100)}"></div>
+        <div class="field"><label>Rang kuchi: <b id="pFAV">${Math.round(kfNow(L,'fillA')*100)}%</b></label>
+          <input type="range" id="pFA" min="5" max="100" value="${Math.round(kfNow(L,'fillA')*100)}"></div>
         <div class="row2">
           <div class="field"><label>Glass xiralik: <b id="pBlV">${L.blur}</b></label>
             <input type="range" id="pBl" min="0" max="40" value="${L.blur}"></div>
-          <div class="field"><label>Glass tint: <b id="pTAV">${Math.round(L.tintA*100)}%</b></label>
-            <input type="range" id="pTA" min="0" max="60" value="${Math.round(L.tintA*100)}"></div>
+          <div class="field"><label>Glass tint: <b id="pTAV">${Math.round(kfNow(L,'tintA')*100)}%</b></label>
+            <input type="range" id="pTA" min="0" max="60" value="${Math.round(kfNow(L,'tintA')*100)}"></div>
         </div>
-        <div class="field"><label>Tint rangi</label><input type="color" id="pTint" value="${L.tint}"></div>`}
+        <div class="field"><label>Tint rangi</label><input type="color" id="pTint" value="${kfNow(L,'tint')}"></div>`}
         <div class="row2">
           <div class="field"><label>3D burilish: <b id="pD3V">${L.d3}°</b></label>
             <input type="range" id="pD3" min="-40" max="40" value="${L.d3}"></div>
@@ -19605,6 +20027,7 @@ function renderProps(){
             <input type="range" id="pDepth" min="0" max="60" value="${L.depth||0}"></div>
         </div>
         ${borderBlock(L)}`,true)+
+      (ANNOT.includes(L.shape)||UI_SHAPES.includes(L.shape)||CURVE_SHAPES.includes(L.shape)?'':sec('🎨 Rang va shakl animatsiyasi (◆)',lookBlock(L),lookHas(L)))+
       sec('✨ Animatsiya',`
         <div class="field"><label>Kirish</label><select id="pIn">${selOpts(OBJ_ANIMS,L.animIn)}</select></div>
         ${inEaseField(L)}
@@ -20004,7 +20427,7 @@ function renderProps(){
   on('pFont','onchange',e=>{L.font=e.target.value;});
   on('pSize','oninput',e=>{setAnimProp(L,'tsize',+e.target.value);$('pSizeV').textContent=e.target.value;});
   on('pWeight','onchange',e=>{L.weight=+e.target.value;});
-  on('pColor','oninput',e=>{L.color=e.target.value;});
+  on('pColor','oninput',e=>{setAnimProp(L,'color',e.target.value);seekDirty=true;lookPendUI(L);});
   box.querySelectorAll('#pAlign button').forEach(b=>b.onclick=()=>{
     saveHistory();
     L.align=b.dataset.a;
@@ -20031,7 +20454,8 @@ function renderProps(){
   on('pBx','oninput',e=>{setAnimProp(L,'bendX',+e.target.value);$('pBxV').textContent=e.target.value;});
   on('pBy','oninput',e=>{setAnimProp(L,'bendY',+e.target.value);$('pByV').textContent=e.target.value;});
   on('pShape','onchange',e=>{
-    L.shape=e.target.value;
+    saveHistory();
+    setAnimProp(L,'shape',e.target.value);seekDirty=true;
     if(UI_SHAPES.includes(L.shape)){uiShapeDefaults(L);renderProps();}
     if(CURVE_SHAPES.includes(L.shape)){L.fill='color';L.shadow=false;L.border=false;if((L.borderW||0)<4)L.borderW=8;
       if(!L.fillColor||L.fillColor==='#8b5cf6')L.fillColor='#ffffff';if(L.shape==='pen'&&!L.pts)L.pts=PEN_DEF.map(q=>q.slice());renderProps();}
@@ -20040,9 +20464,8 @@ function renderProps(){
       if(!L.fillColor||L.fillColor==='#8b5cf6')L.fillColor='#ffd648';
       if(L.borderW<3)L.borderW=5;
       L.fill='color';L.shadow=false;
-      renderProps();
     }
-    renderLayers();renderTimeline();
+    renderProps();renderLayers();renderTimeline();
   });
   on('pW','oninput',e=>{setAnimProp(L,'w',+e.target.value);$('pWV').textContent=e.target.value;});
   on('pH','oninput',e=>{setAnimProp(L,'h',+e.target.value);$('pHV').textContent=e.target.value;});
@@ -20062,20 +20485,21 @@ function renderProps(){
   on('pRtr','oninput',e=>{setAnimProp(L,'rTR',+e.target.value);$('pRtrV').textContent=e.target.value;});
   on('pRbr','oninput',e=>{setAnimProp(L,'rBR',+e.target.value);$('pRbrV').textContent=e.target.value;});
   on('pRbl','oninput',e=>{setAnimProp(L,'rBL',+e.target.value);$('pRblV').textContent=e.target.value;});
-  on('pFill','onchange',e=>{L.fill=e.target.value;
+  on('pFill','onchange',e=>{saveHistory();setAnimProp(L,'fill',e.target.value);seekDirty=true;
     if((L.fill==='neo'||L.fill==='lglass')&&!L._fxInit){L._fxInit=1;L.border=false;}
     renderProps();});
   fxBind(L,box);
-  on('pFillC','oninput',e=>{L.fillColor=e.target.value;});
-  on('pGrad2','oninput',e=>{L.grad2=e.target.value;});
-  on('pFA','oninput',e=>{L.fillA=+e.target.value/100;$('pFAV').textContent=Math.round(L.fillA*100)+'%';});
+  on('pFillC','oninput',e=>{setAnimProp(L,'fillColor',e.target.value);seekDirty=true;lookPendUI(L);});
+  on('pGrad2','oninput',e=>{setAnimProp(L,'grad2',e.target.value);seekDirty=true;lookPendUI(L);});
+  on('pFA','oninput',e=>{setAnimProp(L,'fillA',+e.target.value/100);$('pFAV').textContent=e.target.value+'%';seekDirty=true;lookPendUI(L);});
   on('pBl','oninput',e=>{setAnimProp(L,'blur',+e.target.value);$('pBlV').textContent=e.target.value;});
-  on('pTint','oninput',e=>{L.tint=e.target.value;});
-  on('pTA','oninput',e=>{L.tintA=+e.target.value/100;$('pTAV').textContent=Math.round(L.tintA*100)+'%';});
+  on('pTint','oninput',e=>{setAnimProp(L,'tint',e.target.value);seekDirty=true;lookPendUI(L);});
+  on('pTA','oninput',e=>{setAnimProp(L,'tintA',+e.target.value/100);$('pTAV').textContent=e.target.value+'%';seekDirty=true;lookPendUI(L);});
+  lookBind(L);
   on('pD3','oninput',e=>{setAnimProp(L,'d3',+e.target.value);$('pD3V').textContent=e.target.value+'°';});
   on('pDepth','oninput',e=>{setAnimProp(L,'depth',+e.target.value);$('pDepthV').textContent=e.target.value;});
   on('pBorder','onchange',e=>{L.border=e.target.checked;renderProps();});
-  on('pBColor','oninput',e=>{L.borderColor=e.target.value;});
+  on('pBColor','oninput',e=>{setAnimProp(L,'borderColor',e.target.value);seekDirty=true;lookPendUI(L);});
   on('pBW','oninput',e=>{setAnimProp(L,'borderW',+e.target.value);$('pBWV').textContent=e.target.value;});
   on('pBStyle','onchange',e=>{L.borderStyle=e.target.value;});
   on('pBGrad','onchange',e=>{
@@ -20084,7 +20508,7 @@ function renderProps(){
     renderProps();
   });
   on('pBAng','oninput',e=>{setAnimProp(L,'borderAng',+e.target.value);$('pBAngV').textContent=e.target.value;});
-  on('pBA','oninput',e=>{L.borderA=+e.target.value/100;$('pBAV').textContent=e.target.value;});
+  on('pBA','oninput',e=>{setAnimProp(L,'borderA',+e.target.value/100);$('pBAV').textContent=e.target.value;seekDirty=true;lookPendUI(L);});
   on('pBSpin','onchange',e=>{L.borderSpin=e.target.checked;renderProps();});
   on('pBSpd','oninput',e=>{L.borderSpinSpd=+e.target.value;const el=$('pBSpdV');if(el)el.textContent=(+e.target.value).toFixed(1);});
   on('pBSpinEase','onchange',e=>{L.borderSpinEase=e.target.value;});
@@ -20096,15 +20520,15 @@ function renderProps(){
   on('pBRunL','oninput',e=>{L.borderRunLen=+e.target.value;$('pBRunLV').textContent=e.target.value;});
   on('pBRunG','oninput',e=>{L.borderRunGlow=+e.target.value;$('pBRunGV').textContent=e.target.value;});
   on('pBGlowA','oninput',e=>{setAnimProp(L,'borderGlowA',+e.target.value);$('pBGlowAV').textContent=e.target.value;seekDirty=true;});
-  on('pBGlowC','oninput',e=>{L.borderGlowC=e.target.value;seekDirty=true;});
+  on('pBGlowC','oninput',e=>{setAnimProp(L,'borderGlowC',e.target.value);seekDirty=true;lookPendUI(L);});
   /* 🎨 STYLE — tashqi va ichki soya boshqaruvi */
   const _sl=(id,key,vid)=>on(id,'oninput',e=>{setAnimProp(L,key,+e.target.value);const v=$(vid);if(v)v.textContent=Math.round(+e.target.value);seekDirty=true;if(hasKF(L))renderTimeline();});
   _sl('pSoA','shOutA','pSoAV'); _sl('pSoB','shOutB','pSoBV'); _sl('pSoS','shOutS','pSoSV');
   _sl('pSoX','shOutX','pSoXV'); _sl('pSoY','shOutY','pSoYV');
-  on('pSoC','oninput',e=>{L.shOutC=e.target.value;seekDirty=true;});
+  on('pSoC','oninput',e=>{setAnimProp(L,'shOutC',e.target.value);seekDirty=true;lookPendUI(L);});
   _sl('pSiA','shInA','pSiAV'); _sl('pSiB','shInB','pSiBV'); _sl('pSiS','shInS','pSiSV');
   _sl('pSiX','shInX','pSiXV'); _sl('pSiY','shInY','pSiYV');
-  on('pSiC','oninput',e=>{L.shInC=e.target.value;seekDirty=true;});
+  on('pSiC','oninput',e=>{setAnimProp(L,'shInC',e.target.value);seekDirty=true;lookPendUI(L);});
   on('pShClr','onclick',()=>{
     Object.assign(L,{shOutA:0,shOutB:0,shOutS:0,shOutX:0,shOutY:0,
                      shInA:0,shInB:0,shInS:0,shInX:0,shInY:0,
