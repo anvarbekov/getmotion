@@ -703,13 +703,30 @@
   /* o'rta ekranlarda (MacBook 13") faqat tanlangan rejim nomi yoziladi — panel bir qatorga sig'adi */
   @media (max-width:1440px){ #camHud button:not(.on):not(.kf) span{display:none;} }
   @media (max-width:820px){ #camHud{top:76px;left:10px;max-width:calc(100% - 20px);} #camHud button span{display:none;} }
-  .tl-names .nm.cam-nm{color:#67e8f9;cursor:pointer;}
-  .tl-row.tl-camrow{background:linear-gradient(90deg,rgba(8,145,178,.07),rgba(8,145,178,.02));}
-  .tl-bar.cambar{background:rgba(8,145,178,.16);border:1px dashed rgba(34,211,238,.35);opacity:1;cursor:pointer;color:#a5f3fc;padding:0 10px;}
-  .tl-bar.cambar .camlab{position:relative;z-index:1;font-size:10.5px;opacity:.85;pointer-events:none;overflow:hidden;text-overflow:ellipsis;}
-  .tl-bar.cambar .camseg{position:absolute;top:50%;height:3px;margin-top:-1.5px;background:linear-gradient(90deg,#22d3ee,#34d399);border-radius:2px;pointer-events:none;opacity:.9;}
-  .tl-bar.cambar .kfd.camkf{background:#34d399;border-color:#064e3b;cursor:ew-resize;}
-  .tl-bar.cambar .kfd.camkf.selk{background:#fff;border-color:#22d3ee;}
+  .tl-names .nm.cam-nm{color:#93c5fd;cursor:pointer;font-weight:600;background:linear-gradient(90deg,rgba(59,130,246,.12),transparent);border-bottom:1px solid rgba(96,165,250,.18);}
+  .tl-names .nm.cam-nm.off{color:var(--muted);font-weight:400;}
+  .tl-row.tl-camrow{background:linear-gradient(90deg,rgba(59,130,246,.07),rgba(59,130,246,.02));border-bottom:1px solid rgba(96,165,250,.18);}
+  .tl-bar.cambar{background:linear-gradient(180deg,#3b82f6,#1d4ed8);opacity:.95;cursor:pointer;color:#fff;padding:0 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25);}
+  .tl-bar.cambar.off{background:rgba(59,130,246,.10);border:1px dashed rgba(96,165,250,.45);color:#93c5fd;box-shadow:none;}
+  .tl-bar.cambar .camlab{position:relative;z-index:1;font-size:11px;font-weight:600;pointer-events:none;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.35);}
+  .tl-bar.cambar .camlab i{font-style:normal;font-weight:400;opacity:.85;}
+  .tl-bar.cambar .camseg{position:absolute;top:3px;bottom:3px;border-radius:4px;pointer-events:none;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.20) 0 7px,rgba(255,255,255,.06) 7px 14px);}
+  .tl-bar.cambar .kfd.camkf{background:#fff;border-color:#1e3a8a;cursor:ew-resize;}
+  .tl-bar.cambar .kfd.camkf.selk{background:#fbbf24;border-color:#fff;}
+  /* kamera ◆ menyusi */
+  .cam-menu{position:fixed;z-index:9999;min-width:250px;max-width:340px;background:#15161e;border:1px solid rgba(96,165,250,.35);border-radius:11px;padding:5px;box-shadow:0 14px 38px rgba(0,0,0,.55);font-size:12.5px;}
+  .cam-menu .cm-h{padding:6px 9px 5px;font-size:11px;font-weight:700;color:#93c5fd;letter-spacing:.3px;}
+  .cam-menu button{display:block;width:100%;text-align:left;padding:7px 9px;border-radius:7px;border:none;background:transparent;color:var(--text);font-size:12.5px;cursor:pointer;white-space:normal;line-height:1.35;}
+  .cam-menu button:hover{background:rgba(59,130,246,.18);}
+  .cam-menu button.dim{opacity:.6;}
+  .cam-menu button.danger:hover{background:rgba(248,113,113,.15);color:#fca5a5;}
+  .cam-menu button i{font-style:normal;color:var(--muted);}
+  .cam-menu .cm-sep{height:1px;background:var(--border);margin:4px 3px;}
+  .cam-menu .cm-note{padding:6px 9px;color:var(--muted);font-size:11.5px;line-height:1.4;}
+  .cs-stops{display:flex;flex-wrap:wrap;gap:5px;}
+  .cs-stops .cs-stop{padding:5px 9px;font-size:12px;border-radius:8px;}
+  .cs-stops .cs-stop.has{opacity:.6;border-color:rgba(52,211,153,.45);color:#6ee7b7;}
   #v3Help{position:absolute;top:54px;left:14px;z-index:8;width:min(400px,calc(100% - 28px));max-height:calc(100% - 70px);overflow:auto;padding:13px 15px;border-radius:13px;
     background:rgba(14,15,21,.94);border:1px solid rgba(139,92,246,.45);box-shadow:0 14px 40px rgba(0,0,0,.5);font-size:12px;line-height:1.5;color:var(--text);backdrop-filter:blur(8px);}
   #v3Help .vh-h{font-size:14px;font-weight:800;margin-bottom:6px;}
@@ -737,7 +754,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.3</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.4</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -11031,6 +11048,7 @@ function camSection(){
       <p>🧱 <b>3D chuqurlik:</b> elementning <b>Chuqurlik Z</b> qiymati (element panelida) uni kameradan uzoqlashtiradi (+) yoki yaqinlashtiradi (−). Kamera harakatlanganda yaqin narsalar tez, uzoqdagilar sekin siljiydi — haqiqiy 3D hissi.</p>
       <p>🧊 <b>3D sahna</b> — hammasini yondan ko'rish: oq ramka = kadr, ko'k piramida = kamera ko'rayotgan hudud, yashil chiziq = kamera yo'li.</p>
       <p>🎬 <b>Sahna quruvchi</b> — kadrning tepasi, pasti va yonlariga yangi kadrlar qo'shing (bo'sh yoki nusxa), so'ng "Yo'lni yaratish" — kamera ular orasida o'zi uchadi.</p>
+      <p>🖼 <b>Fon ikkinchi joyda ham bo'lsin</b> — timeline'ning eng tepasidagi <b>🎥 Kamera</b> qatorida kerakli ◆ ga <b>o'ng tugma</b> → «Fonni shu kamera joyiga nusxalash». Yoki fonni tanlab, panelidagi <b>«🎥 Kamera joylariga nusxalash»</b>.</p>
       <p>⚡ Eng oson boshlash — pastdagi <b>🎬 Tayyor harakatlar</b>dan birini bosing.</p>
     </div></details>`;
   const presets=`<div class="field cam-pre"><label>🎬 Tayyor harakatlar — 1 bosishda</label>
@@ -11363,7 +11381,7 @@ function camToolWheel(e){
    🎥 TIMELINE'DA KAMERA QATORI — ◆ nuqtalar ko'rinadi, bosish = o'sha vaqtga o'tish,
    surish = vaqtini o'zgartirish, 2× bosish = yangi ◆, o'ng tugma / Delete = o'chirish
    ═══════════════════════════════════════════════════════════════════════════ */
-let camSelKf=null;
+let camSelKf=null,_camBarDown=null;
 function camFocusPanel(){
   state.selected=null;state.multi=[];
   try{if(typeof trSel!=='undefined')trSel=null;}catch(e){}
@@ -11374,29 +11392,32 @@ function camFocusPanel(){
 }
 function camTimelineRow(rows,names,W){
   const c=getCam();
-  if(!c.on)return;
+  const on=!!c.on;
   const D=Math.max(0.01,state.duration);
   const K=(c.kfs||[]).slice().sort((a,b)=>a.t-b.t);
-  const nm=document.createElement('div');nm.className='nm cam-nm';
+  const nm=document.createElement('div');nm.className='nm cam-nm'+(on?'':' off');
   nm.title='Kamera — bosing: kamera paneli';
-  nm.innerHTML=`<span class="nmtxt">🎥 Kamera <span style="opacity:.6">${K.length?K.length+' ◆':''}</span></span><span class="rowadd" style="display:flex"><button class="ra" title="Playhead joyiga kamera ◆ qo'yish">◆</button></span>`;
-  nm.querySelector('.ra').onclick=ev=>{ev.stopPropagation();saveHistory();const t=camAddKf();_camUiKey='';camSelKf=t;renderProps();renderTimeline();seekDirty=true;toast('◆ Kamera keyframe — '+t.toFixed(2)+'s');};
+  nm.innerHTML=`<span class="nmtxt">🎥 Kamera <span style="opacity:.6">${on?(K.length?K.length+' ◆':''):'· o\'chiq'}</span></span><span class="rowadd" style="display:flex"><button class="ra" title="Playhead joyiga kamera ◆ qo'yish">◆</button></span>`;
+  nm.querySelector('.ra').onclick=ev=>{ev.stopPropagation();saveHistory();if(!c.on)c.on=true;const t=camAddKf();_camUiKey='';camSelKf=t;renderProps();renderTimeline();seekDirty=true;try{camHudSync(true);}catch(e){}toast('◆ Kamera keyframe — '+t.toFixed(2)+'s');};
   nm.addEventListener('click',()=>camFocusPanel());
   names.appendChild(nm);
-  const row=document.createElement('div');row.className='tl-row tl-camrow';
-  const bar=document.createElement('div');bar.className='tl-bar cambar';
+  const row=document.createElement('div');row.className='tl-row tl-camrow tl-top';
+  const bar=document.createElement('div');bar.className='tl-bar cambar'+(on?'':' off');
   bar.style.left='0px';bar.style.width=W+'px';
-  bar.innerHTML=K.length>=2?'':`<span class="camlab">🎥 ${K.length?'Yana 1 ta ◆ qo\'ying (boshqa vaqtda) — shunda kamera harakatlanadi · 2× bosish = shu yerga ◆':'Kamera harakatsiz — 2× bosing: shu vaqtga ◆ qo\'yiladi'}</span>`;
+  const hint=!on?'o\'chiq — 2× bosing: yoqish va shu vaqtga ◆':(K.length>=2?'':(K.length?'yana 1 ta ◆ qo\'ying (boshqa vaqtda) — kamera harakatlanadi':'harakatsiz — 2× bosing: shu vaqtga ◆'));
+  bar.innerHTML=`<span class="camlab">🎥 Kamera${hint?' <i>· '+hint+'</i>':''}</span>`;
+  // harakat oraliqlari (◆ dan ◆ gacha kamera yuradi)
   for(let i=0;i<K.length-1;i++){
+    if(!camSegMoves(K[i],K[i+1]))continue;
     const sg=document.createElement('i');sg.className='camseg';
     sg.style.left=(K[i].t/D*W)+'px';sg.style.width=Math.max(1,(K[i+1].t-K[i].t)/D*W)+'px';
     bar.appendChild(sg);
   }
-  K.forEach(k=>{
+  K.forEach((k,ki)=>{
     const d=document.createElement('div');
     d.className='kfd camkf'+(camSelKf!==null&&Math.abs(camSelKf-k.t)<1e-3?' selk':'');
     d.style.left=`calc(${k.t/D*W}px - 5px)`;
-    d.title='◆ '+k.t.toFixed(2)+'s — bosing: o\'tish · surish: vaqtini o\'zgartirish · o\'ng tugma: o\'chirish';
+    d.title='◆'+(ki+1)+' · '+k.t.toFixed(2)+'s — bosing: o\'tish · surish: vaqtini o\'zgartirish · o\'ng tugma: menyu (fonni shu joyga nusxalash…)';
     d.addEventListener('mousedown',ev=>{
       if(ev.button!==0)return;
       ev.stopPropagation();ev.preventDefault();
@@ -11422,28 +11443,253 @@ function camTimelineRow(rows,names,W){
     });
     d.addEventListener('contextmenu',ev=>{
       ev.preventDefault();ev.stopPropagation();
-      saveHistory();c.kfs=c.kfs.filter(x=>x!==k);camSelKf=null;camClearPend();
-      _camUiKey='';renderProps();renderTimeline();seekDirty=true;toast('✕ Kamera keyframe o\'chirildi ('+k.t.toFixed(2)+'s)');
+      camSelKf=k.t;d.classList.add('selk');
+      camKfMenu(k,ki,ev.clientX,ev.clientY);
     });
+    // 📱 telefonda: ◆ ni bosib turish = menyu
+    d.addEventListener('touchstart',ev=>{
+      const t0=ev.touches[0];if(!t0)return;
+      const x=t0.clientX,y=t0.clientY;
+      const tm=setTimeout(()=>{camSelKf=k.t;d.classList.add('selk');camKfMenu(k,ki,x,y);},520);
+      const cancel=()=>{clearTimeout(tm);d.removeEventListener('touchmove',mv);d.removeEventListener('touchend',cancel);};
+      const mv=e2=>{const q=e2.touches[0];if(q&&Math.hypot(q.clientX-x,q.clientY-y)>8)cancel();};
+      d.addEventListener('touchmove',mv,{passive:true});d.addEventListener('touchend',cancel);
+    },{passive:true});
     bar.appendChild(d);
   });
   const tAt=ev=>{const r=bar.getBoundingClientRect();return clamp((ev.clientX-r.left)/Math.max(1,r.width)*D,0,D);};
+  // ⚠ birinchi bosish timeline'ni qayta quradi (panel ochiladi) — shuning uchun brauzerning
+  // dblclick hodisasi yangi elementga yetib bormaydi. Ikki bosish o'zimiz aniqlaymiz.
   bar.addEventListener('mousedown',ev=>{
-    if(ev.target.classList.contains('camkf'))return;
+    if(ev.target.classList.contains('camkf')||ev.button!==0)return;
     ev.stopPropagation();ev.preventDefault();
+    const now=performance.now(),tt=tAt(ev),dbl=_camBarDown&&now-_camBarDown.t<380&&Math.abs(ev.clientX-_camBarDown.x)<6;
+    _camBarDown=dbl?null:{t:now,x:ev.clientX};
     camSelKf=null;
-    state.time=tAt(ev);camClearPend();seekDirty=true;syncTimeUI(true);
+    if(dbl){
+      state.time=+tt.toFixed(3);camClearPend();syncTimeUI(true);
+      saveHistory();if(!c.on)c.on=true;
+      const t=camAddKf();camSelKf=t;_camUiKey='';renderProps();renderTimeline();seekDirty=true;try{camHudSync(true);}catch(e){}
+      toast('◆ Kamera keyframe — '+t.toFixed(2)+'s · endi kamerani o\'zgartiring');
+      return;
+    }
+    state.time=tt;camClearPend();seekDirty=true;syncTimeUI(true);
     camFocusPanel();
   });
-  bar.addEventListener('dblclick',ev=>{
-    if(ev.target.classList.contains('camkf'))return;
-    ev.stopPropagation();ev.preventDefault();
-    state.time=+tAt(ev).toFixed(3);camClearPend();syncTimeUI(true);
-    saveHistory();const t=camAddKf();camSelKf=t;_camUiKey='';renderProps();renderTimeline();seekDirty=true;
-    toast('◆ Kamera keyframe — '+t.toFixed(2)+'s · endi kamerani o\'zgartiring');
-  });
+  bar.addEventListener('contextmenu',ev=>{if(!ev.target.classList.contains('camkf'))ev.preventDefault();});
   row.appendChild(bar);
   rows.appendChild(row);
+}
+/* ikki ◆ orasida kamera haqiqatan qimirlaydimi */
+function camSegMoves(a,b){for(const k of CAM_KEYS){const x=a[k],y=b[k];if(typeof x==='number'&&typeof y==='number'&&Math.abs(x-y)>1e-3)return true;}return false;}
+/* timeline'dagi kamera qatori balandligi (u eng tepada — qator indekslari shunga suriladi) */
+function tlTopOff(){const r=document.querySelector('#tlRows > .tl-top');return r?r.offsetHeight:0;}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖼 ELEMENTNI (FONNI) KAMERA BORADIGAN JOYGA NUSXALASH / KO'CHIRISH
+   Kamera bir joydan ikkinchisiga uchadi — ikkinchi joyda esa fon yo'q, bo'shliq.
+   Bu yerda element aynan "hozir ekranda qanday ko'rinsa" — kamera o'sha ◆ ga
+   yetganda ham ekranda xuddi shunday (joyi, kattaligi, burilishi) ko'rinadigan
+   qilib nusxalanadi. Kamera yaqinlashgan/uzoqlashgan bo'lsa — o'lcham moslanadi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function camAffAt(t,cx,cy,z){
+  const c=getCam();
+  if(!c.on)return {a:1,b:0,c:0,d:1,e:0,f:0};
+  let S,zoom;
+  try{const v=camValues(t);S=camSolve(c,v,t,true);zoom=Math.max(0.05,v.zoom||1);}catch(e){return null;}
+  const d=50,p0=camProjPt(S,zoom,cx,cy,z),px=camProjPt(S,zoom,cx+d,cy,z),py=camProjPt(S,zoom,cx,cy+d,z);
+  if(!p0||!px||!py)return null;
+  const a=(px.x-p0.x)/d,b=(px.y-p0.y)/d,cc=(py.x-p0.x)/d,dd=(py.y-p0.y)/d;
+  return {a,b,c:cc,d:dd,e:p0.x-a*cx-cc*cy,f:p0.y-b*cx-dd*cy};
+}
+function _affPt(A,x,y){return {x:A.a*x+A.c*y+A.e,y:A.b*x+A.d*y+A.f};}
+/* nusxalanadigan element: tanlangan (guruh a'zosi bo'lsa — butun guruh), aks holda FON —
+   eng pastdagi, kadrning katta qismini egallagan element */
+function camCopyCandidate(){
+  let L=state.layers.find(x=>x.id===state.selected);
+  if(L&&L.linkTo!=null){const P=state.layers.find(x=>x.id===L.linkTo);if(P)L=P;}
+  if(L&&L.type!=='audio')return L;
+  const W=cv.width,H=cv.height;
+  for(const X of state.layers){
+    if(X.type==='audio'||X.linkTo!=null)continue;
+    let B;try{B=getSelBox(X);}catch(e){continue;}
+    if(B&&B.bw*B.bh>=W*H*0.55)return X;
+  }
+  return null;
+}
+/* element markazi kamera t vaqtida ekranning qayerida (null — kamera orqasida) */
+function camScreenOf(L,t){
+  let B;try{B=getSelBox(L);}catch(e){return null;}
+  const A=camAffAt(t,B.T.x,B.T.y,camLayerDepth(L));if(!A)return null;
+  return _affPt(A,B.T.x,B.T.y);
+}
+/* element eng yaxshi ko'rinadigan "andoza" vaqt: hozir yoki kamera ◆ laridan biri */
+function camRefTime(L){
+  const W=cv.width,H=cv.height;
+  const ts=[state.time,...(getCam().kfs||[]).map(k=>k.t)];
+  let best=state.time,bd=Infinity;
+  for(const t of ts){const p=camScreenOf(L,t);if(!p)continue;const d=Math.hypot(p.x-W/2,p.y-H/2)+(Math.abs(t-state.time)<1e-6?-1:0);if(d<bd){bd=d;best=t;}}
+  return best;
+}
+/* L ning kamera tTo vaqtidagi "xuddi shunday ko'rinish" uchun o'xshashlik almashtirishi */
+function camStopXf(L,tTo){
+  let B;try{B=getSelBox(L);}catch(e){return null;}
+  const z=camLayerDepth(L),cx=B.T.x,cy=B.T.y;
+  const tRef=camRefTime(L);
+  const A1=camAffAt(tRef,cx,cy,z),A2=camAffAt(tTo,cx,cy,z);
+  if(!A1||!A2)return null;
+  const p=_affPt(A1,cx,cy);
+  const det=A2.a*A2.d-A2.b*A2.c;if(Math.abs(det)<1e-9)return null;
+  const u=p.x-A2.e,v=p.y-A2.f;
+  const C2={x:(A2.d*u-A2.c*v)/det,y:(-A2.b*u+A2.a*v)/det};
+  let f=Math.sqrt(Math.abs(A1.a*A1.d-A1.b*A1.c)/Math.abs(det));
+  let dr=(Math.atan2(A1.b,A1.a)-Math.atan2(A2.b,A2.a))*180/Math.PI;
+  if(dr>180)dr-=360;if(dr<-180)dr+=360;
+  if(Math.abs(f-1)<0.006)f=1;if(Math.abs(dr)<0.25)dr=0;
+  /* 🖼 FON: asl element ekranni TO'LIQ qoplab turgan bo'lsa — nusxa ham kamera o'sha
+     joyda (burilgan/qiyshaygan perspektivada ham) ekranni to'liq qoplasin: chetlarda
+     qora bo'shliq qolmaguncha biroz kattalashtiriladi */
+  try{
+    const hw=B.bw/2,hh=B.bh/2,r0=B.T.rotDeg||0;
+    if(_quadCovers(_camQuad(tRef,cx,cy,hw,hh,r0,z))){
+      let f2=f,i=0;
+      while(i<45&&!_quadCovers(_camQuad(tTo,C2.x,C2.y,hw*f2,hh*f2,r0+dr,z))){f2*=1.035;i++;}
+      if(i<45)f=f2;
+    }
+  }catch(e){}
+  return {C1:{x:cx,y:cy},C2,f,dr,tRef};
+}
+function _camQuad(t,cx,cy,hw,hh,rotDeg,z){
+  const c=getCam();const v=camValues(t);const S=camSolve(c,v,t,true);const zoom=Math.max(0.05,v.zoom||1);
+  const a=rotDeg*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a);
+  return [[-1,-1],[1,-1],[1,1],[-1,1]].map(([u,w])=>camProjPt(S,zoom,cx+u*hw*cs-w*hh*sn,cy+u*hw*sn+w*hh*cs,z));
+}
+function _quadHas(Q,x,y){
+  let pos=0,neg=0;
+  for(let i=0;i<4;i++){const a=Q[i],b=Q[(i+1)%4];const cr=(b.x-a.x)*(y-a.y)-(b.y-a.y)*(x-a.x);if(cr>1e-6)pos++;else if(cr<-1e-6)neg++;}
+  return !(pos&&neg);
+}
+function _quadCovers(Q){
+  if(!Q||Q.some(p=>!p))return false;
+  const W=cv.width,H=cv.height;
+  return [[0,0],[W,0],[W,H],[0,H]].every(([x,y])=>_quadHas(Q,x,y));
+}
+function _xfApply(N,X,simple){
+  const r=X.dr*Math.PI/180,cs=Math.cos(r)*X.f,sn=Math.sin(r)*X.f;
+  const P=(x,y)=>{const dx=x-X.C1.x,dy=y-X.C1.y;return simple?{x:x+X.C2.x-X.C1.x,y:y+X.C2.y-X.C1.y}:{x:X.C2.x+dx*cs-dy*sn,y:X.C2.y+dx*sn+dy*cs};};
+  {const q=P(N.x||0,N.y||0);N.x=Math.round(q.x*10)/10;N.y=Math.round(q.y*10)/10;}
+  if(N.gox!==undefined){const q=P(N.gox,N.goy);N.gox=q.x;N.goy=q.y;}
+  for(const k of (N.kfs||[])){
+    if(k.x!==undefined&&k.y!==undefined){const q=P(k.x,k.y);k.x=q.x;k.y=q.y;}
+    if(!simple){if(typeof k.scale==='number')k.scale*=X.f;if(typeof k.rot==='number')k.rot+=X.dr;}
+  }
+  if(!simple){N.kscale=(N.kscale||1)*X.f;N.rotDeg=(N.rotDeg||0)+X.dr;}
+}
+/* kamera tTo vaqtida element (yoki uning nusxasi) allaqachon ko'rinadimi */
+function camStopHas(L,tTo){
+  const root=L.copyOf??L.id;
+  const fam=state.layers.filter(x=>x.id===root||x.copyOf===root);
+  const W=cv.width,H=cv.height;
+  for(const X of fam){const p=camScreenOf(X,tTo);if(p&&p.x>W*0.2&&p.x<W*0.8&&p.y>H*0.2&&p.y<H*0.8)return true;}
+  return false;
+}
+function camCopyTo(L,tTo,move,quiet){
+  const X=camStopXf(L,tTo);
+  if(!X){if(!quiet)toast('⚠ Kamera bu ◆ da elementga qaramaydi (orqasida) — boshqa joyni tanlang');return null;}
+  if(Math.hypot(X.C2.x-X.C1.x,X.C2.y-X.C1.y)<2&&X.f===1&&!X.dr){if(!quiet)toast('Element bu kamera joyida allaqachon ko\'rinib turibdi');return null;}
+  const group=isGroupHolder(L);
+  const simple=group||(X.f===1&&!X.dr);
+  if(!quiet)saveHistory();
+  if(move){
+    const kids=state.layers.filter(k=>k.linkTo===L.id);
+    _xfApply(L,X,simple);for(const K of kids)_xfApply(K,X,true);
+    if(!quiet){seekDirty=true;renderAll();toast('➡ «'+layerName(L)+'» kamera ◆ joyiga ko\'chirildi');}
+    return L;
+  }
+  const root=L.copyOf??L.id;
+  const clones=[],map=new Map();
+  const src=[L,...state.layers.filter(k=>k.linkTo===L.id)];
+  for(const S of src){
+    const N=sceneClone(S,0,0);
+    delete N.sceneFrame;   // sahna kadri plastinasining nusxasi — oddiy fon bo'ladi
+    _xfApply(N,X,S!==L||simple);
+    map.set(S.id,N.id);clones.push(N);
+  }
+  for(const N of clones)if(N.linkTo!=null&&map.has(N.linkTo))N.linkTo=map.get(N.linkTo);
+  const N0=clones[0];
+  N0.copyOf=root;
+  const n=state.layers.filter(x=>x.copyOf===root).length+2;
+  N0.customName=(L.copyOf!=null?(state.layers.find(x=>x.id===root)?.customName||layerName(state.layers.find(x=>x.id===root)||L)):(L.customName||layerName(L)))+' · '+n;
+  // z-tartib: asl elementning OSTIGA — nusxa kattalashgan bo'lsa ham asl joyida chok
+  // ko'rinmaydi (u yerda asl element ustida turadi); timeline qatori ham yonida
+  const i=Math.max(0,state.layers.indexOf(L));
+  state.layers.splice(i,0,...clones);
+  try{const ord=trackList();const ti=ord.indexOf(L.track);if(ti>=0){for(const N of clones){const j=ord.indexOf(N.track);if(j>=0)ord.splice(j,1);}ord.splice(ti,0,...clones.map(N=>N.track));}}catch(e){}
+  if(!quiet){state.selected=N0.id;state.multi=[];seekDirty=true;renderAll();
+    toast('🖼 «'+layerName(L)+'» kamera '+tTo.toFixed(1)+'s dagi joyiga nusxalandi'+(X.f!==1?' (o\'lchami kameraga moslandi)':''));}
+  return N0;
+}
+function camCopyAll(L){
+  const K=(getCam().kfs||[]).slice().sort((a,b)=>a.t-b.t);
+  saveHistory();
+  let n=0;
+  for(const k of K){if(camStopHas(L,k.t))continue;if(camCopyTo(L,k.t,false,true))n++;}
+  seekDirty=true;renderAll();
+  toast(n?('🖼 «'+layerName(L)+'» — '+n+' ta kamera joyiga nusxalandi'):'Barcha kamera joylarida allaqachon bor');
+}
+/* ◆ o'ng tugma menyusi */
+function camMenuClose(){const m=document.getElementById('camKfMenu');if(m)m.remove();removeEventListener('mousedown',_camMenuOut,true);removeEventListener('keydown',_camMenuEsc,true);}
+function _camMenuOut(e){if(!e.target.closest||!e.target.closest('#camKfMenu'))camMenuClose();}
+function _camMenuEsc(e){if(e.key==='Escape')camMenuClose();}
+function camKfMenu(k,ki,x,y){
+  camMenuClose();
+  const c=getCam();
+  const L=camCopyCandidate();
+  const m=document.createElement('div');m.id='camKfMenu';m.className='cam-menu';
+  const nmL=L?escapeHtml(layerName(L)).slice(0,28):'';
+  const has=L?camStopHas(L,k.t):false;
+  m.innerHTML=`<div class="cm-h">🎥 Kamera ◆${ki+1} · ${k.t.toFixed(2)}s</div>
+    <button data-a="go">▶ Shu joyga o'tish</button>
+    ${L?`<div class="cm-sep"></div>
+    <button data-a="copy" ${has?'class="dim"':''}>🖼 «${nmL}» ni shu kamera joyiga <b>nusxalash</b>${has?' <i>(bor)</i>':''}</button>
+    <button data-a="move">➡ «${nmL}» ni shu joyga <b>ko'chirish</b></button>
+    <button data-a="all">🖼 «${nmL}» ni <b>barcha</b> kamera ◆ joylariga</button>`
+    :`<div class="cm-sep"></div><div class="cm-note">ℹ Fon yoki boshqa elementni tanlang — shu kamera joyiga nusxalash mumkin bo'ladi</div>`}
+    <div class="cm-sep"></div>
+    <button data-a="del" class="danger">✕ ◆ ni o'chirish</button>`;
+  document.body.appendChild(m);
+  const r=m.getBoundingClientRect();
+  m.style.left=Math.max(6,Math.min(x,innerWidth-r.width-6))+'px';
+  m.style.top=Math.max(6,Math.min(y,innerHeight-r.height-6))+'px';
+  m.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const a=b.dataset.a;camMenuClose();
+    if(a==='go'){camGoTime(k.t);camFocusPanel();}
+    else if(a==='copy')camCopyTo(L,k.t,false);
+    else if(a==='move')camCopyTo(L,k.t,true);
+    else if(a==='all')camCopyAll(L);
+    else if(a==='del'){saveHistory();c.kfs=c.kfs.filter(x=>x!==k);camSelKf=null;camClearPend();
+      _camUiKey='';renderProps();renderTimeline();seekDirty=true;toast('✕ Kamera keyframe o\'chirildi ('+k.t.toFixed(2)+'s)');}
+  });
+  setTimeout(()=>{addEventListener('mousedown',_camMenuOut,true);addEventListener('keydown',_camMenuEsc,true);},0);
+}
+/* Element panelidagi bo'lim: kamera joylari ro'yxati — bir bosishda nusxa */
+function camStopsBlock(L){
+  const c=getCam();
+  const K=(c.kfs||[]).slice().sort((a,b)=>a.t-b.t);
+  if(!c.on||K.length<2||!L||L.type==='audio')return '';
+  if(L.linkTo!=null)return '';
+  let big=false;try{const B=getSelBox(L);big=B.bw*B.bh>=cv.width*cv.height*0.55;}catch(e){}
+  const btns=K.map((k,i)=>{const has=camStopHas(L,k.t);
+    return `<button class="cs-stop${has?' has':''}" data-t="${k.t}" title="${has?'Bu kamera joyida allaqachon ko\'rinadi':'Shu kamera joyiga nusxalash'}">${has?'✓':'＋'} ◆${i+1} · ${k.t.toFixed(1)}s</button>`;}).join('');
+  return sec('🎥 Kamera joylariga nusxalash',`
+    <div class="hintline">Kamera bir nechta joyga boradi. Bu element (masalan <b>fon</b>) kamera borgan joyda ham bo'lsin desangiz — ◆ ni bosing: nusxa kamera o'sha joyga yetganda ekranda <b>aynan hozirgidek</b> ko'rinadigan qilib qo'yiladi. ✓ — u joyda allaqachon bor.</div>
+    <div class="cs-stops">${btns}</div>
+    <button id="pCsAll" style="width:100%;justify-content:center;margin-top:6px">🖼 Barcha kamera joylariga nusxalash</button>`,big);
+}
+function camStopsBind(L){
+  document.querySelectorAll('.cs-stop').forEach(b=>{b.onclick=()=>{const t=+b.dataset.t;if(b.classList.contains('has')){toast('Bu kamera joyida allaqachon bor — baribir nusxa kerak bo\'lsa, timeline\'dagi ◆ ga o\'ng tugma');return;}camCopyTo(L,t,false);};});
+  const a=document.getElementById('pCsAll');if(a)a.onclick=()=>camCopyAll(L);
 }
 function camPathDirty(){try{v3PathKey='';}catch(e){}}
 addEventListener('keydown',e=>{
@@ -18899,7 +19145,7 @@ document.getElementById('btnSplit').onclick=splitSelected;
     if(e.button!==0)return;
     if(e.target.closest('.tl-bar'))return; // bar o'z logikasiga ega
     const r0=rowsEl.getBoundingClientRect();
-    const x0=e.clientX-r0.left, y0=e.clientY-r0.top;
+    const x0=e.clientX-r0.left, y0=e.clientY-r0.top-tlTopOff();
     // 🔗 Tanlov mavjud va bosish TANLOV HUDUDI ichida bo'lsa — ramka emas,
     // butun guruhni surish boshlanadi (barlar orasidagi bo'sh joydan ham tortish mumkin)
     if(state.multi&&state.multi.length>1){
@@ -18991,7 +19237,7 @@ document.getElementById('btnSplit').onclick=splitSelected;
       for(const l of state.layers){
         const ri=disp.indexOf(l.track);
         if(ri<0)continue;
-        const by=ri*rowH(), bx=(l.start/state.duration)*W, bw=Math.max(6,(l.dur/state.duration)*W);
+        const by=ri*rowH()+tlTopOff(), bx=(l.start/state.duration)*W, bw=Math.max(6,(l.dur/state.duration)*W);
         if(bx<Lx+Wx&&bx+bw>Lx&&by<Ty+Hy&&by+28>Ty)hits.push(l.id);
       }
       state.multi=hits;
@@ -20369,6 +20615,8 @@ function renderProps(){
   }
 
   try{if(L.type!=='audio')html+=aeBlock(L);}catch(e){console.warn('aeBlock',e);}
+  // 🎥 kamera bir nechta joyga borsa — elementni (fonni) o'sha joylarga nusxalash
+  try{const _cs=camStopsBlock(L);if(_cs)html=_cs+html;}catch(e){console.warn('camStops',e);}
   box.innerHTML=bgBlock+html;
   box.dataset.forId=String(_pKey);
   box.scrollTop=Math.min(_pTop,Math.max(0,box.scrollHeight-box.clientHeight));
@@ -20377,6 +20625,7 @@ function renderProps(){
   const $=id=>document.getElementById(id);
   const on=(id,ev,fn)=>{const el=$(id);if(el)el[ev]=e=>{historyMaybe();fn(e);};};
   try{aeBind(L,box);}catch(e){console.warn('aeBind',e);}
+  try{camStopsBind(L);}catch(e){console.warn('camStopsBind',e);}
 
   on('pText','oninput',e=>{L.text=e.target.value;renderLayers();});
   box.querySelectorAll('.anim-grid .ag').forEach(b=>b.onclick=()=>{
@@ -21390,6 +21639,9 @@ function renderTimeline(){
     ruler.appendChild(tick);
   }
 
+  // 🎥 Kamera — ENG TEPADA, alohida qator (AE/Premiere'dagidek): ◆ nuqtalari,
+  // harakat oraliqlari, o'ng tugma — fonni shu kamera joyiga nusxalash
+  try{camTimelineRow(rows,tlNames,W);}catch(e){console.warn('kamera qatori',e);}
   const tracks=(tlDragRows||trackList()).slice();
   for(const tr of tracks){
     const members=state.layers.filter(l=>l.track===tr).sort((a,b)=>a.start-b.start);
@@ -21606,7 +21858,7 @@ function renderTimeline(){
             // Vertikal surish = boshqa qatorga (trackka) ko'chirish (faqat yakka)
             const rowsEl=document.getElementById('tlRows');
             const rr=rowsEl.getBoundingClientRect();
-            const idx=Math.floor((ev.clientY-rr.top)/rowH());
+            const idx=Math.floor((ev.clientY-rr.top-tlTopOff())/rowH());
             if(idx>=0&&idx<trackSnap.length){
               if(L.track!==trackSnap[idx]){L.track=trackSnap[idx];trackChanged=true;}
             }else if(idx>=trackSnap.length){
@@ -21671,7 +21923,6 @@ function renderTimeline(){
     rows.appendChild(row);
   }
   try{trTimelineRow(rows,tlNames,W);}catch(e){console.warn('o\'tishlar qatori',e);}
-  try{camTimelineRow(rows,tlNames,W);}catch(e){console.warn('kamera qatori',e);}
   // 📜 Scrollni aynan o'z joyiga qaytaramiz (sakrash yo'q)
   if(_wrap){
     const maxT=Math.max(0,_wrap.scrollHeight-_wrap.clientHeight);
