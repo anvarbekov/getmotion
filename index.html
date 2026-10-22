@@ -798,7 +798,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.1</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.2</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -7378,6 +7378,9 @@ function openKit(){
    ═══════════════════════════════════════════════════════════════════════════ */
 const NM_DEF={nmBase:'#e0e5ec',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,
   nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:40,nmEdge:0,nmSpread:0,nmInW:100};
+/* sirt rangi manbai: 'auto' (orqa fondan) | 'color' (qo'lda) | 'clear' (shaffof, faqat bosilgan).
+   Bosilgan shakl uchun standart — avto: aks holda u fon ichiga botgandek emas, kulrang kapsula bo'lib ko'rinadi */
+function nmSrcOf(L){const s=L.nmSrc;if(s==='auto'||s==='color'||s==='clear')return s;return _nv(L,NM_DEF,'nmMode')==='pressed'?'auto':'color';}
 const LG_DEF={lgBlur:10,lgSat:160,lgBri:105,lgRefr:10,lgDisp:30,lgTint:'#ffffff',lgTintA:8,
   lgRim:1.6,lgRimI:85,lgAng:315,lgSpec:45,lgSpecS:40,lgInner:30,lgInnerW:14,lgShadow:25,lgSheen:0,lgBand:30};
 const NM_KEYS=Object.keys(NM_DEF), LG_KEYS=Object.keys(LG_DEF);
@@ -7394,7 +7397,9 @@ function hexLum(hex){const [r,g,b]=hexRGB(hex);return (0.299*r+0.587*g+0.114*b)/
 const _neoCache=new Map();
 let _neoTmp=null;
 function neoRender(L){
-  const V=k=>_nv(L,NM_DEF,k);
+  const _src=nmSrcOf(L);
+  const _A=(_src==='auto'&&L._nmAuto)?L._nmAuto:null;
+  const V=k=>(_A&&(k==='nmBase'||k==='nmLightC'||k==='nmDarkC'))?_A[k]:_nv(L,NM_DEF,k);
   const m0=ctx.getTransform();
   let k=Math.hypot(m0.a,m0.b)||1;
   let kq=Math.pow(1.15,Math.round(Math.log(k)/Math.log(1.15)));
@@ -7406,7 +7411,7 @@ function neoRender(L){
   kq=Math.max(0.05,kq);
   const key=[L.shape,Math.round(w),Math.round(h),L.radius,L.radMulti?[L.rTL,L.rTR,L.rBR,L.rBL].join():'',L.id,
     L._shMorph?L._shMorph.to+'@'+L._shMorph.u.toFixed(3):'',
-    NM_KEYS.map(q=>Math.round(+V(q)*100)/100||V(q)).join('|'),kq.toFixed(3),_NU.toFixed(3)].join('~');
+    NM_KEYS.map(q=>Math.round(+V(q)*100)/100||V(q)).join('|'),_src,kq.toFixed(3),_NU.toFixed(3)].join('~');
   let ent=_neoCache.get(key);
   if(ent){_neoCache.delete(key);_neoCache.set(key,ent);return ent;}
   const cw=Math.max(2,Math.ceil((w+2*M)*kq)),ch=Math.max(2,Math.ceil((h+2*M)*kq));
@@ -7444,10 +7449,11 @@ function neoRender(L){
         nc.restore();
       }
     }
-    // asosiy sirt
+    // asosiy sirt ("shaffof" rejimda sirt chizilmaydi — orqadagi video botiq joy ichida ko'rinadi)
+    const clear=(mode==='pressed'&&_src==='clear');
     path(nc);
-    nc.fillStyle=(mode==='convex')?grd(nc,1):(mode==='concave')?grd(nc,-1):base;
-    nc.fill();
+    if(clear){nc.fillStyle=aCol(DC,0.10*I);nc.fill();}   // botiq ichi biroz soyada — chuqurlik hissi
+    else{nc.fillStyle=(mode==='convex')?grd(nc,1):(mode==='concave')?grd(nc,-1):base;nc.fill();}
     // ichki soyalar: pressed (botiq) va puffy (shishgan)
     if(mode==='pressed'||mode==='puffy'){
       const innerPass=(col,ox,oy)=>{
@@ -7496,7 +7502,53 @@ function neoRender(L){
   if(_neoCache.size>14){const fk=_neoCache.keys().next().value;_neoCache.delete(fk);}
   return ent;
 }
+/* 🎯 Sirt rangini ORQADAGI tasvirdan olish: neumorphism faqat element rangi atrofdagi
+   sirt bilan bir xil bo'lsagina "botiq/bo'rtiq" ko'rinadi. Shakl chizilish paytida kanvasda
+   uning ostidagi hamma narsa allaqachon bor — shakl atrofidagi halqadan rang olinadi
+   (kichik 24×12 nusxa orqali — yengil). Video shovqini titratmasligi uchun kichik
+   o'zgarishlar e'tiborsiz qoldiriladi. */
+const _nmSmp=document.createElement('canvas');_nmSmp.width=24;_nmSmp.height=12;
+let _nmSx=null;
+function neoAutoColors(L){
+  const A=L._nmAuto;
+  const key=(+state.time).toFixed(3)+'|'+cv.width;
+  if(A&&A.key===key)return;
+  if(A&&state.playing&&!exporting&&performance.now()-A.at<250)return;
+  try{
+    if(!_nmSx)_nmSx=_nmSmp.getContext('2d',{willReadFrequently:true});
+    const m=ctx.getTransform(),cvs=ctx.canvas;
+    const hw=L.w/2*1.22+L.h*0.25,hh=L.h/2*1.22+L.h*0.25;
+    const P=[[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]].map(([x,y])=>({x:m.a*x+m.c*y+m.e,y:m.b*x+m.d*y+m.f}));
+    let x0=Math.min(...P.map(p=>p.x)),x1=Math.max(...P.map(p=>p.x)),y0=Math.min(...P.map(p=>p.y)),y1=Math.max(...P.map(p=>p.y));
+    x0=Math.max(0,Math.floor(x0));y0=Math.max(0,Math.floor(y0));x1=Math.min(cvs.width,Math.ceil(x1));y1=Math.min(cvs.height,Math.ceil(y1));
+    if(x1-x0<4||y1-y0<4)return;
+    _nmSx.globalCompositeOperation='copy';_nmSx.imageSmoothingEnabled=true;
+    _nmSx.drawImage(cvs,x0,y0,x1-x0,y1-y0,0,0,24,12);
+    const d=_nmSx.getImageData(0,0,24,12).data;
+    // shakl atrofidagi halqadan ENG KO'P uchraydigan rang (sirt) olinadi — odam/predmet emas
+    const bins=new Map();let n=0;
+    for(let y=0;y<12;y++)for(let x=0;x<24;x++){
+      if(!(x<4||x>=20||y<2||y>=10))continue;            // faqat tashqi halqa
+      const i=(y*24+x)*4;if(d[i+3]<200)continue;
+      const k=(d[i]>>5)*64+(d[i+1]>>5)*8+(d[i+2]>>5);
+      let o=bins.get(k);if(!o){o=[0,0,0,0];bins.set(k,o);}
+      o[0]++;o[1]+=d[i];o[2]+=d[i+1];o[3]+=d[i+2];n++;
+    }
+    if(n<12)return;                                      // ostida hech narsa yo'q (izolyatsiya kanvasi) — avvalgisi qoladi
+    let best=null;for(const o of bins.values())if(!best||o[0]>best[0])best=o;
+    let r=best[1]/best[0],g=best[2]/best[0],b=best[3]/best[0];
+    const q=v=>Math.max(0,Math.min(255,Math.round(v)));
+    if(A&&A.rgb&&Math.abs(A.rgb[0]-r)<5&&Math.abs(A.rgb[1]-g)<5&&Math.abs(A.rgb[2]-b)<5){A.key=key;A.at=performance.now();return;}
+    const base='#'+[r,g,b].map(v=>q(v).toString(16).padStart(2,'0')).join('');
+    const dk=hexLum(base)<0.4;
+    const LC=dk?hexMix(base,0.14):hexMix(base,0.8);
+    let DC=dk?hexMix(base,-0.6):hexMix(base,-0.24);
+    if(!dk){const [r2,g2,b2]=hexRGB(DC);DC='#'+[r2,g2,Math.min(255,b2+12)].map(v=>v.toString(16).padStart(2,'0')).join('');}
+    L._nmAuto={key,at:performance.now(),rgb:[r,g,b],nmBase:base,nmLightC:LC,nmDarkC:DC};
+  }catch(e){}
+}
 function drawNeo(L){
+  if(nmSrcOf(L)==='auto')neoAutoColors(L);
   const R=neoRender(L);
   ctx.drawImage(R.c,-R.w/2,-R.h/2,R.w,R.h);
 }
@@ -7607,14 +7659,14 @@ function drawLG(L,t){
 
 /* ---------- Presetlar ---------- */
 const NM_PRESETS={
-  'Klassik':{nmBase:'#e0e5ec',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:40,nmEdge:0,nmSpread:0,nmInW:100},
-  'Yumshoq':{nmBase:'#e8ecf1',nmMode:'flat',nmDist:6,nmBlur:14,nmInt:80,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#b4bfd0',nmGrad:40,nmEdge:20,nmSpread:0,nmInW:100},
-  'Qavariq':{nmBase:'#e0e5ec',nmMode:'convex',nmDist:14,nmBlur:28,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:70,nmEdge:30,nmSpread:0,nmInW:100},
-  'Botiq':{nmBase:'#e0e5ec',nmMode:'concave',nmDist:10,nmBlur:20,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:70,nmEdge:0,nmSpread:0,nmInW:100},
-  'Bosilgan':{nmBase:'#e0e5ec',nmMode:'pressed',nmDist:9,nmBlur:18,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:0,nmEdge:0,nmSpread:0,nmInW:100},
-  'Shishgan':{nmBase:'#e0e5ec',nmMode:'puffy',nmDist:10,nmBlur:16,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:0,nmEdge:0,nmSpread:0,nmInW:100},
-  'Qorong\'u':{nmBase:'#2b2f3a',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,nmLightC:'#3a4050',nmDarkC:'#14161c',nmGrad:40,nmEdge:20,nmSpread:0,nmInW:100},
-  'Pushti':{nmBase:'#f0d9e4',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,nmLightC:'#fff4fa',nmDarkC:'#cfaabd',nmGrad:40,nmEdge:20,nmSpread:0,nmInW:100},
+  'Klassik':{nmBase:'#e0e5ec',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:40,nmEdge:0,nmSpread:0,nmInW:100,nmSrc:'color'},
+  'Yumshoq':{nmBase:'#e8ecf1',nmMode:'flat',nmDist:6,nmBlur:14,nmInt:80,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#b4bfd0',nmGrad:40,nmEdge:20,nmSpread:0,nmInW:100,nmSrc:'color'},
+  'Qavariq':{nmBase:'#e0e5ec',nmMode:'convex',nmDist:14,nmBlur:28,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:70,nmEdge:30,nmSpread:0,nmInW:100,nmSrc:'color'},
+  'Botiq':{nmBase:'#e0e5ec',nmMode:'concave',nmDist:10,nmBlur:20,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:70,nmEdge:0,nmSpread:0,nmInW:100,nmSrc:'color'},
+  'Bosilgan':{nmBase:'#e0e5ec',nmMode:'pressed',nmDist:10,nmBlur:20,nmInt:110,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:0,nmEdge:15,nmSpread:0,nmInW:110,nmSrc:'auto'},
+  'Shishgan':{nmBase:'#e0e5ec',nmMode:'puffy',nmDist:10,nmBlur:16,nmInt:100,nmAng:315,nmLightC:'#ffffff',nmDarkC:'#a3b1c6',nmGrad:0,nmEdge:0,nmSpread:0,nmInW:100,nmSrc:'color'},
+  'Qorong\'u':{nmBase:'#2b2f3a',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,nmLightC:'#3a4050',nmDarkC:'#14161c',nmGrad:40,nmEdge:20,nmSpread:0,nmInW:100,nmSrc:'color'},
+  'Pushti':{nmBase:'#f0d9e4',nmMode:'flat',nmDist:12,nmBlur:24,nmInt:100,nmAng:315,nmLightC:'#fff4fa',nmDarkC:'#cfaabd',nmGrad:40,nmEdge:20,nmSpread:0,nmInW:100,nmSrc:'color'},
 };
 const LG_PRESETS={
   'Apple':{lgBlur:10,lgSat:160,lgBri:105,lgRefr:10,lgDisp:30,lgTint:'#ffffff',lgTintA:8,lgRim:1.6,lgRimI:85,lgAng:315,lgSpec:45,lgSpecS:40,lgInner:30,lgInnerW:14,lgShadow:25,lgSheen:0,lgBand:30},
@@ -7645,6 +7697,11 @@ function neoBlock(L){
   return `<div class="hintline">🧊 <b>Neomorphism</b> — fon rangi element rangiga yaqin bo'lsa eng yaxshi chiqadi.</div>
     ${fxPresets(NM_PRESETS,'nmpre')}
     <div class="field"><label>Shakl turi</label><select data-fxk="nmMode">${modes.map(([v,n])=>`<option value="${v}" ${mode===v?'selected':''}>${n}</option>`).join('')}</select></div>
+    ${(()=>{const src=nmSrcOf(L);return `<div class="field"><label>🎯 Sirt rangi</label><select data-fxk="nmSrc">
+      <option value="auto" ${src==='auto'?'selected':''}>🎯 Orqa fondan avtomatik — video/rasm ichiga botgandek</option>
+      <option value="color" ${src==='color'?'selected':''}>🎨 Asosiy rang (qo'lda)</option>
+      ${mode==='pressed'?`<option value="clear" ${src==='clear'?'selected':''}>🫥 Shaffof — botiq ichida orqadagi video ko'rinadi</option>`:''}</select></div>
+      ${src==='auto'?`<div class="hintline" style="margin-top:-4px">Rang shakl atrofidagi sirtdan har kadrda olinadi — shuning uchun element fon ichiga <b>botgandek</b> (yoki bo'rtgandek) ko'rinadi. Quyidagi ranglar faqat «qo'lda» rejimida ishlaydi.</div>`:''}`;})()}
     <div class="row2">${fxColor(L,D,'nmBase','Asosiy rang')}${fxColor(L,D,'nmLightC','Yorug\' soya')}</div>
     <div class="row2">${fxColor(L,D,'nmDarkC','Qorong\'u soya')}
       <div class="field"><label>&nbsp;</label><button id="nmAuto" style="width:100%;justify-content:center" title="Asosiy rangdan yorug' va qorong'u soyalarni avtomatik hisoblaydi">⚙ Avto-soya</button></div></div>
@@ -7692,11 +7749,13 @@ function fxBind(L,box){
       const key=el.dataset.fxk;
       if(el.type==='range'){const v=+el.value;setAnimProp(L,key,v);upd(el,key,v);}
       else L[key]=el.value;
-      if(key==='nmMode')renderProps();
+      if(key==='nmMode'&&el.value==='pressed'&&L.nmSrc!=='clear')L.nmSrc='auto';   // bosilgan — fon ichiga botsin
+      if(key==='nmMode'||key==='nmSrc'){delete L._nmAuto;renderProps();}
+      seekDirty=true;
     };
     el.oninput=h;el.onchange=h;
   });
-  box.querySelectorAll('[data-nmpre]').forEach(b=>b.onclick=()=>{historyMaybe();Object.assign(L,NM_PRESETS[b.dataset.nmpre]);renderProps();});
+  box.querySelectorAll('[data-nmpre]').forEach(b=>b.onclick=()=>{historyMaybe();Object.assign(L,NM_PRESETS[b.dataset.nmpre]);delete L._nmAuto;seekDirty=true;renderProps();});
   box.querySelectorAll('[data-lgpre]').forEach(b=>b.onclick=()=>{historyMaybe();Object.assign(L,LG_PRESETS[b.dataset.lgpre]);renderProps();});
   const au=document.getElementById('nmAuto');
   if(au)au.onclick=()=>{historyMaybe();const b=_nv(L,NM_DEF,'nmBase'),dk=hexLum(b)<0.4;
