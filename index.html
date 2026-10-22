@@ -798,7 +798,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.1</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -7460,14 +7460,23 @@ function neoRender(L){
         tc.globalCompositeOperation='source-over';
         nc.save();T(nc);path(nc);nc.clip();
         nc.setTransform(1,0,0,1,0,0);
-        if(blur>0.2)nc.filter=`blur(${blur*kq*0.6}px)`;
+        // CSS box-shadow bilan bir xil: blur radiusi B → Gauss sigma = B/2
+        if(blur>0.2)nc.filter=`blur(${blur*kq*(mode==='pressed'?0.5:0.6)}px)`;
         nc.drawImage(tcv,0,0);
         nc.restore();
       };
       const dd=dist*inW;
       const s=(mode==='pressed')?1:-1;
-      innerPass(DC, -lx*dd*s, -ly*dd*s);   // pressed: qorong'u — yorug'lik tomonida
-      innerPass(LC,  lx*dd*s,  ly*dd*s);
+      if(mode==='pressed'){
+        // 🐞 TUZATILDI: CSS'dagi "inset 9px 9px 18px qorong'u, inset -9px -9px 18px yorug'" kabi —
+        // yorug' qatlam OSTIDA, qorong'u USTIDA. Avval yorug' soya qorong'u ustidan chizilib, botiqlik
+        // yuvilib ketardi va element tekis kulrang kapsula bo'lib ko'rinardi.
+        innerPass(LC,  lx*dd,  ly*dd);
+        innerPass(DC, -lx*dd, -ly*dd);    // qorong'u — yorug'lik tomonidagi ichki chekkada
+      }else{
+        innerPass(DC, -lx*dd*s, -ly*dd*s);
+        innerPass(LC,  lx*dd*s,  ly*dd*s);
+      }
       T(nc);
     }
     // nozik qirra yaltirashi
@@ -7475,7 +7484,10 @@ function neoRender(L){
     if(eg>0.5){
       path(nc);
       const g=nc.createLinearGradient(lx*ext,ly*ext,-lx*ext,-ly*ext);
-      g.addColorStop(0,aCol(LC,eg/100));g.addColorStop(0.5,aCol(LC,0));g.addColorStop(1,aCol(DC,eg/100*0.8));
+      // 🐞 bosilgan (inset) shaklda qirra TESKARI: yorug'lik tomonida qorong'u, qarshisida yorug' —
+      // avval bo'rtiq shakl qirrasi chizilib, bosilgan element "ko'tarilgan" bo'lib ko'rinardi
+      if(mode==='pressed'){g.addColorStop(0,aCol(DC,eg/100*0.9));g.addColorStop(0.5,aCol(DC,0));g.addColorStop(1,aCol(LC,eg/100));}
+      else{g.addColorStop(0,aCol(LC,eg/100));g.addColorStop(0.5,aCol(LC,0));g.addColorStop(1,aCol(DC,eg/100*0.8));}
       nc.strokeStyle=g;nc.lineWidth=1.4;nc.stroke();
     }
   }finally{ctx=prev;}
