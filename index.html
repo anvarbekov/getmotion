@@ -452,6 +452,8 @@
   #kitOv details ol{margin:6px 0 0;padding-left:18px;line-height:1.5;}
   #kitOv .kit-add{justify-content:center;}
   #kitOv .kit-hint{color:var(--muted);font-size:13px;margin-bottom:10px;}
+  .rot-q{display:flex;gap:4px;flex-wrap:wrap;margin:-2px 0 8px;}
+  .rot-q button{flex:1;min-width:0;padding:3px 4px;font-size:11px;justify-content:center;}
   .rfx-sec .rfx-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:7px;}
   .rfx-sec .rfx-row>span{width:100%;font-size:11px;color:var(--muted);margin-bottom:1px;}
   .rfx-sec .rfx{font-size:11.5px;padding:4px 9px;border-radius:999px;min-width:0;}
@@ -798,7 +800,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.2</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.3</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -21042,8 +21044,10 @@ function transformBlock(L){
       <div class="field"><label>Masshtab: <b id="pKsV">${Math.round(T.scale*100)}%</b></label>
         <input type="range" id="pKs" data-def="100" min="10" max="400" value="${Math.round(T.scale*100)}"></div>
       <div class="field"><label>Aylanish Z: <b id="pRotV">${Math.round(T.rotDeg)}°</b></label>
-        <input type="range" id="pRot" data-def="0" min="-180" max="180" value="${Math.round(T.rotDeg)}"></div>
+        <input type="range" id="pRot" data-def="0" min="-720" max="720" value="${Math.round(T.rotDeg)}"></div>
     </div>
+    <div class="rot-q" title="Aylanishga qo'shish (−720° … +720°, ya'ni 2 to'liq aylanishgacha)">
+      ${[[-360,'⟲ −360°'],[-90,'−90°'],[0,'0°'],[90,'+90°'],[360,'⟳ +360°']].map(([v,n])=>`<button data-rotq="${v}">${n}</button>`).join('')}</div>
     ${isGroupHolder(L)?`
     <div style="font-weight:700;font-size:11px;margin:10px 0 4px;letter-spacing:.4px;color:var(--accent2)">🧩 GURUH</div>
     <div class="hintline">Bu — <b>guruh ramkasi</b>. Ichidagi ${groupKids(L).length} ta element bitta plastina bo'lib harakatlanadi: pastdagi 3D burilish, masshtab va shaffoflik hammasiga BIRGA qo'llanadi (yozuvlar karta yuzasiga chop etilgandek). Ramkaning o'zi ko'rinmaydi.</div>
@@ -21056,9 +21060,9 @@ function transformBlock(L){
     <div style="font-weight:700;font-size:11px;margin:10px 0 4px;letter-spacing:.4px;color:var(--accent2)">🧊 BASIC 3D</div>
     <div class="hintline">Element tekis plastina kabi 3D fazoda buriladi (Premiere Pro "Basic 3D" uslubi). Barchasi ◆ keyframe bilan animatsiya bo'ladi.</div>
     <div class="field"><label>↔ Swivel (vertikal o'q): <b id="pRYV">${Math.round(T.ry)}°</b></label>
-      <input type="range" id="pRY" data-def="0" min="-180" max="180" value="${Math.round(T.ry)}"></div>
+      <input type="range" id="pRY" data-def="0" min="-720" max="720" value="${Math.round(T.ry)}"></div>
     <div class="field"><label>↕ Tilt (gorizontal o'q): <b id="pRXV">${Math.round(T.rx)}°</b></label>
-      <input type="range" id="pRX" data-def="0" min="-180" max="180" value="${Math.round(T.rx)}"></div>
+      <input type="range" id="pRX" data-def="0" min="-720" max="720" value="${Math.round(T.rx)}"></div>
     <div class="field"><label>⤢ Chuqurlik Z (Distance to Image): <b id="pDZV">${Math.round(T.dist3??L.dist3??0)}</b> <span style="color:var(--muted)">— 3D sahnadagi o'rni: musbat = uzoqroq, manfiy = yaqinroq. Kamera burilganda parallaks shu qiymatdan kelib chiqadi.</span></label>
       <input type="range" id="pDZ" min="-900" max="2400" value="${Math.round(T.dist3??L.dist3??0)}"></div>
     <div class="field"><label>🎥 Perspektiv kuchi: <b id="pPrsV">${Math.round(T.persp3??L.persp3??100)}</b>% <span style="color:var(--muted)">— kamera fokusi (Premiere standarti = 100)</span></label>
@@ -22750,6 +22754,13 @@ function renderProps(){
   if(L)centerBind([L.id],'pCt');
   on('pKs','oninput',e=>{setTransformProp(L,'scale',+e.target.value/100);$('pKsV').textContent=e.target.value+'%';if(hasKF(L))renderTimeline();});
   on('pRot','oninput',e=>{setTransformProp(L,'rot',+e.target.value);$('pRotV').textContent=e.target.value+'°';if(hasKF(L))renderTimeline();});
+  box.querySelectorAll('[data-rotq]').forEach(b=>b.onclick=()=>{
+    historyMaybe();
+    const cur=kfValue(L,clamp(state.time-L.start,0,L.dur)).rotDeg||0, d=+b.dataset.rotq;
+    const v=d===0?0:clamp(Math.round(cur+d),-720,720);
+    setTransformProp(L,'rot',v);seekDirty=true;renderProps();if(hasKF(L))renderTimeline();
+    if(d!==0&&Math.round(cur+d)!==v)toast('Aylanish chegarasi: −720° … +720° (2 to\'liq aylanish)');
+  });
   on('pRX','oninput',e=>{setTransformProp(L,'rx',+e.target.value);$('pRXV').textContent=e.target.value+'°';if(hasKF(L))renderTimeline();});
   on('pRY','oninput',e=>{setTransformProp(L,'ry',+e.target.value);$('pRYV').textContent=e.target.value+'°';if(hasKF(L))renderTimeline();});
   on('pAl','oninput',e=>{setTransformProp(L,'alpha',+e.target.value/100);$('pAlV').textContent=e.target.value+'%';if(hasKF(L))renderTimeline();});
@@ -23723,7 +23734,8 @@ document.getElementById('inDuration').onchange=e=>{
       const _rh=rotHandlePos(rB);
       if(Math.hypot(p.x-_rh.x,p.y-_rh.y)<hitRadius()){
         saveHistory();
-        rotating={L:sel};
+        {const _T0=getSelBox(sel).T;const _a0=Math.atan2(p.y-_T0.y,p.x-_T0.x)*180/Math.PI;
+         rotating={L:sel,base:kfValue(sel,clamp(state.time-sel.start,0,sel.dur)).rotDeg||0,last:_a0,acc:0};}
         e.preventDefault();
         return;
       }
@@ -23983,9 +23995,12 @@ document.getElementById('inDuration').onchange=e=>{
     if(rotating){
       const L=rotating.L;
       const T=getSelBox(L).T;
-      let deg=Math.atan2(p.y-T.y,p.x-T.x)*180/Math.PI+90-(T._gr||0);
-      while(deg>180)deg-=360; while(deg<-180)deg+=360;
-      for(const sn of [0,90,180,-90,-180])if(Math.abs(deg-sn)<5)deg=sn;
+      // 🔄 uzluksiz aylanish: dastak to'liq aylanib o'tsa ham qiymat sakramaydi (−720° … +720°)
+      const _a=Math.atan2(p.y-T.y,p.x-T.x)*180/Math.PI;
+      let _d=_a-(rotating.last??_a);while(_d>180)_d-=360;while(_d<-180)_d+=360;
+      rotating.last=_a;rotating.acc=(rotating.acc||0)+_d;
+      let deg=clamp((rotating.base||0)+rotating.acc,-720,720);
+      {const sn=Math.round(deg/90)*90;if(Math.abs(deg-sn)<5)deg=sn;}
       if(e.shiftKey)deg=Math.round(deg/15)*15;
       setTransformProp(L,'rot',deg);
       dragInfo=`Aylanish: ${Math.round(deg)}°`;
