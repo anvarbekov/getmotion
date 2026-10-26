@@ -800,7 +800,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.3</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.4</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -7396,7 +7396,7 @@ function hexMix(hex,f){ // f>0 oqqa, f<0 qoraga
 function hexLum(hex){const [r,g,b]=hexRGB(hex);return (0.299*r+0.587*g+0.114*b)/255;}
 
 /* ---------- NEO kesh ---------- */
-const _neoCache=new Map();
+const _neoCache=new Map(), _neoByL=new Map();
 let _neoTmp=null;
 function neoRender(L){
   const _src=nmSrcOf(L);
@@ -7406,6 +7406,15 @@ function neoRender(L){
   let k=Math.hypot(m0.a,m0.b)||1;
   let kq=Math.pow(1.15,Math.round(Math.log(k)/Math.log(1.15)));
   const w=L.w,h=L.h;
+  /* 🐞 TUZATILDI: yorug'lik yo'nalishi EKRANGA nisbatan. Avval u element bilan birga
+     burilardi — element 90–180° burilganda (yoki aylanib turganda) soya teskari tomonga
+     o'tib, "bosilgan" shakl botiq emas, do'mpayib (qavariq) ko'rinardi. Endi elementning
+     joriy burilishi/oynalanishi teskari hisoblanib, soya doim bir tomonda qoladi. */
+  let lx,ly;
+  {const aW=V('nmAng')*Math.PI/180,wx=Math.sin(aW),wy=-Math.cos(aW),det=m0.a*m0.d-m0.b*m0.c;
+   if(Math.abs(det)>1e-12){const ix=(m0.d*wx-m0.c*wy)/det,iy=(-m0.b*wx+m0.a*wy)/det,n=Math.hypot(ix,iy)||1;lx=ix/n;ly=iy/n;}
+   else{lx=wx;ly=wy;}}
+  const _la=Math.round(Math.atan2(ly,lx)*180/Math.PI);   // keshda: lokal yorug'lik burchagi (1° aniqlik)
   const _NU=pfxUnit();const dist=V('nmDist')*_NU,blur=V('nmBlur')*_NU,sp=V('nmSpread')*_NU,inW=V('nmInW')/100;
   const M=Math.ceil(Math.abs(dist)+blur*1.6+Math.abs(sp)+10);
   const maxPx=3000;
@@ -7413,7 +7422,7 @@ function neoRender(L){
   kq=Math.max(0.05,kq);
   const key=[L.shape,Math.round(w),Math.round(h),L.radius,L.radMulti?[L.rTL,L.rTR,L.rBR,L.rBL].join():'',L.id,
     L._shMorph?L._shMorph.to+'@'+L._shMorph.u.toFixed(3):'',
-    NM_KEYS.map(q=>Math.round(+V(q)*100)/100||V(q)).join('|'),_src,kq.toFixed(3),_NU.toFixed(3)].join('~');
+    NM_KEYS.map(q=>Math.round(+V(q)*100)/100||V(q)).join('|'),_src,_la,kq.toFixed(3),_NU.toFixed(3)].join('~');
   let ent=_neoCache.get(key);
   if(ent){_neoCache.delete(key);_neoCache.set(key,ent);return ent;}
   const cw=Math.max(2,Math.ceil((w+2*M)*kq)),ch=Math.max(2,Math.ceil((h+2*M)*kq));
@@ -7424,8 +7433,7 @@ function neoRender(L){
   const tc=tcv.getContext('2d');
   const prev=ctx;
   const T=(x)=>x.setTransform(kq,0,0,kq,cw/2,ch/2);
-  const mode=V('nmMode'),a=V('nmAng')*Math.PI/180;
-  const lx=Math.sin(a),ly=-Math.cos(a);
+  const mode=V('nmMode');
   const I=clamp(V('nmInt')/100,0,1.5);
   const base=V('nmBase'),LC=V('nmLightC'),DC=V('nmDarkC');
   const aCol=(col,al)=>hexA(col,clamp(al,0,1));
@@ -7501,7 +7509,9 @@ function neoRender(L){
   }finally{ctx=prev;}
   ent={c,M,w:w+2*M,h:h+2*M};
   _neoCache.set(key,ent);
-  if(_neoCache.size>14){const fk=_neoCache.keys().next().value;_neoCache.delete(fk);}
+  // har qatlam uchun ko'pi bilan 3 ta nusxa: aylanayotgan element boshqalarning keshini siqib chiqarmasin
+  {const ks=_neoByL.get(L.id)||[];ks.push(key);while(ks.length>3)_neoCache.delete(ks.shift());_neoByL.set(L.id,ks);}
+  if(_neoCache.size>40){const fk=_neoCache.keys().next().value;_neoCache.delete(fk);}
   return ent;
 }
 /* 🎯 Sirt rangini ORQADAGI tasvirdan olish: neumorphism faqat element rangi atrofdagi
@@ -7562,7 +7572,9 @@ function drawLG(L,t){
   const dm=ctx.getTransform();
   const k=(Math.hypot(dm.a,dm.b)||1)*pfxUnit();
   const ccx=dm.e,ccy=dm.f;
-  const a=V('lgAng')*Math.PI/180,lx=Math.sin(a),ly=-Math.cos(a);
+  // yorug'lik ekranga nisbatan (element burilsa ham nur/aks bir tomonda qoladi)
+  const a=V('lgAng')*Math.PI/180,wx=Math.sin(a),wy=-Math.cos(a);
+  let lx=wx,ly=wy;{const det=dm.a*dm.d-dm.b*dm.c;if(Math.abs(det)>1e-12){const ix=(dm.d*wx-dm.c*wy)/det,iy=(-dm.b*wx+dm.a*wy)/det,n=Math.hypot(ix,iy)||1;lx=ix/n;ly=iy/n;}}
   const ext=0.5*(Math.abs(lx)*w+Math.abs(ly)*h);
   const _gs=glassSnap();
   // tashqi chuqurlik soyasi (shakl ichi baribir qoplanadi)
@@ -7571,7 +7583,7 @@ function drawLG(L,t){
     ctx.save();
     ctx.shadowColor=`rgba(6,14,40,${(0.5*shA).toFixed(3)})`;
     ctx.shadowBlur=(10+22*shA)*k;
-    ctx.shadowOffsetX=-lx*5*shA*k;ctx.shadowOffsetY=(-ly*5*shA+4)*k;
+    ctx.shadowOffsetX=-wx*5*shA*k;ctx.shadowOffsetY=(-wy*5*shA+4)*k;   // soya siljishi — ekran koordinatasida
     shapePath(L);ctx.fillStyle='#000';ctx.fill();
     ctx.restore();
   }
