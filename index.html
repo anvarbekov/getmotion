@@ -800,7 +800,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.4</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.5</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -2298,17 +2298,11 @@ function camRaw(t){
   const u=clamp((t-a.t)/dt,0,1);
   const mode=c.ease||'spline';
   if(mode==='spline'&&K.length>=3){
-    // Catmull-Rom → Hermite (tezlik uzluksiz)
-    const p0=K[Math.max(0,i-1)], p3=K[Math.min(K.length-1,i+2)];
-    const u2=u*u, u3=u2*u;
-    const h00=2*u3-3*u2+1, h10=u3-2*u2+u, h01=-2*u3+3*u2, h11=u3-u2;
-    for(const k of CAM_KEYS){
-      const vA=get(a,k), vB=get(b,k);
-      const spanL=Math.max(1e-4,b.t-p0.t), spanR=Math.max(1e-4,p3.t-a.t);
-      const mA=(vB-get(p0,k))/spanL;
-      const mB=(get(p3,k)-vA)/spanR;
-      out[k]=h00*vA+h10*dt*mA+h01*vB+h11*dt*mB;
-    }
+    /* 🐞 TUZATILDI: avvalgi Catmull-Rom qo'shni ◆ larga qarab egilardi — bir xil qiymatli
+       ikki ◆ ORASIDA ham kamera surilib (oshib) ketardi, kadrni markazda ushlab bo'lmasdi.
+       Endi monotonik kubik (Fritsch–Carlson): harakat baribir silliq, lekin hech qachon
+       oshib ketmaydi — teng ◆ lar orasida kamera aniq joyida turadi. */
+    for(const k of CAM_KEYS)out[k]=kfMonoEval(K,i,u,(q)=>get(q,k));
   }else{
     let e=u;
     if(mode==='smooth'||mode==='spline')e=u*u*(3-2*u);
@@ -2835,6 +2829,29 @@ function kfValue(L,local){
   if(L.ex)exApply(L,local,r);   // ƒ AE expressions
   return r;
 }
+/* 📈 Monotonik kubik interpolyatsiya (Fritsch–Carlson). Qo'shni ◆ larni hisobga oladi
+   (nuqtalarda sinish yo'q), lekin qiymat ikki ◆ orasidan HECH QACHON chiqib ketmaydi:
+   teng qiymatli ◆ lar orasida aniq turadi, yo'nalish o'zgaradigan ◆ da yumshoq to'xtaydi. */
+function kfMonoTan(t0,v0,t1,v1,t2,v2){
+  const h0=t1-t0,h1=t2-t1;
+  if(!(h0>1e-6)||!(h1>1e-6))return 0;
+  const d0=(v1-v0)/h0,d1=(v2-v1)/h1;
+  if(d0*d1<=0)return 0;
+  return 3*(h0+h1)/((2*h1+h0)/d0+(h1+2*h0)/d1);
+}
+function kfMonoEval(K,i,u,get){
+  const a=K[i],b=K[i+1];
+  const va=+get(a)||0,vb=+get(b)||0;
+  const h=Math.max(1e-6,b.t-a.t),d=(vb-va)/h;
+  if(Math.abs(vb-va)<1e-9)return va;                       // teng ◆ — aniq turadi
+  let ma=i>0?kfMonoTan(K[i-1].t,+get(K[i-1])||0,a.t,va,b.t,vb):d;
+  let mb=i+2<K.length?kfMonoTan(a.t,va,b.t,vb,K[i+2].t,+get(K[i+2])||0):d;
+  const al=ma/d,be=mb/d;
+  if(al<0)ma=0;if(be<0)mb=0;
+  const s=al*al+be*be;if(s>9){const tau=3/Math.sqrt(s);ma=tau*al*d;mb=tau*be*d;}
+  const u2=u*u,u3=u2*u;
+  return (2*u3-3*u2+1)*va+(u3-2*u2+u)*h*ma+(-2*u3+3*u2)*vb+(u3-u2)*h*mb;
+}
 /* ⚡ kf kaliti → xususiyat xaritasi (keyframe'da faqat MAVJUD kalitlar aylanadi —
    250+ xususiyat ro'yxatini har chaqiruvda aylanib chiqish shart emas) */
 let _KFPM=null,_KFPMn=0;
@@ -2856,12 +2873,9 @@ function kfValueRaw(L,local){
     const u0=clamp((local-a.t)/Math.max(b.t-a.t,0.001),0,1);
     const u=u0*u0*(3-2*u0); // yengil smoothstep — chetlarda ham yumshoq
     const p0=K[Math.max(0,i-1)], p3=K[Math.min(K.length-1,i+2)];
-    const cr=(v0,v1,v2,v3)=>{
-      const t2=u*u, t3=t2*u;
-      return 0.5*((2*v1)+(-v0+v2)*u+(2*v0-5*v1+4*v2-v3)*t2+(-v0+3*v1-3*v2+v3)*t3);
-    };
     const g=(k,f,d)=>{const v=(f==='rot')?k.rot:(k[f]);return v===undefined?d:v;};
-    const sp=(f,d)=>cr(g(p0,f,d),g(a,f,d),g(b,f,d),g(p3,f,d));
+    // monotonik kubik: teng ◆ lar orasida element surilib ketmaydi (oshib ketish yo'q)
+    const sp=(f,d)=>kfMonoEval(K,i,u,q=>g(q,f,d));
     const out2={x:sp('x',0),y:sp('y',0),scale:sp('scale',1),rotDeg:sp('rot',0),
       rx:sp('rx',0),ry:sp('ry',0),alpha:clamp(sp('alpha',1),0,1)};
     {const M=kfPM();for(const q of [p0,a,b,p3])for(const kk in q){if(kk in out2)continue;const prop=M[kk];
