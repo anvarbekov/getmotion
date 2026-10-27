@@ -452,6 +452,7 @@
   #kitOv details ol{margin:6px 0 0;padding-left:18px;line-height:1.5;}
   #kitOv .kit-add{justify-content:center;}
   #kitOv .kit-hint{color:var(--muted);font-size:13px;margin-bottom:10px;}
+  #pRadFull.on{background:var(--accent);border-color:var(--accent);color:#fff;}
   .rot-q{display:flex;gap:4px;flex-wrap:wrap;margin:-2px 0 8px;}
   .rot-q button{flex:1;min-width:0;padding:3px 4px;font-size:11px;justify-content:center;}
   .rfx-sec .rfx-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:7px;}
@@ -800,7 +801,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.6</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.7</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -20898,23 +20899,36 @@ function fontPairApply(id){
   return T.length;
 }
 /* Har burchak alohida radius UI (matn tashqari barcha elementlar uchun) */
+/* Burchak radiusi chegarasi: element o'lchamining yarmi (= to'liq doira/kapsula), kamida 200 */
+function radFullOf(L){
+  let w=L.w,h=L.h;
+  if(L.type==='video'||L.type==='image'){
+    if(L.maskOn){w=L.maskW;h=L.maskH;}else{try{const m=mediaBox(L);w=m.w;h=m.h;}catch(e){}}
+  }
+  return Math.max(1,Math.ceil(Math.min(+w||0,+h||0)/2));
+}
+function radMaxOf(L){return Math.max(200,radFullOf(L));}
+function radFullBtn(L){
+  const full=radFullOf(L),isF=!L.radMulti&&(L.radius||0)>=full-0.5;
+  return `<button id="pRadFull" class="${isF?'on':''}" style="padding:2px 8px;font-size:11px;margin-left:6px" title="Burchaklarni maksimal yumaloq qilish — kvadrat element DOIRA, cho'ziq element KAPSULA bo'ladi (o'lchamini o'zgartirsangiz ham yumaloq qoladi)">⬤ To'liq yumaloq</button>`;
+}
 function radMultiBlock(L){
   const b=Math.round(L.radius||0);
   return `<label class="chk"><input type="checkbox" id="pRadM" ${L.radMulti?'checked':''}> Har burchak alohida radius</label>
   ${L.radMulti?`
   <div class="row2">
     <div class="field"><label>↖ Yuqori-chap: <b id="pRtlV">${Math.round(L.rTL??b)}</b></label>
-      <input type="range" id="pRtl" min="0" max="600" value="${Math.round(L.rTL??b)}"></div>
+      <input type="range" id="pRtl" min="0" max="${Math.max(600,radMaxOf(L))}" value="${Math.round(L.rTL??b)}"></div>
     <div class="field"><label>↗ Yuqori-o'ng: <b id="pRtrV">${Math.round(L.rTR??b)}</b></label>
-      <input type="range" id="pRtr" min="0" max="600" value="${Math.round(L.rTR??b)}"></div>
+      <input type="range" id="pRtr" min="0" max="${Math.max(600,radMaxOf(L))}" value="${Math.round(L.rTR??b)}"></div>
   </div>
   <div class="row2">
     <div class="field"><label>↙ Past-chap: <b id="pRblV">${Math.round(L.rBL??b)}</b></label>
-      <input type="range" id="pRbl" min="0" max="600" value="${Math.round(L.rBL??b)}"></div>
+      <input type="range" id="pRbl" min="0" max="${Math.max(600,radMaxOf(L))}" value="${Math.round(L.rBL??b)}"></div>
     <div class="field"><label>↘ Past-o'ng: <b id="pRbrV">${Math.round(L.rBR??b)}</b></label>
-      <input type="range" id="pRbr" min="0" max="600" value="${Math.round(L.rBR??b)}"></div>
+      <input type="range" id="pRbr" min="0" max="${Math.max(600,radMaxOf(L))}" value="${Math.round(L.rBR??b)}"></div>
   </div>
-  <div class="hintline">Istalgan burchakni maksimalgacha buking (600px). Quti, tashqi ramka va oddiy media hammasiga qo'llanadi — ◆ keyframe bilan animatsiya ham bo'ladi.</div>`:''}`;
+  <div class="hintline">Istalgan burchakni maksimalgacha buking (element o'lchamining yarmigacha). Quti, tashqi ramka va oddiy media hammasiga qo'llanadi — ◆ keyframe bilan animatsiya ham bo'ladi.</div>`:''}`;
 }
 /* Kirish timing-function tanlovi (barcha element turlari uchun) */
 const IN_EASES=[['default','— standart (animatsiyaning o\'zi)'],['linear','Linear'],
@@ -21653,8 +21667,8 @@ function renderProps(){
           <div class="field"><label>Balandlik: <b id="pHV">${Math.round(L.h)}</b>px</label>
             <input type="range" id="pH" min="30" max="${Math.round(state.H*0.5)}" value="${Math.round(L.h)}"></div>
         </div>
-        <div class="field"><label>Burchak radiusi: <b id="pRV">${Math.round(L.radius)}</b></label>
-          <input type="range" id="pR" min="0" max="200" value="${Math.round(L.radius)}"></div>
+        <div class="field"><label>Burchak radiusi: <b id="pRV">${Math.round(L.radius)}</b>${radFullBtn(L)}</label>
+          <input type="range" id="pR" min="0" max="${radMaxOf(L)}" value="${Math.round(L.radius)}"></div>
         ${radMultiBlock(L)}`,true)+
       sec('🎨 Ranglar va shrift',`
         <div class="row2">
@@ -21742,8 +21756,8 @@ function renderProps(){
         </div>
         ${hasThick?`<div class="field"><label>Chiziq qalinligi: <b id="pTThV">${L.tThick}</b></label>
           <input type="range" id="pTTh" min="2" max="${k==='frame'?60:30}" value="${L.tThick}"></div>`:''}
-        ${hasR?`<div class="field"><label>Burchak radiusi: <b id="pRV">${Math.round(Math.min(L.radius,200))}</b></label>
-          <input type="range" id="pR" min="0" max="200" value="${Math.round(Math.min(L.radius,200))}"></div>`:''}`,true)+
+        ${hasR?`<div class="field"><label>Burchak radiusi: <b id="pRV">${Math.round(Math.min(L.radius,radMaxOf(L)))}</b>${radFullBtn(L)}</label>
+          <input type="range" id="pR" min="0" max="${radMaxOf(L)}" value="${Math.round(Math.min(L.radius,radMaxOf(L)))}"></div>`:''}`,true)+
       sec('🎨 Ranglar',`
         <div class="row2">
           <div class="field"><label>Asosiy rang</label><input type="color" id="pTC1" value="${L.tC1}"></div>
@@ -21811,8 +21825,8 @@ function renderProps(){
           <div class="field"><label>Balandlik: <b id="pHV">${Math.round(L.h)}</b>px</label>
             <input type="range" id="pH" min="40" max="${state.H}" value="${L.h}"></div>
         </div>
-        <div class="field"><label>Burchak radiusi: <b id="pRV">${Math.round(L.radius)}</b></label>
-          <input type="range" id="pR" min="0" max="200" value="${L.radius}"></div>
+        <div class="field"><label>Burchak radiusi: <b id="pRV">${Math.round(L.radius)}</b>${radFullBtn(L)}</label>
+          <input type="range" id="pR" min="0" max="${radMaxOf(L)}" value="${Math.min(L.radius,radMaxOf(L))}"></div>
         ${radMultiBlock(L)}`,true)+
       sec('💠 To\'ldirish',`
         <div class="field"><label>Uslub ${lookAnimated(L,'fill')?'<span class="kfdot" title="Vaqt davomida o\'zgaradi (◆)">◆</span>':''}</label>
@@ -21907,8 +21921,8 @@ function renderProps(){
         <div class="row2">
           <div class="field"><label>${L.maskOn?'Ichki video o\'lchami':'O\'lcham'}: <b id="pScV">${Math.round(L.scale*100)}%</b></label>
             <input type="range" id="pSc" min="5" max="800" value="${Math.round(L.scale*100)}"></div>
-          <div class="field"><label>Burchak: <b id="pRV">${L.radius}</b></label>
-            <input type="range" id="pR" min="0" max="200" value="${L.radius}"></div>
+          <div class="field"><label>Burchak: <b id="pRV">${Math.round(L.radius)}</b>${radFullBtn(L)}</label>
+            <input type="range" id="pR" min="0" max="${radMaxOf(L)}" value="${Math.min(L.radius,radMaxOf(L))}"></div>
         </div>
         ${radMultiBlock(L)}
         <div class="hintline">${L.maskOn?'Quti rejimida chekka dastaklar QUTINI o\'lchaydi':'Chekka dastaklar = crop (har tomondan kesish), burchak dastaklar = o\'lcham'}</div>
@@ -22310,7 +22324,12 @@ function renderProps(){
   });
   on('pW','oninput',e=>{setAnimProp(L,'w',+e.target.value);$('pWV').textContent=e.target.value;});
   on('pH','oninput',e=>{setAnimProp(L,'h',+e.target.value);$('pHV').textContent=e.target.value;});
-  on('pR','oninput',e=>{setAnimProp(L,'radius',+e.target.value);$('pRV').textContent=e.target.value;});
+  on('pR','oninput',e=>{setAnimProp(L,'radius',+e.target.value);$('pRV').textContent=e.target.value;seekDirty=true;});
+  on('pRadFull','onclick',()=>{
+    const full=radFullOf(L);
+    if(!L.radMulti&&(L.radius||0)>=full-0.5){setAnimProp(L,'radius',0);toast('Burchaklar to\'g\'ri (0)');}
+    else{if(L.radMulti){L.radMulti=false;}setAnimProp(L,'radius',full);toast('⬤ To\'liq yumaloq: radius '+full+' px — kvadrat element doira, cho\'ziq element kapsula');}
+    seekDirty=true;renderProps();});
   on('pRadM','onchange',e=>{
     L.radMulti=e.target.checked;
     if(L.radMulti){
@@ -23756,7 +23775,8 @@ document.getElementById('inDuration').onchange=e=>{
       if(h){
         const B=getSelBox(sel);
         saveHistory();
-        resizing={L:sel,h,box:{...B},size:sel.size,scale:sel.scale,crop:sel.crop?{...sel.crop}:null};
+        resizing={L:sel,h,box:{...B},size:sel.size,scale:sel.scale,crop:sel.crop?{...sel.crop}:null,
+          round:!sel.radMulti&&(sel.radius||0)>0&&(sel.radius||0)>=radFullOf(sel)-1};   // to'liq yumaloq bo'lsa — o'lcham o'zgarsa ham yumaloq qoladi
         if(sel.type==='video'||sel.type==='image'){
           if(!sel.maskOn){
             const m=mediaBox(sel);
@@ -24126,6 +24146,7 @@ document.getElementById('inDuration').onchange=e=>{
         }
         if(L.type==='shape'||L.type==='progress'||L.type==='timer'){setAnimProp(L,'w',bw/Ts);setAnimProp(L,'h',bh/Ts);}
         else{setAnimProp(L,'maskW',bw/Ts);setAnimProp(L,'maskH',bh/Ts);}
+        if(resizing.round)setAnimProp(L,'radius',Math.ceil(Math.min(bw,bh)/Ts/2));
         setTransformProp(L,_rc((left+right)/2,(top+bottom)/2));
         dragInfo=`${Math.round(bw)} × ${Math.round(bh)} px`;
       }
@@ -24147,6 +24168,7 @@ document.getElementById('inDuration').onchange=e=>{
           if(mAct){
             setAnimProp(L,'maskW',B.bw*f/Math.max(B.T.scale,0.01));
             setAnimProp(L,'maskH',B.bh*f/Math.max(B.T.scale,0.01));
+            if(resizing.round)setAnimProp(L,'radius',Math.ceil(Math.min(B.bw,B.bh)*f/Math.max(B.T.scale,0.01)/2));
             const bw=B.bw*f,bh=B.bh*f;
             if(h.includes('w'))left=right-bw; else right=left+bw;
             if(h.includes('n'))top=bottom-bh; else bottom=top+bh;
@@ -24160,6 +24182,7 @@ document.getElementById('inDuration').onchange=e=>{
               Math.abs(rp.y-cym)/Math.max(B.bh/2,1)
             );
             setAnimProp(L,'mscale',Math.max(0.02,Math.min(6,R.scale*fc)));
+            if(resizing.round)setAnimProp(L,'radius',radFullOf(L));
             dragInfo=`O'lcham: ${Math.round(clamp(R.scale*fc,0.02,6)*100)}%`;
           }
         }else{ // chekka = crop
