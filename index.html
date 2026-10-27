@@ -452,6 +452,9 @@
   #kitOv details ol{margin:6px 0 0;padding-left:18px;line-height:1.5;}
   #kitOv .kit-add{justify-content:center;}
   #kitOv .kit-hint{color:var(--muted);font-size:13px;margin-bottom:10px;}
+  .ag-pal{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:6px 0 8px;}
+  .ag-pal button{height:30px;padding:0 4px;border-radius:8px;justify-content:center;min-width:0;border:1px solid rgba(255,255,255,.15);}
+  .ag-pal button span{font-size:10.5px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   #pRadFull.on{background:var(--accent);border-color:var(--accent);color:#fff;}
   .rot-q{display:flex;gap:4px;flex-wrap:wrap;margin:-2px 0 8px;}
   .rot-q button{flex:1;min-width:0;padding:3px 4px;font-size:11px;justify-content:center;}
@@ -801,7 +804,7 @@
 <body>
 
 <header>
-  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.7</small></div>
+  <div class="logo"><span class="mark">G</span>GetMotion <small>8.6.8</small></div>
   <select class="hsel" id="selAspect" title="Video formati">
     <option value="16:9">16:9 · Landshaft</option>
     <option value="9:16">9:16 · Stories / Reels</option>
@@ -1817,6 +1820,7 @@ function isoRegion(L,ecx,ecy,scale,pad3d){
     +(L.fxBlur||0)*3+(L.blur||0)*1.5+(L.tshadow||0)*2+(L.tdepth||0)*2
     +(L.olOn?(L.olOffset||0)+(L.olW||0):0)+(L.borderGlowI||0)
     +(L.borderRunOn?(L.borderRunGlow||26)*1.6:0)+(L.shadow?60:0)+((L.cardShadow||0)>0?Math.max(w,h)*0.12:0)
+    +(L.agOn?(typeof agPad==='function'?agPad(L):120):0)
     +((L.shOutA||0)>0?(L.shOutB||0)*1.4+Math.abs(L.shOutY||0)+Math.abs(L.shOutX||0)+Math.max(0,L.shOutS||0):0)
     +70;
   RW+=pad;RH+=pad;
@@ -2742,7 +2746,7 @@ addEventListener('resize',()=>{fitStage();renderTimeline();});
 applyFormat();
 
 /* ================= KEYFRAME (3D bilan) ================= */
-const KF_EXTRA=['radius','borderW','maskW','maskH','innerX','innerY','blur','w','h','d3','depth','bendX','bendY','volume',
+const KF_EXTRA=['agInt','agSize','agStart','agSpan','agWidth','agOff','radius','borderW','maskW','maskH','innerX','innerY','blur','w','h','d3','depth','bendX','bendY','volume',
   'olW','olOffset','olGapSize','olGapPos','olGapT','olGapB','olGapL','olGapR',
   'rTL','rTR','rBR','rBL',
   'mkW','mkH','mkX','mkY','mkRot','mkFeather','mkRadius','pval','borderAng',
@@ -16156,7 +16160,7 @@ function mediaCardShadow(L,w,h){
    hammasi asl qatlamdan har kadrda ko'chiriladi), so'ng AI niqob bilan faqat
    odam qoladi. Matn shu ikkisi orasiga qo'yiladi → yozuv odam ortida.
    ═══════════════════════════════════════════════════════════════════════════ */
-const FG_SKIP=new Set(['id','track','fgOf','customName','muted','volume','seg','_seg','el','_px','_pxc','_pxF','name','kfMode','_kfPend','_kfPrev','_new','burst','sceneFrame','copyOf']);
+const FG_SKIP=new Set(['id','track','fgOf','customName','muted','volume','seg','_seg','el','_px','_pxc','_pxF','name','kfMode','_kfPend','_kfPrev','_new','burst','sceneFrame','copyOf','agOn','cardShadow']);
 function fgSync(F){
   const V=state.layers.find(x=>x.id===F.fgOf);
   if(!V){return false;}
@@ -16707,6 +16711,202 @@ function reelFxBind(L,box){
   });
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ✨ KONTUR NURI (Google "AI Mode" qidiruv panelidagi kabi)
+   ───────────────────────────────────────────────────────────────────────────
+   Element chetidan tashqariga yumshoq, ko'p rangli nur taraladi; nur chegaraning
+   tanlangan qismida (masalan o'ng yarmida) — ranglar chegara BO'YLAB (burchakka
+   qarab emas) bir tekis taqsimlanadi, uchlari silliq so'nadi. Ixtiyoriy ingichka
+   rangli chegara chizig'i. Nur STATIK — hech narsa aylanmaydi.
+   • Har bir parametr ◆ keyframe'lanadi (kuch, o'lcham, joy, uzunlik).
+   • Nur kesh-kanvasda bir marta chiziladi — keyin faqat drawImage (yengil).
+   ═══════════════════════════════════════════════════════════════════════════ */
+const AG_DEF={agCols:['#34a853','#fbbc05','#ea4335','#4285f4'],agStart:2,agSpan:52,agSize:38,agWidth:14,agInt:90,agOff:4,agLine:true,agLineW:2,agIn:false,agFade:28};
+const AG_PAL=[
+  ['Google AI',['#34a853','#fbbc05','#ea4335','#4285f4'],{agStart:2,agSpan:52}],
+  ['Apple Intelligence',['#f97316','#ec4899','#a855f7','#3b82f6'],{agStart:0,agSpan:100}],
+  ['Neon',['#22d3ee','#a855f7','#ec4899'],{}],
+  ['Quyosh',['#f59e0b','#f97316','#ef4444'],{}],
+  ['Okean',['#06b6d4','#3b82f6','#6366f1'],{}],
+  ['Yalpiz',['#10b981','#34d399','#a3e635'],{}],
+  ['Oltin',['#fde68a','#f59e0b','#d97706'],{}],
+  ['Oq nur',['#ffffff','#e0f2fe','#ffffff'],{}],
+  ['Kamalak',['#ef4444','#f59e0b','#facc15','#22c55e','#3b82f6','#a855f7'],{agStart:0,agSpan:100}],
+];
+const _agv=(L,k)=>L[k]!==undefined?L[k]:AG_DEF[k];
+function agOn(L){return !!L.agOn&&(_agv(L,'agInt')>0.5);}
+/* rang palitrasi bo'ylab silliq rang (OKLab'siz — yorqin ranglar uchun RGB yetarli) */
+function agColAt(cols,s){
+  if(cols.length===1)return hexRGB(cols[0]);
+  const x=clamp(s,0,1)*(cols.length-1),i=Math.min(cols.length-2,Math.floor(x)),f=x-i;
+  const a=hexRGB(cols[i]),b=hexRGB(cols[i+1]);
+  return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];
+}
+/* elementning konturi: to'rtburchak/kapsula/doira — perimetr bo'ylab nuqta; boshqa shakllar — burchak bo'yicha */
+function agGeom(L,dims){
+  const w=dims.w,h=dims.h;
+  let r=dims.r;
+  if(L.type==='shape'){
+    if(L.shape==='pill')r=Math.min(w,h)/2;
+    else if(L.shape==='circle')return {w:Math.min(w,h),h:Math.min(w,h),r:Math.min(w,h)/2,rr:true};
+    else if(L.shape!=='rect'&&L.shape!=='glass')return {w,h,r:0,rr:false};
+  }
+  return {w,h,r:Math.min(r||0,w/2,h/2),rr:true};
+}
+/* rangli yoy (chegara bo'ylab) — c: kontekst (markaz 0,0), grow: tashqariga kengayish */
+function agArc(c,L,G,lineW,grow,alphaMul,N){
+  const cols=_agv(L,'agCols');
+  const span=clamp(_agv(L,'agSpan')/100,0.02,1),full=span>0.995;
+  const fade=full?0:clamp(_agv(L,'agFade')/100,0.01,0.5);
+  const w=G.w+grow*2,h=G.h+grow*2,r=G.r>0?G.r+grow:0;
+  c.lineWidth=lineW;c.lineJoin='round';
+  if(G.rr){
+    const rr=Math.min(r,w/2,h/2),sw=w-2*rr;
+    const P=2*(w-2*rr+h-2*rr)+2*Math.PI*rr;
+    const uTop=(sw/2)/Math.max(P,1e-6);                 // 0% = tepa o'rtasi
+    const u0=uTop+(_agv(L,'agStart')/100);
+    c.lineCap='round';
+    for(let i=0;i<N;i++){
+      const s0=i/N,s1=(i+1)/N,sm=(s0+s1)/2;
+      const a=full?1:Math.min(1,sm/fade,(1-sm)/fade);
+      if(a<=0.002)continue;
+      const p0=roundRectPoint(w,h,rr,u0+s0*span),p1=roundRectPoint(w,h,rr,u0+Math.min(1,s1+0.15/N)*span);
+      const [R,Gc,B]=agColAt(full?cols.concat([cols[0]]):cols,sm);
+      c.strokeStyle=`rgba(${R|0},${Gc|0},${B|0},${(a*alphaMul).toFixed(3)})`;
+      c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();
+    }
+  }else{
+    // murakkab shakllar: konus gradient (burchak bo'yicha)
+    const st=(_agv(L,'agStart')/100)*Math.PI*2-Math.PI/2;
+    const g=c.createConicGradient(st,0,0);
+    const n=24;
+    for(let i=0;i<=n;i++){const s=i/n;
+      let a=0,cs=0;if(s<=span){cs=s/span;a=full?1:Math.min(1,cs/fade,(1-cs)/fade);}
+      const [R,Gc,B]=agColAt(full?cols.concat([cols[0]]):cols,cs);
+      g.addColorStop(s,`rgba(${R|0},${Gc|0},${B|0},${(clamp(a,0,1)*alphaMul).toFixed(3)})`);}
+    c.strokeStyle=g;
+    const sx=w/Math.max(1,G.w),sy=h/Math.max(1,G.h);
+    c.save();c.scale(sx,sy);c.lineWidth=lineW/Math.max(sx,sy);
+    const keep=ctx;ctx=c;try{shapePath(L);}finally{ctx=keep;}
+    c.stroke();c.restore();
+  }
+}
+const _agCache=new Map();
+function agRender(L,G,front){
+  const m=ctx.getTransform();
+  const k=Math.hypot(m.a,m.b)||1;
+  let kq=Math.pow(1.15,Math.round(Math.log(k)/Math.log(1.15)));
+  const U=pfxUnit();
+  const size=_agv(L,'agSize')*U,wid=_agv(L,'agWidth')*U,off=_agv(L,'agOff')*U,lw=_agv(L,'agLineW')*U;
+  const P=Math.ceil(front?lw*2+4:size*2.2+off+wid+8);
+  const W=G.w+P*2,H=G.h+P*2;
+  if(Math.max(W,H)*kq>2600)kq=2600/Math.max(W,H);
+  kq=Math.max(0.05,kq);
+  const key=[L.id,front?1:0,Math.round(G.w),Math.round(G.h),Math.round(G.r),G.rr?1:0,L.shape||'',JSON.stringify(_agv(L,'agCols')),
+    ['agStart','agSpan','agSize','agWidth','agOff','agLineW','agFade'].map(q=>Math.round(_agv(L,q)*10)/10).join(','),_agv(L,'agIn')?1:0,kq.toFixed(3),U.toFixed(3)].join('~');
+  let e=_agCache.get(key);
+  if(e){_agCache.delete(key);_agCache.set(key,e);return e;}
+  const cw=Math.max(2,Math.ceil(W*kq)),ch=Math.max(2,Math.ceil(H*kq));
+  const cvs=document.createElement('canvas');cvs.width=cw;cvs.height=ch;
+  const c=cvs.getContext('2d');
+  c.setTransform(kq,0,0,kq,cw/2,ch/2);
+  if(front){
+    // ingichka rangli chegara (aniq)
+    agArc(c,L,G,lw,0,1,220);
+  }else{
+    // keng yumshoq nur + yaqin yorqin qatlam (bloom)
+    c.filter=`blur(${Math.max(0.5,size*kq*0.55)}px)`;
+    agArc(c,L,G,wid*1.6,off+wid*0.4,0.75,140);
+    c.filter=`blur(${Math.max(0.5,size*kq*0.22)}px)`;
+    agArc(c,L,G,wid*0.8,off*0.6,0.85,140);
+    c.filter='none';
+    if(!_agv(L,'agIn')){
+      // ichkarisi tozalanadi — nur faqat tashqarida (shaffof elementlar ham toza qoladi)
+      c.globalCompositeOperation='destination-out';
+      if(G.rr)pathRound(c,-G.w/2,-G.h/2,G.w,G.h,G.r);else{const keep=ctx;ctx=c;try{shapePath(L);}finally{ctx=keep;}}
+      c.fillStyle='#000';c.fill();
+      c.globalCompositeOperation='source-over';
+    }
+  }
+  e={c:cvs,W,H};
+  _agCache.set(key,e);
+  {const ks=(_agCache._byL||(_agCache._byL=new Map()));const a=ks.get(L.id)||[];a.push(key);while(a.length>6)_agCache.delete(a.shift());ks.set(L.id,a);}
+  if(_agCache.size>60){const fk=_agCache.keys().next().value;_agCache.delete(fk);}
+  return e;
+}
+/* chizish: back=true — element ORTIDA (nur), false — USTIDA (ingichka chiziq) */
+function agDraw(L,dims,back){
+  if(!agOn(L))return;
+  if(!back&&!_agv(L,'agLine'))return;
+  const G=agGeom(L,dims);
+  if(!(G.w>1&&G.h>1))return;
+  const R=agRender(L,G,!back);
+  const I=clamp(_agv(L,'agInt')/100,0,1.5),a0=ctx.globalAlpha;
+  ctx.save();
+  ctx.globalAlpha=a0*Math.min(1,I);
+  ctx.drawImage(R.c,-R.W/2,-R.H/2,R.W,R.H);
+  if(back&&I>1.01){ctx.globalAlpha=a0*(I-1);ctx.drawImage(R.c,-R.W/2,-R.H/2,R.W,R.H);}   // 100% dan yuqori — yanada yorqin
+  ctx.restore();
+}
+function agPad(L){return agOn(L)?(_agv(L,'agSize')*2.2+_agv(L,'agOff')+_agv(L,'agWidth'))*pfxUnit():0;}
+
+/* ── Panel ── */
+function agLight(cols){return cols.every(c=>{const h=c.replace('#','');const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);return (r*.299+g*.587+b*.114)>200;});}
+function agBlock(L){
+  const on=!!L.agOn;
+  const cols=_agv(L,'agCols');
+  const sl=(k,n,mn,mx,st,u)=>`<div class="field"><label>${n}: <b id="agv_${k}">${Math.round(_agv(L,k)*10)/10}</b>${u||''}</label><input type="range" data-agk="${k}" data-def="${AG_DEF[k]}" min="${mn}" max="${mx}" step="${st}" value="${_agv(L,k)}"></div>`;
+  return `<label class="chk"><input type="checkbox" id="agOn" ${on?'checked':''}> ✨ Kontur nuri — Google AI qidiruv panelidagi kabi</label>
+    ${on?`
+    <div class="ag-pal">${AG_PAL.map((p,i)=>`<button data-agp="${i}" title="${p[0]}" style="background:linear-gradient(90deg,${p[1].join(',')})"><span${agLight(p[1])?' style="color:#111;text-shadow:none"':''}>${p[0]}</span></button>`).join('')}</div>
+    <div class="field"><label>🎨 Ranglar (chegara bo'ylab tartibda)</label>
+      <div class="grad-cols" id="agCols">${cols.map((c,i)=>`<div class="gc"><input type="color" data-agc="${i}" value="${c}">${cols.length>1?`<span class="rm" data-agrm="${i}" title="O'chirish">✕</span>`:''}</div>`).join('')}
+      ${cols.length<6?'<button id="agAdd" style="padding:3px 8px">+ Rang</button>':''}</div></div>
+    <div class="row2">${sl('agStart','Joyi (0 = tepa o\'rtasi)',-50,100,1,'%')}${sl('agSpan','Uzunligi',5,100,1,'%')}</div>
+    <div class="row2">${sl('agInt','Kuchi',0,150,1,'%')}${sl('agSize','Tarqalishi',4,140,1,'px')}</div>
+    <div class="row2">${sl('agWidth','Qalinligi',2,60,1,'px')}${sl('agOff','Chetdan uzoqligi',-20,60,1,'px')}</div>
+    ${_agv(L,'agSpan')<100?sl('agFade','Uchlarining so\'nishi',1,50,1,'%'):''}
+    <label class="chk"><input type="checkbox" id="agLine" ${_agv(L,'agLine')?'checked':''}> Ingichka rangli chegara chizig'i</label>
+    ${_agv(L,'agLine')?sl('agLineW','Chiziq qalinligi',0.5,8,0.5,'px'):''}
+    <label class="chk"><input type="checkbox" id="agIn" ${_agv(L,'agIn')?'checked':''}> Nur element ichiga ham tushsin (shaffof elementlar uchun)</label>
+    <div class="hintline">Nur statik — aylanmaydi. Joyi va uzunligini ◆ keyframe bilan o'zgartirib, xohlasangiz nurni chegara bo'ylab siljitish mumkin.</div>`:''}`;
+}
+function agBind(L,box){
+  const q=s=>box.querySelector(s);
+  const re=()=>{seekDirty=true;renderProps();};
+  const on=q('#agOn');if(on)on.onchange=()=>{historyMaybe();L.agOn=on.checked;if(L.agOn&&!L.agCols)L.agCols=AG_DEF.agCols.slice();re();};
+  box.querySelectorAll('[data-agk]').forEach(el=>{el.oninput=()=>{const k=el.dataset.agk,v=+el.value;setAnimProp(L,k,v);const b=document.getElementById('agv_'+k);if(b)b.textContent=Math.round(v*10)/10;seekDirty=true;};
+    el.onchange=()=>{historyMaybe();if(el.dataset.agk==='agSpan')renderProps();};});
+  box.querySelectorAll('[data-agc]').forEach(el=>{el.oninput=()=>{const a=(L.agCols||AG_DEF.agCols).slice();a[+el.dataset.agc]=el.value;L.agCols=a;seekDirty=true;};el.onchange=()=>historyMaybe();});
+  box.querySelectorAll('[data-agrm]').forEach(el=>el.onclick=()=>{historyMaybe();const a=(L.agCols||AG_DEF.agCols).slice();a.splice(+el.dataset.agrm,1);L.agCols=a;re();});
+  const add=q('#agAdd');if(add)add.onclick=()=>{historyMaybe();const a=(L.agCols||AG_DEF.agCols).slice();a.push(a[a.length-1]||'#ffffff');L.agCols=a;re();};
+  box.querySelectorAll('[data-agp]').forEach(b=>b.onclick=()=>{historyMaybe();const p=AG_PAL[+b.dataset.agp];L.agCols=p[1].slice();Object.assign(L,p[2]);if(!p[2].agSpan&&p[2].agSpan!==0&&L.agSpan==null)L.agSpan=AG_DEF.agSpan;re();});
+  const ln=q('#agLine');if(ln)ln.onchange=()=>{historyMaybe();L.agLine=ln.checked;re();};
+  const ins=q('#agIn');if(ins)ins.onchange=()=>{historyMaybe();L.agIn=ins.checked;re();};
+}
+
+/* ── Motion Kit: Google AI uslubidagi qidiruv paneli ── */
+function kitAISearch(){
+  const S=kitS(),W=state.W,H=state.H;
+  const bw=Math.round(Math.min(W*0.84,S*0.86)),bh=Math.round(S*0.2),cx=W/2,cy=H*0.5;
+  const box=kitShape({shape:'rect',w:bw,h:bh,x:cx,y:cy,radius:Math.round(bh*0.26),fill:'color',fillColor:'#fbfcfe',fillA:0.96,
+    border:true,borderColor:'#e2e8f0',borderW:1.5,borderA:1,shOutC:'#64748b',shOutA:14,shOutB:Math.round(S*0.05),shOutY:Math.round(S*0.012),
+    agOn:true,agCols:AG_DEF.agCols.slice(),agStart:2,agSpan:52,agSize:Math.round(S*0.036),agWidth:Math.round(S*0.013),agInt:95,agOff:4,agLine:true,agLineW:2,
+    animIn:'blurPop',inTime:0.55,customName:'AI qidiruv paneli'});
+  const fs=Math.round(bh*0.17);
+  const ph=kitText('Ask AI Mode',{x:cx-bw/2+bw*0.06+kitMeasure('Ask AI Mode',fs,400,'Inter')/2,y:cy-bh*0.2,size:fs,font:'"Inter", sans-serif',weight:400,color:'#5f6368',
+    animIn:'typewriter',stagger:0.05,caret:true,caretC:'#1a73e8',customName:'Yozuv joyi'});ph._off=0.4;
+  const ic=(name,x)=>{const I=kitIcon(name,Math.round(bh*0.2),'#202124',{x,y:cy+bh*0.24,animIn:'fade',inTime:0.3,customName:'Ikonka'});I._off=0.6;return I;};
+  const i1=ic('image',cx-bw/2+bw*0.06),i2=ic('clip',cx-bw/2+bw*0.135),i3=ic('search',cx-bw/2+bw*0.21);
+  const mic=ic('mic',cx+bw/2-bw*0.17);
+  const btn=kitShape({shape:'circle',w:Math.round(bh*0.38),h:Math.round(bh*0.38),x:cx+bw/2-bw*0.07,y:cy+bh*0.22,fill:'color',fillColor:'#4285f4',fillA:1,
+    animIn:'springPop',inTime:0.45,customName:'Yuborish tugmasi'});btn._off=0.7;
+  const arr=kitIcon('send',Math.round(bh*0.2),'#ffffff',{x:btn.x,y:btn.y,animIn:'springPop',inTime:0.45,customName:'Yuborish belgisi'});arr._off=0.7;
+  kitPlace([box,ph,i1,i2,i3,mic,btn,arr],'🔎 AI qidiruv paneli',{dur:5,toast:'🔎 AI qidiruv paneli — nur ranglari: panel → ✨ Kontur nuri'});
+}
+try{KIT_ITEMS.push({cat:'ui',ico:'🔎',n:'AI qidiruv paneli (nurli)',d:'Google AI Mode uslubi: oq panel, chetidan ko\'p rangli nur, yozuv va tugmalar',run:kitAISearch,
+  s:['Qo\'shing — "Ask AI Mode" matnini o\'zgartiring','Nur ranglari: panelni tanlang → ✨ Kontur nuri']});}catch(e){}
+
 function drawShape(L,local,t,baseAlpha){
   const fx=objectFX(L,local,t);
   applyWalls(L,fx,L.w,L.h,local);
@@ -16752,6 +16952,8 @@ function drawShape(L,local,t,baseAlpha){
   }
   // 🎨 STYLE: tashqi soya (default 0 — ko'rinmaydi)
   styleShadowOuter(L);
+  // ✨ Kontur nuri — element ORTIDA
+  try{agDraw(L,{w:L.w,h:L.h,r:styleRad(L)},true);}catch(e){}
   // 3D chuqurlik (extrude) — shakl haqiqiy hajmga ega bo'lib ko'rinadi
   if(L.depth>0){
     const baseCol=(L.fill==='color'||L.fill==='gradient')?L.fillColor:'#4a5378';
@@ -16790,6 +16992,8 @@ function drawShape(L,local,t,baseAlpha){
     ctx.setLineDash([]);
     borderGlowFx(L,L.w,L.h,t);
   }
+  // ✨ Kontur nuri — ingichka rangli chegara (element USTIDA)
+  try{agDraw(L,{w:L.w,h:L.h,r:styleRad(L)},false);}catch(e){}
   // 3D chuqurlikda yuqori qirra yorug' bevel
   if(L.depth>0){
     shapePath(L);
@@ -17058,6 +17262,9 @@ function drawMedia(L,local,t,baseAlpha){
   }
   // 📸 foto karta soyasi (media ortida)
   if((L.cardShadow||0)>0){const _mA0=maskActiveAt(L,local);mediaCardShadow(L,_mA0?L.maskW:m.w,_mA0?L.maskH:m.h);}
+  // ✨ Kontur nuri — media ORTIDA
+  const _agD=agOn(L)?(()=>{const _mA1=maskActiveAt(L,local);return {w:_mA1?L.maskW:m.w,h:_mA1?L.maskH:m.h,r:L.radMulti?Math.max(L.rTL||0,L.rTR||0,L.rBR||0,L.rBL||0):(L.radius||0)};})():null;
+  if(_agD)try{agDraw(L,_agD,true);}catch(e){}
   // ⚡ Reveal transitionlar (doira ochilish / wipe) uchun klip
   ctx.save();
   {
@@ -17147,6 +17354,8 @@ function drawMedia(L,local,t,baseAlpha){
       drawOutline(L,m.w,m.h,t); // 🖼 tashqi outline quti YOQILMAGANDA ham ishlaydi
     }
   }
+  // ✨ Kontur nuri — ingichka rangli chegara (media USTIDA)
+  if(_agD)try{agDraw(L,_agD,false);}catch(e){}
   // 🧍 OLDINGI PLAN: kadr aynan asl videodek chizildi — endi faqat odam qoladi
   if(L.fgOf!=null&&SG&&SG.P){try{fgMaskApply(L,SG,SG.S0||S,m,local);}catch(e){}}
   ctx.restore();
@@ -21280,13 +21489,6 @@ function borderBlock(L){
       <div class="field"><label>Shaffoflik: <b id="pBAV">${Math.round((kfNow(L,'borderA')??1)*100)}</b>%</label>
         <input type="range" id="pBA" min="0" max="100" value="${Math.round((kfNow(L,'borderA')??1)*100)}"></div>
     </div>
-    <label class="chk"><input type="checkbox" id="pBSpin" ${L.borderSpin?'checked':''}> 🔄 Ranglar aylanib tursin (jonli)</label>
-    ${L.borderSpin?`<div class="row2">
-      <div class="field"><label>Tezligi: <b id="pBSpdV">${(L.borderSpinSpd||1).toFixed(1)}</b>×</label>
-        <input type="range" id="pBSpd" min="0.2" max="4" step="0.1" value="${L.borderSpinSpd||1}"></div>
-      <div class="field"><label>Aylanish uslubi (easing)</label>
-        <select id="pBSpinEase">${SPIN_EASES.map(([v,n])=>`<option value="${v}" ${(L.borderSpinEase||'linear')===v?'selected':''}>${n}</option>`).join('')}</select></div>
-    </div>`:''}
     `:`
     <div class="field"><label>Chegara rangi</label><input type="color" id="pBColor" value="${kfNow(L,'borderColor')}"></div>`}
     <div class="row2">
@@ -21297,27 +21499,9 @@ function borderBlock(L){
     </div>
     <div class="field"><label>🎨 Rang burilishi (hue): <b id="pBHueV">${Math.round(L.borderHue||0)}</b>° — ◆ bilan vaqt davomida rang o'zgaradi</label>
       <input type="range" id="pBHue" min="0" max="360" value="${Math.round(L.borderHue||0)}"></div>
-    <label class="chk"><input type="checkbox" id="pBGlow" ${L.borderGlowOn?'checked':''}> ✨ Chegara nuri (glow) — chegara rangidagi soya</label>
-    ${L.borderGlowOn?`<div class="row2">
-      <div class="field"><label>Nur kuchi: <b id="pBGlowIV">${Math.round(L.borderGlowI||0)}</b></label>
-        <input type="range" id="pBGlowI" min="0" max="60" value="${Math.round(L.borderGlowI||0)}"></div>
-      <div class="field"><label>Quyuqlik: <b id="pBGlowAV">${Math.round(L.borderGlowA??70)}</b>%</label>
-        <input type="range" id="pBGlowA" min="0" max="100" value="${Math.round(L.borderGlowA??70)}"></div>
-    </div>
-    <div class="field"><label>Nur rangi <span style="color:var(--muted)">— bo'sh qoldirsangiz chegara rangi olinadi</span></label>
-      <input type="color" id="pBGlowC" value="${kfNow(L,'borderGlowC')||kfNow(L,'borderColor')||'#ffd76b'}"></div>`:''}
-    <label class="chk"><input type="checkbox" id="pBSpark" ${L.borderSparkOn?'checked':''}> 🌟 Aylanuvchi yorqin uchqun (shine)</label>
-    ${L.borderSparkOn?`<div class="field"><label>Uchqun tezligi: <b id="pBSparkSV">${(L.borderSparkSpd||0.5).toFixed(2)}</b>×</label>
-      <input type="range" id="pBSparkS" min="0.1" max="2" step="0.05" value="${L.borderSparkSpd||0.5}"></div>`:''}
-    <label class="chk"><input type="checkbox" id="pBRun" ${L.borderRunOn?'checked':''}> 🌈 Yuguruvchi neon yoy (chegara bo'ylab oqim)</label>
-    ${L.borderRunOn?`<div class="row2">
-      <div class="field"><label>Tezligi: <b id="pBRunSV">${(L.borderRunSpd||0.35).toFixed(2)}</b>×</label>
-        <input type="range" id="pBRunS" min="0.05" max="1.5" step="0.05" value="${L.borderRunSpd||0.35}"></div>
-      <div class="field"><label>Yoy uzunligi: <b id="pBRunLV">${Math.round(L.borderRunLen??28)}</b>%</label>
-        <input type="range" id="pBRunL" min="5" max="80" value="${Math.round(L.borderRunLen??28)}"></div>
-    </div>
-    <div class="field"><label>Nur kuchi: <b id="pBRunGV">${Math.round(L.borderRunGlow??26)}</b></label>
-      <input type="range" id="pBRunG" min="4" max="70" value="${Math.round(L.borderRunGlow??26)}"></div>`:''}`:''}
+`:''}
+    ${(L.borderSpin||L.borderGlowOn||L.borderSparkOn||L.borderRunOn)?`<div class="hintline" style="margin-top:6px">⚠ Bu elementda eski nur / aylanuvchi chegara effekti yoqilgan. <button id="pOldGlowOff" style="padding:2px 8px;font-size:11px">O'chirish</button></div>`:''}
+    ${(L.type==='shape'||L.type==='video'||L.type==='image')?`<hr style="border:none;border-top:1px solid var(--border);margin:10px 0">${agBlock(L)}`:''}
     <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
     <div style="font-weight:700;font-size:11px;margin:2px 0 6px;letter-spacing:.4px;color:var(--accent2)">🎨 SOYALAR (STYLE)</div>
     <div class="hintline">Hammasi standart holatda <b>0</b> — hech qanday soya chizilmaydi. Kerak bo'lganini o'zingiz yoqasiz. CSS <code>box-shadow</code> kabi ishlaydi.</div>
@@ -22349,6 +22533,8 @@ function renderProps(){
     if((L.fill==='neo'||L.fill==='lglass')&&!L._fxInit){L._fxInit=1;L.border=false;if(L.fill==='neo')L.nmV=2;}
     renderProps();});
   fxBind(L,box);
+  try{agBind(L,box);}catch(e){console.warn('agBind',e);}
+  on('pOldGlowOff','onclick',()=>{L.borderSpin=false;L.borderGlowOn=false;L.borderSparkOn=false;L.borderRunOn=false;seekDirty=true;renderProps();toast('Eski nur effektlari o\'chirildi');});
   on('pFillC','oninput',e=>{setAnimProp(L,'fillColor',e.target.value);seekDirty=true;lookPendUI(L);});
   on('pGrad2','oninput',e=>{setAnimProp(L,'grad2',e.target.value);seekDirty=true;lookPendUI(L);});
   on('pFA','oninput',e=>{setAnimProp(L,'fillA',+e.target.value/100);$('pFAV').textContent=e.target.value+'%';seekDirty=true;lookPendUI(L);});
